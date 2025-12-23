@@ -1,25 +1,48 @@
 # Compiler
 CXX := g++
+CC := gcc
 
 # Compiler flags
-CXXFLAGS := -Wall -Wextra -std=c++17
+CXXFLAGS := -Wall -Wextra -std=c++17 -I../glad/include
+CFLAGS := -I../glad/include
+
+# Set PKG_CONFIG_PATH to use local SDL3 build
+export PKG_CONFIG_PATH := $(shell pwd)/../SDL/build:$(PKG_CONFIG_PATH)
 
 # SDL3 flags from pkg-config
-SDL_LIBS := $(shell pkg-config --libs sdl3)
-SDL_CFLAGS := $(shell pkg-config --cflags sdl3)
+SDL_LIBS := $(shell PKG_CONFIG_PATH=../SDL/build pkg-config --libs sdl3)
+SDL_CFLAGS := $(shell PKG_CONFIG_PATH=../SDL/build pkg-config --cflags sdl3)
 
-# Target
-TARGET := main
+# OpenGL framework (macOS)
+LDFLAGS := -framework OpenGL
 
-# Sources
+# Target executable
+TARGET := game
+
+# Source files
 SRC := main.cpp
+GLAD_SRC := ../glad/src/glad.c
+
+# Object files
+OBJS := main.o glad.o
 
 # Default rule
 all: $(TARGET)
 
-$(TARGET): $(SRC)
-	$(CXX) $(CXXFLAGS) $(SDL_CFLAGS) $(SRC) -o $(TARGET) $(SDL_LIBS)
+# Compile main.cpp
+main.o: $(SRC)
+	$(CXX) $(CXXFLAGS) $(SDL_CFLAGS) -c $(SRC) -o main.o
+
+# Compile glad.c
+glad.o: $(GLAD_SRC)
+	$(CC) $(CFLAGS) -c $(GLAD_SRC) -o glad.o
+
+# Link everything together
+$(TARGET): $(OBJS)
+	$(CXX) $(OBJS) -o $(TARGET) $(SDL_LIBS) $(LDFLAGS)
 
 # Clean rule
 clean:
-	rm -f $(TARGET)
+	rm -f $(OBJS) $(TARGET)
+
+.PHONY: all clean
