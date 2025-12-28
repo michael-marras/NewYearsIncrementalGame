@@ -3,19 +3,38 @@
 #include <glad/glad.h>
 #include <vector>
 
-// Globals
-int gScreenHeight = 480; 
-int gScreenWidth  = 640;
-SDL_Window* gGraphicsApplicationWindow = nullptr;
-SDL_GLContext gOpenGLContext = nullptr;
-bool gRunning = true;
-//VAO
-GLuint gVertexArrayObject = 0;
-//VBO
-GLuint gVertexBufferObject =0;
+// -------------Globals-------------
+// Globals generally are prefixed with 'g' in this application
 
-//Program Object (for our shaders)
-GLuint gGraphicsPipelineShaderProgram = 0;
+// Screen Dimensions
+int gScreenHeight                      = 480; 
+int gScreenWidth                       = 640;
+SDL_Window* gGraphicsApplicationWindow = nullptr;
+SDL_GLContext gOpenGLContext           = nullptr;
+
+// Main loop flag
+bool gRunning = true;
+
+/* shader
+ *The following stores a unique id for the graphics pipeline
+ * program object that will be used for our OpenGl draw calls.
+ */
+GLuint gGraphicsPipelineShaderProgram  = 0;
+
+/* OpenGL Objects
+ * Vertex Array Object (VAO)
+ * Vertex Array objects encapsulate all of the items needed to render an object.
+ * For example, we may have multiple vertex buffer objects (VBO) related to rendering one object.
+ * The VAO allows us to setup the OpenGL state to render that object that object using
+ * the correct layout and correct buffers with one call after being setup.
+ */ 
+GLuint gVertexArrayObject              = 0;
+/* Vertex Buffer Object (VBO)
+ * Vertex Buffer Objects store information relating to vertices (e.g. positions normals,
+ * and textures)
+ * VBOs are our mechanism for arranging geometry on the GPU.
+ */
+GLuint gVertexBufferObject             = 0;
 
 //Vertex Shader
 const std::string gVertexShaderSource = 
@@ -82,7 +101,19 @@ void GetOpenGlVersionInfo() {
     std::cout << "Shading Language: " << glGetString(GL_SHADING_LANGUAGE_VERSION) << std::endl;
 }
 
+/**
+ * Setup geometry during the vertex specification step
+ *
+ * @return void 
+ */
 void VertexSpecification() {
+
+    /* Geometry Data
+     * Here we are going to store x,y, and z position attributes within vertex
+     * positions for the data. For now, this information is just stored in the CPU, and we
+     * are going to store this data on the GPU shortly, in a call to glBufferData which will
+     * store this information into a vertex buffer object.
+     */
 
     //Lives on the cpu
     const std::vector<GLfloat> vertexPosition = {
@@ -91,58 +122,91 @@ void VertexSpecification() {
         0.8f, -0.8f, 0.0f,  //vertex 2
         0.0f, 0.8f, 0.0f    //vertex 3
     };
+
+    /* Vertex Arrays Object (VAO) Setu[]
+     * Note: We can think of the VAO as a 'wrapper around' all of the Vertex Buffer Objects
+     * In the sense that it encapsulates all VBO state that we are setting up.
+     * This, it is also important that we glBindVertexArray (i.e. select the VAO we want to use)
+     * before our vertex buffer object operations.
+     */ 
     
-    //Start settings things up on the gpu
+    // Start settings things up on the gpu
     glGenVertexArrays(1, &gVertexArrayObject);
+
+    // We bind (i.e select) to the Vertex Array Object (VAO) that we want to work within.
     glBindVertexArray(gVertexArrayObject);
 
-    // Start generating our VBO
+    /* Vertex Buffer Object (VBO) creation
+     * Create a new vertex buffer object
+     * Note: Wel'' see this pattern of code often in OpenGL of creating and binding to a buffer
+     */ 
     glGenBuffers(1, &gVertexBufferObject);
+
+    /* Next we will do glBindBuffer.
+     * Bind is equivalent to selecting the active buffer object that we want to work with in OpenGL.
+     */
     glBindBuffer(GL_ARRAY_BUFFER, gVertexBufferObject);
-    glBufferData(GL_ARRAY_BUFFER, 
-                 vertexPosition.size() * sizeof(GLfloat), 
-                 vertexPosition.data(), 
-                 GL_STATIC_DRAW);
+
+    /* Now in our currently binded buffer, we populate the data from our 'vertex positions' (which is on the CPU)
+     * onto a buffer that will live on the GPU.
+     */
+    glBufferData(GL_ARRAY_BUFFER,                         // Kind of Buffer
+                 vertexPosition.size() * sizeof(GLfloat), // Size of data in bytes
+                 vertexPosition.data(),                   // Raw arra of data
+                 GL_STATIC_DRAW);                         // How we intend to use the data
 
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0,
-                          3,
-                          GL_FLOAT,
-                          GL_FALSE,
-                          0,
-                          (void*)0
+    glVertexAttribPointer(0,                              // 0 corresponds to glEnableVertexAttribArray
+                          3,                              // The number of components (e.g. x,y,z )
+                          GL_FLOAT,                       // Type
+                          GL_FALSE,                       // Is the data normalized  
+                          0,                              // Stride
+                          (void*)0                        // Offset
             );
     glBindVertexArray(0);
     glDisableVertexAttribArray(0);
 }
 
+/** 
+ * Initialization of the graphics application. Typically this will involve setting up a window
+ * and the OpenGL Context (with the appropriate version)
+ *
+ * @return void
+ */
 void InitializeProgram() {
+    // Initialize SDL
     if(!SDL_Init(SDL_INIT_VIDEO)) {
         std::cout << "SDL3 could not initialize video subsystem" << std::endl;
         exit(1);
     }
 
+    // Setup the OpenGL Context
+    // Use OpenGL 4.1 core or greater
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
-
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+
+    //We want to request a double buffer for smooth updating.
+    // SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
     SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
 
+    // Create an application window using OpenGL that supports SDL
     gGraphicsApplicationWindow = SDL_CreateWindow("OpenGL Window", gScreenWidth, gScreenHeight, SDL_WINDOW_OPENGL);
 
+    // Check if the window did not create
     if (gGraphicsApplicationWindow == nullptr) {
         std::cout << "SDL_Window was not able to be created" << std::endl;
         exit(1);
     }
 
+    // Create an OpenGL Graphics Context
     gOpenGLContext = SDL_GL_CreateContext(gGraphicsApplicationWindow);
-
     if(gOpenGLContext==nullptr) {
         std::cout << "OpenGl context not available" << std::endl;
         exit(1);
     }
 
-    //Initialize the Glad Library
+    // Initialize the Glad Library
     if(!gladLoadGLLoader((GLADloadproc)SDL_GL_GetProcAddress)) {
         std::cout << "glad was not initialized" <<std::endl;
         exit(1);
@@ -203,13 +267,22 @@ void CleanUp() {
 }
 
 int main() {
+
+    // 1. Setup the graphics program
     InitializeProgram();
 
+    // 2. Setup our Geometry
     VertexSpecification();
 
+    // 3. Create our graphics pipeline
+    // at a minimum this means the vertex and fragment shader
     CreateGraphicsPipeline();
 
+    // 4. Call the main application loop
     MainLoop();
     
+    // Call the cleanup function when our program terminates
     CleanUp();
+
+    return 0;
 }
