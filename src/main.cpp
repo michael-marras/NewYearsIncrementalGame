@@ -10,6 +10,10 @@
 #include "tile_definitions.h"
 #include "constants.h"
 #include "camera.h"
+#include "GameContext.h"
+
+const Uint64 FPS = 100;
+const Uint64 TARGETFRAMETIME = 1000 / FPS;
 
 struct SDLApplication {
     SDL_Window* window;
@@ -245,7 +249,7 @@ struct SDLApplication {
 };
 
 // Entry Point
-int main(int argc, char* argv[]) {
+int main() {
     SDLApplication app("poop");
 
     if (!app.Initialize()) {
