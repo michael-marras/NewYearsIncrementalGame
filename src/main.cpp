@@ -1,4 +1,8 @@
 #include <SDL3/SDL.h>
+#include <string>
+
+const Uint64 FPS = 100;
+const Uint64 TARGETFRAMETIME = 1000 / FPS;
 
 struct SDLApplication {
     SDL_Window* window;
@@ -8,7 +12,7 @@ struct SDLApplication {
     //constructor
     SDLApplication(const char* title) {
         SDL_Init(SDL_INIT_VIDEO);
-        window = SDL_CreateWindow(title, 320, 240, SDL_WINDOW_RESIZABLE);
+        window = SDL_CreateWindow(title, 1920, 1080, SDL_WINDOW_RESIZABLE);
     }
 
     //destructor
@@ -16,8 +20,15 @@ struct SDLApplication {
         SDL_Quit();
     }
 
+    //Handle input events from I/O or networking devices
+    void Tick(){
+        Input();
+        Update();
+        Render();
+    }
+
     //Advances out loop one iteration
-    void Tick() {
+    void Input() {
         SDL_Event event;
 
         // const bool* keyState = SDL_GetKeyboardState(nullptr);
@@ -58,14 +69,49 @@ struct SDLApplication {
         //Application/Game Logic
         //...
     }
+
+    void Update() {
+    }
+
+    void Render() {
+    }
+
+    void FPSCount(Uint64* currentTick, Uint64* lastTime, Uint64* fps) {
+        if (*currentTick > *lastTime + 1000) {
+            *lastTime = *currentTick;
+            std::string title;
+            title += "Mike's SDL3 FPS: " + std::to_string(*fps);
+            SDL_SetWindowTitle(window, title.c_str());
+            *fps = 0;
+        }
+    }
+    
+    void TimePerFrame(Uint64* currentTick) {
+        Uint64 deltaTime = SDL_GetTicks() - *currentTick;
+        if (deltaTime < TARGETFRAMETIME) {
+            SDL_Delay(TARGETFRAMETIME - deltaTime - 1);
+            while (SDL_GetTicks() - *currentTick < TARGETFRAMETIME) {
+                // Tight loop for precision (usually < 1ms)
+            }
+        }
+    }
+
     //Main Application Loop
     void MainLoop() {
-        int w,h;
-        SDL_GetWindowSize(window, &w, &h);
-        SDL_WarpMouseInWindow(window, w/2 , h/2);
+        Uint64 fps = 0; //number of frames per second
+        Uint64 lastTime = 0;
 
+        //inf loop
         while(running) {
+            Uint64 currentTick = SDL_GetTicks();
             Tick();
+            fps++;
+            
+            //Per frame calculation of elapsed time
+            TimePerFrame(&currentTick);
+
+            //FPS Calculation
+            FPSCount(&currentTick, &lastTime, &fps);
         }
     }          
 };
