@@ -1,27 +1,52 @@
 #include <SDL3/SDL.h>
 #include <string>
+#include <cstdlib>
+#include <ctime>
+#include <cmath>
+#include <unordered_map>
+#include "SDL3/SDL_keycode.h"
 #include "textures.h"
-
-const Uint64 FPS = 100;
-const Uint64 TARGETFRAMETIME = 1000 / FPS;
+#include "tiles.h"
+#include "tile_definitions.h"
+#include "constants.h"
+#include "camera.h"
 
 struct SDLApplication {
     SDL_Window* window;
     SDL_Renderer* renderer;
     TextureManager* textureManager;
+    TileManager* tileManager;
+    Camera* camera;
+    int currentResolutionIndex = 5;
+    std::unordered_map<SDL_Keycode, bool> keysHeld;
     //to run indefinitely
     bool running = true;
+    int map;
 
     //constructor
     SDLApplication(const char* title) {
         SDL_Init(SDL_INIT_VIDEO);
-        window = SDL_CreateWindow(title, 1920, 1080, SDL_WINDOW_RESIZABLE);
-        renderer = SDL_CreateRenderer(window, NULL);  // NULL = use default renderer
+        const ResolutionPreset& initialPreset = RESOLUTION_PRESETS[currentResolutionIndex];
+        window = SDL_CreateWindow(title, initialPreset.width, initialPreset.height, SDL_WINDOW_RESIZABLE);
+        renderer = SDL_CreateRenderer(window, NULL);
+        
+        SDL_SetRenderLogicalPresentation(renderer, VIRTUAL_WIDTH, VIRTUAL_HEIGHT, SDL_LOGICAL_PRESENTATION_LETTERBOX);
+        
+        std::string windowTitle = std::string(title) + " - " + initialPreset.name + 
+                                 " (" + std::to_string(initialPreset.width) + "x" + 
+                                 std::to_string(initialPreset.height) + ")";
+        SDL_SetWindowTitle(window, windowTitle.c_str());
+        
         textureManager = new TextureManager(renderer);
+        tileManager = new TileManager();
+        camera = new Camera(0.0f, 0.0f);
+        
     }
 
     //destructor
     ~SDLApplication() {
+        delete camera;
+        delete tileManager;
         delete textureManager;
         
         if (renderer) {
@@ -33,23 +58,32 @@ struct SDLApplication {
         SDL_Quit();
     }
 
-    // Initialize and load all resources (textures, sounds, etc.)
     bool Initialize() {
-        // Load all textures here
-        if (!textureManager->LoadImageFromRes("test_img", "test_img.png")) {
-            SDL_Log("Failed to load test_img!");
-            return false;
-        }
+        SetupTiles(tileManager, textureManager);
         
-        // You can load more images here:
-        // if (!textureManager->LoadImageFromRes("player", "player.png")) {
-        //     SDL_Log("Failed to load player texture!");
-        //     return false;
-        // }
-        // textureManager->LoadImageFromRes("enemy", "enemy.png");
-        // textureManager->LoadImageFromRes("background", "bg.png");
+        map = tileManager->CreateTileGrid(100, 100);
+        camera->SnapToTarget(800, 800); // this is center of the map, can we done differently later
         
         return true;
+    }
+
+    // Change resolution to a different preset
+    void ChangeResolution(int newIndex) {
+        if (newIndex < 0) newIndex = 0;
+        if (newIndex >= RESOLUTION_PRESET_COUNT) newIndex = RESOLUTION_PRESET_COUNT - 1;
+        
+        if (newIndex == currentResolutionIndex) return;
+        
+        currentResolutionIndex = newIndex;
+        const ResolutionPreset& preset = RESOLUTION_PRESETS[currentResolutionIndex];
+        
+        // Resize the window
+        SDL_SetWindowSize(window, preset.width, preset.height);
+        
+        // Center the window on the screen
+        SDL_SetWindowPosition(window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
+        
+        SDL_Log("Changed resolution to %s (%dx%d)", preset.name, preset.width, preset.height);
     }
 
     //Handle input events from I/O or networking devices
@@ -63,75 +97,118 @@ struct SDLApplication {
     void Input() {
         SDL_Event event;
 
-        // const bool* keyState = SDL_GetKeyboardState(nullptr);
-
         //Event Handling loop
         while (SDL_PollEvent(&event)) {
             if(event.type == SDL_EVENT_QUIT){
                 running = false;
             }
             else if(event.type == SDL_EVENT_KEY_DOWN) {
-                SDL_Log("a key was pressed: %d", event.key.key);
+                keysHeld[event.key.key] = true;
+                
+                if (event.key.key == SDLK_ESCAPE) {
+                    running = false;
+                }
+                if (event.key.key == SDLK_UP) {
+                    ChangeResolution(currentResolutionIndex - 1);
+                }
+                if (event.key.key == SDLK_DOWN) {
+                    ChangeResolution(currentResolutionIndex + 1);
+                }
+            }
+            else if(event.type == SDL_EVENT_KEY_UP) {
+                keysHeld[event.key.key] = false;
             }
             else if(event.type == SDL_EVENT_MOUSE_MOTION) {
-                SDL_Log("x,y: %f %f", event.motion.x, event.motion.y);
-                SDL_Log("xrel,yrel: %f %f", event.motion.xrel, event.motion.yrel);
             }
             else if(event.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
                 if(event.button.button == SDL_BUTTON_LEFT) {
-                    SDL_Log("left button clicked %d", event.button.button);
                 }
                 if(event.button.button == SDL_BUTTON_MIDDLE) {
-                    SDL_Log("middle button clicked %d", event.button.button);
                 }
                 if(event.button.button == SDL_BUTTON_RIGHT) {
-                    SDL_Log("right button clicked %d", event.button.button);
                 }
-                SDL_Log("Clicks: %d", event.button.clicks);
             }
         }
-
-        // float x,y;
-        //Get the 'local' within current window mouse position
-        // SDL_MouseButtonFlags mouse = SDL_GetMouseState(&x,&y);
-        //Get Mouse position outside window, across multiple monitors
-        // SDL_MouseButtonFlags mouse = SDL_GetMouseState(&x, &y);
-        // SDL_Log("x.y: %f %f", x,y);
-
-        //Application/Game Logic
-        //...
     }
 
     void Update() {
+        const float moveSpeed = 2.0f;
+        
+        float moveX = 0.0f;
+        float moveY = 0.0f;
+        
+        if (IsKeyHeld(SDLK_W)) {
+            moveY -= 1.0f;
+        }
+        if (IsKeyHeld(SDLK_S)) {
+            moveY += 1.0f;
+        }
+        if (IsKeyHeld(SDLK_A)) {
+            moveX -= 1.0f;
+        }
+        if (IsKeyHeld(SDLK_D)) {
+            moveX += 1.0f;
+        }
+        if (moveX != 0.0f || moveY != 0.0f) {
+            float length = sqrtf(moveX * moveX + moveY * moveY);
+            if (length > 0.0f) {
+                moveX /= length;
+                moveY /= length;
+            }
+
+            moveX *= moveSpeed;
+            moveY *= moveSpeed;
+            
+            camera->Move(moveX, moveY);
+        }
+    }
+    
+    bool IsKeyHeld(SDL_Keycode key) const {
+        auto it = keysHeld.find(key);
+        return (it != keysHeld.end() && it->second);
     }
 
     void Render() {
-        // Clear the screen with black
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
         SDL_RenderClear(renderer);
+
+        TileGrid* grid = tileManager->GetTileGrid(map);
+        if (!grid) return;
+ 
+        float cameraX = camera->GetX();
+        float cameraY = camera->GetY();
         
-        // Example: Render a texture by name
-        TextureInfo* tex = textureManager->GetTexture("test_img");
-        if (tex) {
-            SDL_FRect dstRect;
-            dstRect.x = 100.0f;  // X position on screen
-            dstRect.y = 100.0f;  // Y position on screen
-            dstRect.w = (float)tex->width;   // Width (can scale by multiplying)
-            dstRect.h = (float)tex->height;   // Height (can scale by multiplying)
-            
-            // Render the texture at the specified position
-            SDL_RenderTexture(renderer, tex->texture, NULL, &dstRect);
+        // Cull tiles: calculate which tiles to render
+        int startGridX = (int)(cameraX / TILE_RENDER_SIZE);
+        int startGridY = (int)(cameraY / TILE_RENDER_SIZE);
+        
+        // Add +2 buffer tiles
+        int tilesX = (VIRTUAL_WIDTH / TILE_RENDER_SIZE) + 2;
+        int tilesY = (VIRTUAL_HEIGHT / TILE_RENDER_SIZE) + 2;
+        
+        // Render tiles
+        for (int y = startGridY; y < startGridY + tilesY; y++) {
+            for (int x = startGridX; x < startGridX + tilesX; x++) {
+                if (grid->IsValid(x, y)) {
+                    float screenX = (x * TILE_RENDER_SIZE) - cameraX;
+                    float screenY = (y * TILE_RENDER_SIZE) - cameraY;
+
+                    int tileId = grid->GetTile(x, y);
+                    
+                    textureManager->RenderTile(tileManager, tileId, screenX, screenY, 1.0f);
+                }
+            }
         }
         
-        // Present the rendered frame to the screen
         SDL_RenderPresent(renderer);
     }
 
     void FPSCount(Uint64* currentTick, Uint64* lastTime, Uint64* fps) {
         if (*currentTick > *lastTime + 1000) {
             *lastTime = *currentTick;
-            std::string title;
-            title += "Mike's SDL3 FPS: " + std::to_string(*fps);
+            const ResolutionPreset& preset = RESOLUTION_PRESETS[currentResolutionIndex];
+            std::string title = std::string(preset.name) + " (" + std::to_string(preset.width) + "x" + 
+                              std::to_string(preset.height) + ") - FPS: " + std::to_string(*fps);
             SDL_SetWindowTitle(window, title.c_str());
             *fps = 0;
         }
@@ -171,7 +248,6 @@ struct SDLApplication {
 int main(int argc, char* argv[]) {
     SDLApplication app("poop");
 
-    // Initialize all resources (textures, sounds, etc.)
     if (!app.Initialize()) {
         SDL_Log("Failed to initialize application!");
         return 1;

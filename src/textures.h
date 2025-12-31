@@ -30,6 +30,13 @@ public:
     // Check if a texture exists
     bool HasTexture(const char* name);
     
+    // Render a portion of a texture (for sprite sheets)
+    bool RenderSprite(const char* textureName, int srcX, int srcY, int srcW, int srcH, float dstX, float dstY, float scale = 1.0f);
+    
+    // Render a tile by ID (requires TileManager - see tiles.h)
+    // This is a convenience function that looks up tile info and renders it
+    bool RenderTile(class TileManager* tileManager, int tileId, float dstX, float dstY, float scale = 1.0f);
+    
     // Clean up all textures (called automatically in destructor)
     void Cleanup();
 

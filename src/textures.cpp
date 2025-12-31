@@ -1,4 +1,5 @@
 #include "textures.h"
+#include "tiles.h"
 #include <SDL3/SDL.h>
 
 TextureManager::TextureManager(SDL_Renderer* renderer) 
@@ -57,6 +58,9 @@ bool TextureManager::LoadImage(const char* name, const char* imagePath) {
         return false;
     }
     
+    // Set texture to nearest neighbor filtering for pixel-perfect rendering (no gaps)
+    SDL_SetTextureScaleMode(texture, SDL_SCALEMODE_NEAREST);
+    
     // Store texture with its dimensions
     TextureInfo info;
     info.texture = texture;
@@ -85,4 +89,42 @@ TextureInfo* TextureManager::GetTexture(const char* name) {
 
 bool TextureManager::HasTexture(const char* name) {
     return textures.find(name) != textures.end();
+}
+
+bool TextureManager::RenderSprite(const char* textureName, int srcX, int srcY, int srcW, int srcH, float dstX, float dstY, float scale) {
+    TextureInfo* tex = GetTexture(textureName);
+    if (!tex) {
+        return false;
+    }
+    
+    // Source rectangle (which part of the sprite sheet to use)
+    SDL_FRect srcRect;
+    srcRect.x = (float)srcX;
+    srcRect.y = (float)srcY;
+    srcRect.w = (float)srcW;
+    srcRect.h = (float)srcH;
+    
+    // Destination rectangle (where and how big to draw on screen)
+    SDL_FRect dstRect;
+    dstRect.x = dstX;
+    dstRect.y = dstY;
+    dstRect.w = (float)srcW * scale;
+    dstRect.h = (float)srcH * scale;
+    
+    // Render the sprite
+    SDL_RenderTexture(renderer, tex->texture, &srcRect, &dstRect);
+    return true;
+}
+
+bool TextureManager::RenderTile(TileManager* tileManager, int tileId, float dstX, float dstY, float scale) {
+    if (!tileManager) return false;
+    
+    TileInfo* tile = tileManager->GetTile(tileId);
+    if (!tile) return false;
+    
+    // Use RenderSprite with the tile's information
+    return RenderSprite(tile->sheetName.c_str(), 
+                       tile->sheetX, tile->sheetY, 
+                       tile->width, tile->height, 
+                       dstX, dstY, scale);
 }
