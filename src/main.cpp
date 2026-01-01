@@ -198,9 +198,9 @@ struct SDLApplication {
     }
     
     void TimePerFrame(Uint64* currentTick) {
-        Uint64 deltaTime = SDL_GetTicks() - *currentTick;
-        if (deltaTime < TARGETFRAMETIME) {
-            SDL_Delay(TARGETFRAMETIME - deltaTime - 1);
+        context -> setDeltaTime(currentTick);
+        if (context -> getDeltaTime() < TARGETFRAMETIME) {
+            SDL_Delay(TARGETFRAMETIME - context -> getDeltaTime() - 1);
             while (SDL_GetTicks() - *currentTick < TARGETFRAMETIME) {
                 // Tight loop for precision (usually < 1ms)
             }

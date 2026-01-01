@@ -43,3 +43,10 @@ bool GameContext:: isRunning() {
     return this -> Running;
 }
 
+void GameContext:: setDeltaTime(Uint64* currentTick) {
+    this -> DeltaTime = SDL_GetTicks() - *currentTick;
+}
+
+Uint64 GameContext:: getDeltaTime() {
+    return this -> DeltaTime;
+}

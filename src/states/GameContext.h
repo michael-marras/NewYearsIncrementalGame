@@ -9,6 +9,7 @@ class GameContext {
     private: 
         // Display/Rendering
         int currentResolutionIndex = 5;
+        Uint64 DeltaTime = 0;
         // Input
         std::unordered_map<SDL_Keycode, bool> KeyHeld;
         std::unordered_map<SDL_Keycode, std::tuple<int, int>> KeyMap;
@@ -16,7 +17,7 @@ class GameContext {
         std::tuple<int, int> mousePos {0, 0};
 
         // Game World
-            bool Running = true;
+        bool Running = true;
         // Entities
             // TODO
         // UI
@@ -60,6 +61,17 @@ class GameContext {
          */
         bool isRunning();
 
+        /**
+         * Set Delta Time in a tick
+         *
+         * @param currentTick the current tick
+         */
+        void setDeltaTime(Uint64* currentTick);
+
+        /**
+         * Get Delta Time
+         */
+        Uint64 getDeltaTime();
         
 
 };
