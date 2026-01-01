@@ -11,9 +11,7 @@
 #include "constants.h"
 #include "camera.h"
 #include "states/GameContext.h"
-
-// const Uint64 FPS = 100;
-// const Uint64 TARGETFRAMETIME = 1000 / FPS;
+#include <memory>
 
 struct SDLApplication {
     SDL_Window* window;
@@ -24,8 +22,8 @@ struct SDLApplication {
     int currentResolutionIndex = 5;
     std::unordered_map<SDL_Keycode, bool> keysHeld;
     //to run indefinitely
-    bool running = true;
     int map;
+    std::unique_ptr<GameContext> context = std::make_unique<GameContext>();
 
     //constructor
     SDLApplication(const char* title) {
@@ -71,25 +69,6 @@ struct SDLApplication {
         return true;
     }
 
-    // Change resolution to a different preset
-    void ChangeResolution(int newIndex) {
-        if (newIndex < 0) newIndex = 0;
-        if (newIndex >= RESOLUTION_PRESET_COUNT) newIndex = RESOLUTION_PRESET_COUNT - 1;
-        
-        if (newIndex == currentResolutionIndex) return;
-        
-        currentResolutionIndex = newIndex;
-        const ResolutionPreset& preset = RESOLUTION_PRESETS[currentResolutionIndex];
-        
-        // Resize the window
-        SDL_SetWindowSize(window, preset.width, preset.height);
-        
-        // Center the window on the screen
-        SDL_SetWindowPosition(window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
-        
-        SDL_Log("Changed resolution to %s (%dx%d)", preset.name, preset.width, preset.height);
-    }
-
     //Handle input events from I/O or networking devices
     void Tick(){
         Input();
@@ -104,19 +83,19 @@ struct SDLApplication {
         //Event Handling loop
         while (SDL_PollEvent(&event)) {
             if(event.type == SDL_EVENT_QUIT){
-                running = false;
+                context -> Quit();
             }
             else if(event.type == SDL_EVENT_KEY_DOWN) {
                 keysHeld[event.key.key] = true;
                 
                 if (event.key.key == SDLK_ESCAPE) {
-                    running = false;
+                    context -> Quit();
                 }
                 if (event.key.key == SDLK_UP) {
-                    ChangeResolution(currentResolutionIndex - 1);
+                    context -> ChangeResolution(context -> getCurrentResolutionIndex() - 1, window);
                 }
                 if (event.key.key == SDLK_DOWN) {
-                    ChangeResolution(currentResolutionIndex + 1);
+                    context -> ChangeResolution(context -> getCurrentResolutionIndex() + 1, window);
                 }
             }
             else if(event.type == SDL_EVENT_KEY_UP) {
@@ -234,7 +213,7 @@ struct SDLApplication {
         Uint64 lastTime = 0;
 
         //inf loop
-        while(running) {
+        while(context -> isRunning()) {
             Uint64 currentTick = SDL_GetTicks();
             Tick();
             fps++;
