@@ -10,10 +10,10 @@
 #include "tile_definitions.h"
 #include "constants.h"
 #include "camera.h"
-#include "GameContext.h"
+#include "states/GameContext.h"
 
-const Uint64 FPS = 100;
-const Uint64 TARGETFRAMETIME = 1000 / FPS;
+// const Uint64 FPS = 100;
+// const Uint64 TARGETFRAMETIME = 1000 / FPS;
 
 struct SDLApplication {
     SDL_Window* window;
