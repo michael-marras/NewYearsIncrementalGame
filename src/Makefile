@@ -20,18 +20,22 @@ LDFLAGS := -framework OpenGL
 TARGET := game
 
 # Source files
-SRC := main.cpp
+SRC := main.cpp textures.cpp
 GLAD_SRC := ../glad/src/glad.c
 
 # Object files
-OBJS := main.o glad.o
+OBJS := main.o textures.o glad.o
 
 # Default rule
 all: $(TARGET)
 
 # Compile main.cpp
-main.o: $(SRC)
-	$(CXX) $(CXXFLAGS) $(SDL_CFLAGS) -c $(SRC) -o main.o
+main.o: main.cpp
+	$(CXX) $(CXXFLAGS) $(SDL_CFLAGS) -c main.cpp -o main.o
+
+# Compile textures.cpp
+textures.o: textures.cpp
+	$(CXX) $(CXXFLAGS) $(SDL_CFLAGS) -c textures.cpp -o textures.o
 
 # Compile glad.c
 glad.o: $(GLAD_SRC)
