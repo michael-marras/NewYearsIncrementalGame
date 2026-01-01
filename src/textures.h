@@ -37,6 +37,10 @@ public:
     // This is a convenience function that looks up tile info and renders it
     bool RenderTile(class TileManager* tileManager, int tileId, float dstX, float dstY, float scale = 1.0f);
     
+    // Render an object by ID (requires ObjectManager - see objects.h)
+    // This is a convenience function that looks up object info and renders it
+    bool RenderObject(class ObjectManager* objectManager, int objectId, float dstX, float dstY, float scale = 1.0f);
+    
     // Clean up all textures (called automatically in destructor)
     void Cleanup();
 

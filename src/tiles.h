@@ -72,6 +72,8 @@ public:
     int GetTileCount() const { return (int)tiles.size(); }
     
     int CreateTileGrid(int width, int height);
+    int CreateTileGridwGroupings(int width, int height);
+    int CreateTileGridwGroupingsSeeded(int width, int height, unsigned int seed);
     TileGrid* GetTileGrid(int gridId);
     void DestroyTileGrid(int gridId);
     void DestroyAllGrids();

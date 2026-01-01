@@ -7,25 +7,27 @@
 #include "SDL3/SDL_keycode.h"
 #include "textures.h"
 #include "tiles.h"
+#include "objects.h"
 #include "tile_definitions.h"
+#include "object_definitions.h"
+#include "map_generation.h"
 #include "constants.h"
 #include "camera.h"
-#include "states/GameContext.h"
-
-// const Uint64 FPS = 100;
-// const Uint64 TARGETFRAMETIME = 1000 / FPS;
+#include "GameContext.h"
 
 struct SDLApplication {
     SDL_Window* window;
     SDL_Renderer* renderer;
     TextureManager* textureManager;
     TileManager* tileManager;
+    ObjectManager* objectManager;
     Camera* camera;
     int currentResolutionIndex = 5;
     std::unordered_map<SDL_Keycode, bool> keysHeld;
     //to run indefinitely
     bool running = true;
     int map;
+    int objectMap;
 
     //constructor
     SDLApplication(const char* title) {
@@ -43,6 +45,7 @@ struct SDLApplication {
         
         textureManager = new TextureManager(renderer);
         tileManager = new TileManager();
+        objectManager = new ObjectManager();
         camera = new Camera(0.0f, 0.0f);
         
     }
@@ -50,6 +53,7 @@ struct SDLApplication {
     //destructor
     ~SDLApplication() {
         delete camera;
+        delete objectManager;
         delete tileManager;
         delete textureManager;
         
@@ -64,8 +68,15 @@ struct SDLApplication {
 
     bool Initialize() {
         SetupTiles(tileManager, textureManager);
+        SetupObjects(objectManager, textureManager);
         
-        map = tileManager->CreateTileGrid(100, 100);
+        // Generate map from seed (change seed for different maps, or use time for random)
+        unsigned int mapSeed = 12345;  // Use same seed for same map, or use time(nullptr) for random
+        GeneratedMap generated = GenerateMapFromSeed(mapSeed, tileManager, objectManager, 100, 100);
+        map = generated.tileGridId;
+        objectMap = generated.objectGridId;
+
+
         camera->SnapToTarget(800, 800); // this is center of the map, can we done differently later
         
         return true;
@@ -136,7 +147,7 @@ struct SDLApplication {
     }
 
     void Update() {
-        const float moveSpeed = 2.0f;
+        const float moveSpeed = 1.0f;
         
         float moveX = 0.0f;
         float moveY = 0.0f;
@@ -200,6 +211,39 @@ struct SDLApplication {
                     int tileId = grid->GetTile(x, y);
                     
                     textureManager->RenderTile(tileManager, tileId, screenX, screenY, 1.0f);
+                }
+            }
+        }
+        
+        // Render objects (on top of tiles)
+        ObjectGrid* objectGrid = objectManager->GetObjectGrid(objectMap);
+        if (objectGrid) {
+            const int objectBufferTiles = 3;
+            
+            int objectStartGridY = startGridY - objectBufferTiles;
+            int objectEndGridY = startGridY + tilesY;
+            int objectStartGridX = startGridX;
+            int objectEndGridX = startGridX + tilesX;
+            
+            for (int y = objectStartGridY; y < objectEndGridY; y++) {
+                for (int x = objectStartGridX; x < objectEndGridX; x++) {
+                    if (objectGrid->IsValid(x, y) && objectGrid->HasObject(x, y)) {
+                        float screenX = (x * TILE_RENDER_SIZE) - cameraX;
+                        float screenY = (y * TILE_RENDER_SIZE) - cameraY;
+
+                        int objectId = objectGrid->GetObject(x, y);
+                        ObjectInfo* objInfo = objectManager->GetObject(objectId);
+                        
+                        if (objInfo) {
+                            float objectBottomY = screenY + objInfo->height;
+                            float objectRightX = screenX + objInfo->width;
+                            
+                            if (objectRightX > 0 && screenX < VIRTUAL_WIDTH && 
+                                objectBottomY > 0 && screenY < VIRTUAL_HEIGHT) {
+                                textureManager->RenderObject(objectManager, objectId, screenX, screenY, 1.0f);
+                            }
+                        }
+                    }
                 }
             }
         }

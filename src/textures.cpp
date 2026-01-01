@@ -1,5 +1,6 @@
 #include "textures.h"
 #include "tiles.h"
+#include "objects.h"
 #include <SDL3/SDL.h>
 
 TextureManager::TextureManager(SDL_Renderer* renderer) 
@@ -126,5 +127,18 @@ bool TextureManager::RenderTile(TileManager* tileManager, int tileId, float dstX
     return RenderSprite(tile->sheetName.c_str(), 
                        tile->sheetX, tile->sheetY, 
                        tile->width, tile->height, 
+                       dstX, dstY, scale);
+}
+
+bool TextureManager::RenderObject(ObjectManager* objectManager, int objectId, float dstX, float dstY, float scale) {
+    if (!objectManager) return false;
+    
+    ObjectInfo* obj = objectManager->GetObject(objectId);
+    if (!obj) return false;
+    
+    // Use RenderSprite with the object's information
+    return RenderSprite(obj->sheetName.c_str(), 
+                       obj->sheetX, obj->sheetY, 
+                       obj->width, obj->height, 
                        dstX, dstY, scale);
 }
