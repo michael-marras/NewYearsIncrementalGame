@@ -23,6 +23,13 @@ public:
     void FollowTarget(float targetX, float targetY, float speed = 1.0f);
     void SetFollowTarget(float targetX, float targetY);
     void UpdateFollow(float deltaTime);
+
+    // Zoom control
+    void SetZoom(float zoom);
+    float getZoom();
+    void ZoomIn(float amount);
+    void ZoomOut(float amount);
+    void SetZoomBounds(float minZoom, float maxZoom);
     
     // Get world-to-screen conversion
     float WorldToScreenX(float worldX) const;

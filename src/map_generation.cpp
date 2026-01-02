@@ -92,6 +92,17 @@ GeneratedMap GenerateMapFromSeed(unsigned int seed,
             }
         }
     }
+
+    // Place wells
+    if (wellObj) {
+        for (int i = 0; i < numWells; i++) {
+            int x = std::rand() % width;
+            int y = std::rand() % height;
+            if (!objGrid->HasObject(x, y)) {
+                objGrid->SetObject(x, y, wellObj->id);
+            }
+        }
+    }
     
     GeneratedMap result;
     result.tileGridId = tileGridId;

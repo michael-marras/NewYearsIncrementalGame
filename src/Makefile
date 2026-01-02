@@ -20,8 +20,8 @@ LDFLAGS = -L$(SDL_LIB_DIR) -Wl,-rpath,$(SDL_LIB_DIR)
 LIBS = -lSDL3 -framework OpenGL
 
 # Source and output files
-SRC = main.cpp textures.cpp tiles.cpp objects.cpp tile_definitions.cpp object_definitions.cpp map_generation.cpp camera.cpp states/GameContext.cpp player.cpp
-OBJ = main.o textures.o tiles.o objects.o tile_definitions.o object_definitions.o map_generation.o camera.o states/GameContext.o player.o
+SRC = main.cpp textures.cpp tiles.cpp objects.cpp tile_definitions.cpp frame_definitions.cpp object_definitions.cpp map_generation.cpp camera.cpp states/GameContext.cpp player.cpp input_manager.cpp
+OBJ = main.o textures.o tiles.o objects.o tile_definitions.o frame_definitions.o object_definitions.o map_generation.o camera.o states/GameContext.o player.o input_manager.o
 TARGET = game
 
 # Default target
@@ -33,7 +33,7 @@ $(TARGET): $(OBJ)
 	@echo Build complete: $(TARGET)
 
 # Compile source to object files
-main.o: main.cpp textures.h tiles.h objects.h tile_definitions.h object_definitions.h map_generation.h constants.h camera.h states/GameContext.h
+main.o: main.cpp textures.h tiles.h objects.h tile_definitions.h frame_definitions.h object_definitions.h map_generation.h constants.h camera.h states/GameContext.h input_manager.h player.h
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c main.cpp -o main.o
 
 textures.o: textures.cpp textures.h
@@ -47,6 +47,9 @@ objects.o: objects.cpp objects.h
 
 tile_definitions.o: tile_definitions.cpp tile_definitions.h
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c tile_definitions.cpp -o tile_definitions.o
+
+frame_definitions.o: frame_definitions.cpp frame_definitions.h
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -c frame_definitions.cpp -o frame_definitions.o
 
 object_definitions.o: object_definitions.cpp object_definitions.h
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c object_definitions.cpp -o object_definitions.o
@@ -62,6 +65,9 @@ states/GameContext.o: states/GameContext.cpp states/GameContext.h
 
 player.o: player.cpp player.h
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c player.cpp -o player.o
+
+input_manager.o: input_manager.cpp input_manager.h
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -c input_manager.cpp -o input_manager.o
 
 # Clean build artifacts
 clean:

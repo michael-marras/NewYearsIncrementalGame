@@ -5,6 +5,9 @@
 #include <string>
 #include <unordered_map>
 
+// Forward Declarations
+enum class PlayerAnimations : uint8_t;
+
 // Structure to hold texture and its dimensions
 struct TextureInfo {
     SDL_Texture* texture;
@@ -40,6 +43,9 @@ public:
     // Render an object by ID (requires ObjectManager - see objects.h)
     // This is a convenience function that looks up object info and renders it
     bool RenderObject(class ObjectManager* objectManager, int objectId, float dstX, float dstY, float scale = 1.0f);
+
+    // Render the player by the frame
+    bool RenderPlayer(class player* player, float dstX, float dstY, PlayerAnimations frame);
     
     // Clean up all textures (called automatically in destructor)
     void Cleanup();

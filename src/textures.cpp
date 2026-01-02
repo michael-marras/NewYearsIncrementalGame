@@ -1,5 +1,6 @@
 #include "textures.h"
 #include "tiles.h"
+#include "player.h"
 #include "objects.h"
 #include <SDL3/SDL.h>
 
@@ -141,4 +142,13 @@ bool TextureManager::RenderObject(ObjectManager* objectManager, int objectId, fl
                        obj->sheetX, obj->sheetY, 
                        obj->width, obj->height, 
                        dstX, dstY, scale);
+}
+
+bool TextureManager::RenderPlayer(player* player, float dstX, float dstY, PlayerAnimations frame) {
+    if (!player) return false;
+    SDL_Log("test");
+
+    frameInfo info = player->getFrame(frame);
+
+    return RenderSprite(info.sheetName.c_str(), info.sheetX, info.sheetY, info.width, info.height, dstX, dstY, 3);
 }

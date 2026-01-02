@@ -1,8 +1,71 @@
 #include "GameContext.h"
 #include "../constants.h"
+#include "../textures.h"
+#include "../tiles.h"
+#include "../objects.h"
+#include "../camera.h"
+#include "../player.h"
 
 GameContext:: GameContext() {
-    // TODO
+    window = nullptr;
+    renderer = nullptr;
+    textureManager = nullptr;
+    tileManager = nullptr;
+    objectManager = nullptr;
+    Player = nullptr;
+    camera = nullptr;
+    map = -1;
+    objectMap = -1;
+}
+
+GameContext:: ~GameContext() {
+    if (camera) {
+        delete camera;
+        camera = nullptr;
+    }
+    if (objectManager) {
+        delete objectManager;
+        objectManager = nullptr;
+    }
+    if (Player) {
+        delete Player;
+        Player = nullptr;
+    }
+    if (tileManager) {
+        delete tileManager;
+        tileManager = nullptr;
+    }
+    if (textureManager) {
+        delete textureManager;
+        textureManager = nullptr;
+    }
+}
+
+void GameContext:: InitializeManagers(SDL_Window* window, SDL_Renderer* renderer) {
+    if (!window || !renderer) {
+        SDL_Log("Warning: InitializeManagers called with nullptr window or renderer");
+        return;
+    }
+    
+    this->window = window;
+    this->renderer = renderer;
+    
+    // Only initialize if not already initialized
+    if (!textureManager) {
+        textureManager = new TextureManager(renderer);
+    }
+    if (!tileManager) {
+        tileManager = new TileManager();
+    }
+    if (!objectManager) {
+        objectManager = new ObjectManager();
+    }
+    if (!Player) {
+        Player = new player();
+    }
+    if (!camera) {
+        camera = new Camera(0.0f, 0.0f);
+    }
 }
 
 void GameContext:: ResetGameWorld() {
@@ -13,7 +76,12 @@ void GameContext:: UpdateMouse() {
     // TODO
 }
 
-void GameContext:: ChangeResolution(int newIndex, SDL_Window* window) {
+void GameContext:: ChangeResolution(int newIndex) {
+    if (!window) {
+        SDL_Log("Warning: ChangeResolution called but window is not initialized");
+        return;
+    }
+    
     if (newIndex < 0) newIndex = 0;
     if (newIndex >= RESOLUTION_PRESET_COUNT) newIndex = RESOLUTION_PRESET_COUNT - 1;
     
@@ -49,4 +117,56 @@ void GameContext:: setDeltaTime(Uint64* currentTick) {
 
 Uint64 GameContext:: getDeltaTime() {
     return this -> DeltaTime;
+}
+
+TextureManager* GameContext:: getTextureManager() {
+    return this -> textureManager;
+}
+
+TileManager* GameContext:: getTileManager() {
+    return this -> tileManager;
+}
+
+ObjectManager* GameContext:: getObjectManager() {
+    return this -> objectManager;
+}
+
+Camera* GameContext:: getCamera() {
+    return this -> camera;
+}
+
+void GameContext:: setTextureManager(TextureManager* manager) {
+    this -> textureManager = manager;
+}
+
+void GameContext:: setTileManager(TileManager* manager) {
+    this -> tileManager = manager;
+}
+
+void GameContext:: setObjectManager(ObjectManager* manager) {
+    this -> objectManager = manager;
+}
+
+void GameContext:: setCamera(Camera* camera) {
+    this -> camera = camera;
+}
+
+int GameContext:: getMap() const {
+    return map;
+}
+
+void GameContext:: setMap(int mapId) {
+    map = mapId;
+}
+
+int GameContext:: getObjectMap() const {
+    return objectMap;
+}
+
+void GameContext:: setObjectMap(int objectMapId) {
+    objectMap = objectMapId;
+}
+
+player* GameContext:: getPlayer() {
+    return this -> Player;
 }

@@ -3,8 +3,11 @@
 #include <string>
 #include <unordered_map>
 
+// Forward Declarations
+class TextureManager;
+
 // animations
-enum class PlayerAnimations {
+enum class PlayerAnimations: uint8_t {
     // Standing Still
     StandingStillForward,
     StandingStillBackward,
@@ -25,7 +28,10 @@ enum class PlayerAnimations {
 
     // Walking Right
     WalkingRightLeftFoot,
-    WalkingRightRightFoot
+    WalkingRightRightFoot,
+
+    //Count of Player Animations
+    PlayerAnimationsCount
 };
 
 // Frame information structure
@@ -49,7 +55,7 @@ class player {
         int curretnAnimationDepth = 0;
 
         // Frames
-        std:: unordered_map Frames;
+        std::unordered_map<PlayerAnimations, frameInfo> Frames;
 
     public:
         /**
@@ -82,14 +88,27 @@ class player {
          */
         int getY();
 
+        /** 
+         * Get current Player Animation
+         */
+        PlayerAnimations getCurrentPlayerAnimation();
+        
         /**
          *  Register the player animation from the sprite sheet
          */
-        void RegisterPlayerAnimationsFromGrid(const char* sheetName, int cols, int rows);
+        PlayerAnimations RegisterPlayerAnimationsFromGrid(const char* sheetName, int cols, int rows, 
+            int startX = 0, int startY = 0, PlayerAnimations startId = PlayerAnimations::StandingStillForward);
 
         /**
          *
          */
-        void RegisterPlayerAnimation(PlayerAnimations id, const char* sheetName, int sheetX, int sheetY);
+        void RegisterPlayerAnimation(PlayerAnimations id, const char* sheetName, int sheetX, int sheetY); 
+
+        /**
+         * get frameInfo structure from Frames
+         */
+        frameInfo getFrame(PlayerAnimations frame) {
+            return this -> Frames[frame];
+        }
 };
 #endif
