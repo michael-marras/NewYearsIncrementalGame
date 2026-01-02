@@ -1,4 +1,5 @@
 #include "objects.h"
+#include <SDL3/SDL.h>
 #include <cstdio>
 #include <cstring>
 
@@ -11,7 +12,7 @@ ObjectManager::~ObjectManager() {
 
 void ObjectManager::RegisterObject(int id, const char* sheetName, int sheetX, int sheetY, 
                                   int width, int height, bool interactable, const char* name,
-                                  int maxHealth) {
+                                  int maxHealth, const char* replacement) {
     std::string objectName;
     
     // Use provided name, or generate default name if not provided
@@ -34,6 +35,7 @@ void ObjectManager::RegisterObject(int id, const char* sheetName, int sheetX, in
     obj.height = height;
     obj.interactable = interactable;
     obj.maxHealth = maxHealth;
+    obj.death_replacement = replacement;
     
     objects[id] = obj;
     nameToId[objectName] = id;
@@ -112,6 +114,21 @@ ObjectInfo* ObjectManager::GetObjectAt(int gridId, int x, int y) {
     return GetObject(objectId);
 }
 
+bool ObjectManager::ReplaceObjectAt(int gridId, int x, int y, int newObjectId) {
+    ObjectGrid* grid = GetObjectGrid(gridId);
+    if (!grid || !grid->IsValid(x, y)) {
+        return false;
+    }
+    
+    // Remove old instance data (if any)
+    RemoveInstance(gridId, x, y);
+    
+    // Set new object (0 = empty, otherwise new object ID)
+    grid->SetObject(x, y, newObjectId);
+    
+    return true;
+}
+
 void ObjectManager::DestroyAllGrids() {
     for (auto& pair : grids) {
         ClearInstances(pair.first);  // Clear instances before deleting grid
@@ -186,18 +203,32 @@ void ObjectManager::SetInstanceHealth(int gridId, int x, int y, int health) {
 bool ObjectManager::DamageInstance(int gridId, int x, int y, int damage) {
     ObjectInstance* instance = GetOrCreateInstance(gridId, x, y);
     if (!instance) {
-        // Object doesn't have health tracking (indestructible)
         return false;
     }
     
     instance->currentHealth -= damage;
+    SDL_Log("%d", instance->currentHealth);
     if (instance->currentHealth <= 0) {
-        // Object destroyed - remove from grid and clean up instance
+        // Object destroyed - check for replacement
         ObjectGrid* grid = GetObjectGrid(gridId);
-        if (grid) {
+        if (!grid) return true;
+        
+        // Get current object ID before removing
+        int currentObjectId = grid->GetObject(x, y);
+        ObjectInfo* objInfo = GetObject(currentObjectId);
+        
+        RemoveInstance(gridId, x, y);
+        
+        if (objInfo && !objInfo->death_replacement.empty()) {
+            ObjectInfo* replacementInfo = GetObjectByName(objInfo->death_replacement.c_str());
+            if (replacementInfo) {
+                ReplaceObjectAt(gridId, x, y, replacementInfo->id);
+            } else {
+                grid->ClearObject(x, y);
+            }
+        } else {
             grid->ClearObject(x, y);
         }
-        RemoveInstance(gridId, x, y);
         return true;  // Object was destroyed
     }
     

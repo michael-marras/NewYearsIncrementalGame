@@ -116,12 +116,6 @@ struct SDLApplication {
             }
             else if(event.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
                 input.ProcessMouseButtonDown(event.button.button);
-                if(event.button.button == SDL_BUTTON_LEFT) {
-                }
-                if(event.button.button == SDL_BUTTON_MIDDLE) {
-                }
-                if(event.button.button == SDL_BUTTON_RIGHT) {
-                }
             }
             else if(event.type == SDL_EVENT_MOUSE_BUTTON_UP) {
                 input.ProcessMouseButtonUp(event.button.button);
@@ -133,7 +127,40 @@ struct SDLApplication {
     }
 
     void Update() {
+        TextureManager* textureManager = context->getTextureManager();
+        TileManager* tileManager = context->getTileManager();
+        ObjectManager* objectManager = context->getObjectManager();
+        Camera* camera = context->getCamera();
+
         const float moveSpeed = 1.0f;
+        
+        // Handle mouse wheel zoom (zooms toward screen center)
+        float mouseWheelY = input.GetMouseWheelY();
+        if (mouseWheelY != 0.0f) {
+            float zoomSpeed = 0.1f;
+            if (mouseWheelY > 0.0f) {
+                camera->ZoomIn(mouseWheelY * zoomSpeed);
+            } else {
+                camera->ZoomOut(-mouseWheelY * zoomSpeed);
+            }
+        }
+
+        float mouseScreenX = input.GetMouseX();
+        float mouseScreenY = input.GetMouseY();
+        float mouseRenderX, mouseRenderY;
+        SDL_RenderCoordinatesFromWindow(renderer, mouseScreenX, mouseScreenY, &mouseRenderX, &mouseRenderY);
+        
+        float worldX, worldY;
+        camera->RenderToWorld(mouseRenderX, mouseRenderY, worldX, worldY, VIRTUAL_WIDTH, VIRTUAL_HEIGHT);
+        int gridX = (int)(worldX / TILE_RENDER_SIZE);
+        int gridY = (int)(worldY / TILE_RENDER_SIZE);
+
+        ObjectInfo* objInfo = objectManager->GetObjectAt(context->getObjectMap(), gridX, gridY);
+
+        if (input.IsMouseButtonHeld(1)) {
+            objectManager->DamageInstance(context->getObjectMap(), gridX, gridY, 1);
+        }
+        
         
         float moveX = 0.0f;
         float moveY = 0.0f;
@@ -181,23 +208,28 @@ struct SDLApplication {
         float cameraY = camera->GetY();
         
         // Cull tiles: calculate which tiles to render
-        int startGridX = (int)(cameraX / TILE_RENDER_SIZE);
-        int startGridY = (int)(cameraY / TILE_RENDER_SIZE);
+        float zoom = camera->GetZoom();
+        float effectiveWidth = VIRTUAL_WIDTH / zoom;
+        float effectiveHeight = VIRTUAL_HEIGHT / zoom;
+        
+        // Start from the left/top edge of the visible area (camera is at center)
+        int startGridX = (int)((cameraX - effectiveWidth / 2.0f) / TILE_RENDER_SIZE);
+        int startGridY = (int)((cameraY - effectiveHeight / 2.0f) / TILE_RENDER_SIZE);
         
         // Add +2 buffer tiles
-        int tilesX = (VIRTUAL_WIDTH / TILE_RENDER_SIZE) + 2;
-        int tilesY = (VIRTUAL_HEIGHT / TILE_RENDER_SIZE) + 2;
+        int tilesX = (int)(effectiveWidth / TILE_RENDER_SIZE) + 2;
+        int tilesY = (int)(effectiveHeight / TILE_RENDER_SIZE) + 2;
         
         // Render tiles
         for (int y = startGridY; y < startGridY + tilesY; y++) {
             for (int x = startGridX; x < startGridX + tilesX; x++) {
                 if (grid->IsValid(x, y)) {
-                    float screenX = (x * TILE_RENDER_SIZE) - cameraX;
-                    float screenY = (y * TILE_RENDER_SIZE) - cameraY;
+                    float renderX = camera->WorldToRenderX(x * TILE_RENDER_SIZE, VIRTUAL_WIDTH);
+                    float renderY = camera->WorldToRenderY(y * TILE_RENDER_SIZE, VIRTUAL_HEIGHT);
 
                     int tileId = grid->GetTile(x, y);
                     
-                    textureManager->RenderTile(tileManager, tileId, screenX, screenY, 1.0f);
+                    textureManager->RenderTile(tileManager, tileId, renderX, renderY, zoom);
                 }
             }
         }
@@ -215,47 +247,27 @@ struct SDLApplication {
             for (int y = objectStartGridY; y < objectEndGridY; y++) {
                 for (int x = objectStartGridX; x < objectEndGridX; x++) {
                     if (objectGrid->IsValid(x, y) && objectGrid->HasObject(x, y)) {
-                        float screenX = (x * TILE_RENDER_SIZE) - cameraX;
-                        float screenY = (y * TILE_RENDER_SIZE) - cameraY;
+                    float worldX = x * TILE_RENDER_SIZE;
+                    float worldY = y * TILE_RENDER_SIZE;
+                    float renderX, renderY;
+                    camera->WorldToRender(worldX, worldY, renderX, renderY, VIRTUAL_WIDTH, VIRTUAL_HEIGHT);
 
                         int objectId = objectGrid->GetObject(x, y);
                         ObjectInfo* objInfo = objectManager->GetObject(objectId);
                         
                         if (objInfo) {
-                            float objectBottomY = screenY + objInfo->height;
-                            float objectRightX = screenX + objInfo->width;
+                            float objectBottomY = renderY + (objInfo->height * zoom);
+                            float objectRightX = renderX + (objInfo->width * zoom);
                             
-                            if (objectRightX > 0 && screenX < VIRTUAL_WIDTH && 
-                                objectBottomY > 0 && screenY < VIRTUAL_HEIGHT) {
-                                textureManager->RenderObject(objectManager, objectId, screenX, screenY, 1.0f);
+                            if (objectRightX > 0 && renderX < VIRTUAL_WIDTH && 
+                                objectBottomY > 0 && renderY < VIRTUAL_HEIGHT) {
+                                textureManager->RenderObject(objectManager, objectId, renderX, renderY, zoom);
                             }
                         }
                     }
                 }
             }
         }
-
-        // if (context.player) {
-        //     textureManager->RenderPlayer(class Player *player, float dstX, float dstY, int frame)
-        // }
-        
-        // Convert mouse window coordinates to render/logical coordinates
-        float mouseScreenX = input.GetMouseX();
-        float mouseScreenY = input.GetMouseY();
-        float mouseRenderX, mouseRenderY;
-        SDL_RenderCoordinatesFromWindow(renderer, mouseScreenX, mouseScreenY, &mouseRenderX, &mouseRenderY);
-
-        float mouseWheelY = input.GetMouseWheelY();
-        
-        // Convert render coordinates to world coordinates
-        float worldX, worldY;
-        camera->ScreenToWorld(mouseRenderX, mouseRenderY, worldX, worldY);
-        int gridX = (int)(worldX / TILE_RENDER_SIZE);
-        int gridY = (int)(worldY / TILE_RENDER_SIZE);
-
-        // Get object at mouse position (if any)
-        ObjectInfo* objInfo = objectManager->GetObjectAt(context->getObjectMap(), gridX, gridY);
-        
         SDL_RenderPresent(renderer);
     }
 

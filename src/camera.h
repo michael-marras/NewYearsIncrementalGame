@@ -26,7 +26,7 @@ public:
 
     // Zoom control
     void SetZoom(float zoom);
-    float getZoom();
+    float GetZoom() const;
     void ZoomIn(float amount);
     void ZoomOut(float amount);
     void SetZoomBounds(float minZoom, float maxZoom);
@@ -40,6 +40,15 @@ public:
     float ScreenToWorldX(float screenX) const;
     float ScreenToWorldY(float screenY) const;
     void ScreenToWorld(float screenX, float screenY, float& worldX, float& worldY) const;
+    
+    // Convert center-relative screen coordinates to top-left-relative render coordinates
+    // (Camera uses center-relative, SDL uses top-left-relative)
+    void WorldToRender(float worldX, float worldY, float& renderX, float& renderY, float screenWidth, float screenHeight) const;
+    float WorldToRenderX(float worldX, float screenWidth) const;
+    float WorldToRenderY(float worldY, float screenHeight) const;
+    
+    // Convert top-left-relative render coordinates to world coordinates
+    void RenderToWorld(float renderX, float renderY, float& worldX, float& worldY, float screenWidth, float screenHeight) const;
     
     // Center camera on a point
     void CenterOn(float worldX, float worldY);
@@ -55,6 +64,11 @@ private:
     bool isFollowing;
     float targetX, targetY;
     float followSpeed;
+
+    // Zoom
+    float zoom = 1.0f;
+    float minZoom = 0.25f;
+    float maxZoom = 4.0f;
 };
 
 #endif // CAMERA_H

@@ -70,29 +70,50 @@ void Camera::UpdateFollow(float deltaTime) {
 }
 
 float Camera::WorldToScreenX(float worldX) const {
-    return worldX - x;
+    return (worldX - x) * zoom;
 }
 
 float Camera::WorldToScreenY(float worldY) const {
-    return worldY - y;
+    return (worldY - y) * zoom;
 }
 
 void Camera::WorldToScreen(float worldX, float worldY, float& screenX, float& screenY) const {
-    screenX = worldX - x;
-    screenY = worldY - y;
+    screenX = (worldX - x) * zoom;
+    screenY = (worldY - y) * zoom;
 }
 
 float Camera::ScreenToWorldX(float screenX) const {
-    return screenX + x;
+    return (screenX / zoom) + x;
 }
 
 float Camera::ScreenToWorldY(float screenY) const {
-    return screenY + y;
+    return (screenY / zoom) + y;
 }
 
 void Camera::ScreenToWorld(float screenX, float screenY, float& worldX, float& worldY) const {
-    worldX = screenX + x;
-    worldY = screenY + y;
+    worldX = (screenX / zoom) + x;
+    worldY = (screenY / zoom) + y;
+}
+
+float Camera::WorldToRenderX(float worldX, float screenWidth) const {
+    return WorldToScreenX(worldX) + (screenWidth / 2.0f);
+}
+
+float Camera::WorldToRenderY(float worldY, float screenHeight) const {
+    return WorldToScreenY(worldY) + (screenHeight / 2.0f);
+}
+
+void Camera::WorldToRender(float worldX, float worldY, float& renderX, float& renderY, float screenWidth, float screenHeight) const {
+    renderX = WorldToScreenX(worldX) + (screenWidth / 2.0f);
+    renderY = WorldToScreenY(worldY) + (screenHeight / 2.0f);
+}
+
+void Camera::RenderToWorld(float renderX, float renderY, float& worldX, float& worldY, float screenWidth, float screenHeight) const {
+    // Convert render coordinates (top-left origin) to screen coordinates (center origin)
+    float screenX = renderX - (screenWidth / 2.0f);
+    float screenY = renderY - (screenHeight / 2.0f);
+    // Convert to world coordinates
+    ScreenToWorld(screenX, screenY, worldX, worldY);
 }
 
 void Camera::CenterOn(float worldX, float worldY) {
@@ -101,3 +122,24 @@ void Camera::CenterOn(float worldX, float worldY) {
     ClampToBounds();
 }
 
+float Camera::GetZoom() const {
+    return zoom;
+}
+
+void Camera::SetZoom(float newZoom) {
+    zoom = std::max(minZoom, std::min(maxZoom, newZoom));
+}
+
+void Camera::ZoomIn(float amount) {
+    SetZoom(zoom + amount);
+}
+
+void Camera::ZoomOut(float amount) {
+    SetZoom(zoom - amount);
+}
+
+void Camera::SetZoomBounds(float newMinZoom, float newMaxZoom) {
+    minZoom = newMinZoom;
+    maxZoom = newMaxZoom;
+    SetZoom(zoom);
+}

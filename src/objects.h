@@ -7,15 +7,16 @@
 
 // Object information structure (template/definition data - shared by all instances)
 struct ObjectInfo {
-    int id;                    // Unique object ID
-    std::string name;          // Human-readable name (e.g., "tree", "rock", "chest")
-    std::string sheetName;     // Which sprite sheet it's in
-    int sheetX;                // X position in sprite sheet (in pixels)
-    int sheetY;                // Y position in sprite sheet (in pixels)
-    int width;                 // Object width
-    int height;                // Object height
-    bool interactable;         // Can player interact with this object?
-    int maxHealth = -1;        // Maximum health/durability (-1 = infinite/indestructible)
+    int id;                             // Unique object ID
+    std::string name;                   // Human-readable name (e.g., "tree", "rock", "chest")
+    std::string sheetName;              // Which sprite sheet it's in
+    int sheetX;                         // X position in sprite sheet (in pixels)
+    int sheetY;                         // Y position in sprite sheet (in pixels)
+    int width;                          // Object width
+    int height;                         // Object height
+    bool interactable;                  // Can player interact with this object?
+    int maxHealth = -1;                 // Maximum health/durability (-1 = infinite/indestructible)
+    std::string death_replacement = ""; // What replaces this object when it gets destroyed
     // Add more properties as needed (collision, interaction type, etc.)
 };
 
@@ -88,7 +89,7 @@ public:
     // Register an object with an optional custom name
     void RegisterObject(int id, const char* sheetName, int sheetX, int sheetY, 
                        int width, int height, bool interactable = false, const char* name = nullptr,
-                       int maxHealth = -1);
+                       int maxHealth = -1, const char* replacement = "");
     
     // Register multiple objects from a sprite sheet at once
     void RegisterObjectsFromSheet(const char* sheetName, const int* objectData, int count, bool interactable = false);
@@ -118,6 +119,13 @@ public:
     
     // Get object info at a grid position (returns nullptr if no object at position)
     ObjectInfo* GetObjectAt(int gridId, int x, int y);
+    
+    /**
+     * Replace object at a grid position with a new object
+     * Removes old instance data and sets new object (new object starts fresh)
+     * Returns true if replacement succeeded, false if position is invalid
+     */
+    bool ReplaceObjectAt(int gridId, int x, int y, int newObjectId);
 
     // Destroy object grid
     void DestroyObjectGrid(int gridId);
@@ -148,6 +156,7 @@ public:
     
     /**
      * Damage an object instance (returns true if object was destroyed)
+     * When destroyed, replaces with object specified in death_replacement field (empty string = remove)
      */
     bool DamageInstance(int gridId, int x, int y, int damage);
     
