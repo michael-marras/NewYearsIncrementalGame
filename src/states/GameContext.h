@@ -10,7 +10,7 @@ class TextureManager;
 class TileManager;
 class ObjectManager;
 class Camera;
-class player;
+class Player;
 
 class GameContext {
     private: 
@@ -29,7 +29,7 @@ class GameContext {
         bool Running = true;
         int map;
         int objectMap;
-        player* Player;
+        Player* player;
         // Entities
             // TODO
         // UI
@@ -160,6 +160,6 @@ class GameContext {
         /**
          * Get Player Pointer
          */ 
-        player* getPlayer();
+        Player* getPlayer();
 };
 #endif // GAMECONTEXT_H

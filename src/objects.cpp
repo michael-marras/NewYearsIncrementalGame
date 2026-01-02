@@ -1,7 +1,10 @@
 #include "objects.h"
+#include "constants.h"
+#include "player.h"
 #include <SDL3/SDL.h>
 #include <cstdio>
 #include <cstring>
+#include <cmath>
 
 ObjectManager::ObjectManager() {
 }
@@ -191,6 +194,23 @@ ObjectInstance* ObjectManager::GetInstance(int gridId, int x, int y) const {
         return const_cast<ObjectInstance*>(&it->second);
     }
     return nullptr;
+}
+
+bool ObjectManager::PlayerCanInteract(int gridId, int x, int y, Player* player) {
+    ObjectInfo* objInfo = GetObjectAt(gridId, x, y);
+    if (!objInfo || !objInfo->interactable) return false;
+
+    float objectWorldX = x * TILE_RENDER_SIZE + TILE_RENDER_SIZE / 2.0f;
+    float objectWorldY = y * TILE_RENDER_SIZE + TILE_RENDER_SIZE / 2.0f;
+
+    float playerX = player->getX();
+    float playerY = player->getY();
+
+    float dx = objectWorldX - playerX;
+    float dy = objectWorldY - playerY;
+    float dist = sqrtf(dx * dx + dy * dy);
+
+    return dist < 20;
 }
 
 void ObjectManager::SetInstanceHealth(int gridId, int x, int y, int health) {

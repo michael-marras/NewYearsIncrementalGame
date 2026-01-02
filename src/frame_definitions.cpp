@@ -1,6 +1,6 @@
 #include "frame_definitions.h"
 
-void SetupAnimations(player* playerManager, TextureManager* textureManager) {
+void SetupAnimations(Player* playerManager, TextureManager* textureManager) {
     // Load sprite sheets
     textureManager->LoadImageFromRes("incremental_character", "incremental_character.png");
     

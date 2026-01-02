@@ -45,7 +45,7 @@ public:
     bool RenderObject(class ObjectManager* objectManager, int objectId, float dstX, float dstY, float scale = 1.0f);
 
     // Render the player by the frame
-    bool RenderPlayer(class player* player, float dstX, float dstY, PlayerAnimations frame);
+    bool RenderPlayer(class Player* player, float dstX, float dstY, PlayerAnimations frame);
     
     // Clean up all textures (called automatically in destructor)
     void Cleanup();

@@ -12,7 +12,7 @@ GameContext:: GameContext() {
     textureManager = nullptr;
     tileManager = nullptr;
     objectManager = nullptr;
-    Player = nullptr;
+    player = nullptr;
     camera = nullptr;
     map = -1;
     objectMap = -1;
@@ -27,9 +27,9 @@ GameContext:: ~GameContext() {
         delete objectManager;
         objectManager = nullptr;
     }
-    if (Player) {
-        delete Player;
-        Player = nullptr;
+    if (player) {
+        delete player;
+        player = nullptr;
     }
     if (tileManager) {
         delete tileManager;
@@ -60,8 +60,8 @@ void GameContext:: InitializeManagers(SDL_Window* window, SDL_Renderer* renderer
     if (!objectManager) {
         objectManager = new ObjectManager();
     }
-    if (!Player) {
-        Player = new player();
+    if (!player) {
+        player = new Player();
     }
     if (!camera) {
         camera = new Camera(0.0f, 0.0f);
@@ -167,6 +167,6 @@ void GameContext:: setObjectMap(int objectMapId) {
     objectMap = objectMapId;
 }
 
-player* GameContext:: getPlayer() {
-    return this -> Player;
+Player* GameContext:: getPlayer() {
+    return this -> player;
 }

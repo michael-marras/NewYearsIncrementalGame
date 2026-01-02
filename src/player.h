@@ -45,11 +45,11 @@ struct frameInfo {
     int height; 
 };
 
-class player {
+class Player {
     private:
         // Position
-        int posX;
-        int posY;
+        float posX;
+        float posY;
 
         // Player Animation
         PlayerAnimations currentAnimation;
@@ -62,32 +62,37 @@ class player {
         /**
          * Default Constructor
          */
-        player();
+        Player();
 
         /**
          * Constructor
          */
-        player(int posX, int posY);
+        Player(int posX, int posY);
 
         /**
          * Set player X position
          */
-        void setX(int X);
+        void setX(float X);
 
         /**
          * Get player X position
          */
-        int getX();
+        float getX();
         
         /**
          * Set player Y position
          */
-        void setY(int Y);
+        void setY(float Y);
 
         /**
          * Get player Y position
          */
-        int getY();
+        float getY();
+
+        /**
+         * Combined method to change both x and y
+         */
+        void move(float dx, float dy);
 
         /** 
          * Get current Player Animation

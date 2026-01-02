@@ -137,18 +137,26 @@ bool TextureManager::RenderObject(ObjectManager* objectManager, int objectId, fl
     ObjectInfo* obj = objectManager->GetObject(objectId);
     if (!obj) return false;
     
+    // Convert center coordinates to top-left for SDL rendering
+    float topLeftX = dstX - (obj->width * scale / 2.0f);
+    float topLeftY = dstY - (obj->height * scale / 2.0f);
+    
     // Use RenderSprite with the object's information
     return RenderSprite(obj->sheetName.c_str(), 
                        obj->sheetX, obj->sheetY, 
                        obj->width, obj->height, 
-                       dstX, dstY, scale);
+                       topLeftX, topLeftY, scale);
 }
 
-bool TextureManager::RenderPlayer(player* player, float dstX, float dstY, PlayerAnimations frame) {
+bool TextureManager::RenderPlayer(Player* player, float dstX, float dstY, PlayerAnimations frame) {
     if (!player) return false;
-    SDL_Log("test");
 
     frameInfo info = player->getFrame(frame);
+    float scale = 1.0f;
+    
+    // Convert center coordinates to top-left for SDL rendering
+    float topLeftX = dstX - (info.width * scale / 2.0f);
+    float topLeftY = dstY - (info.height * scale / 2.0f);
 
-    return RenderSprite(info.sheetName.c_str(), info.sheetX, info.sheetY, info.width, info.height, dstX, dstY, 3);
+    return RenderSprite(info.sheetName.c_str(), info.sheetX, info.sheetY, info.width, info.height, topLeftX, topLeftY, scale);
 }

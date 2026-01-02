@@ -1,37 +1,42 @@
 #include "player.h"
 
-player:: player() {
-    this -> posX = 800;
-    this -> posY = 800;
+Player:: Player() {
+    this -> posX = 800.0f;
+    this -> posY = 800.0f;
     this -> currentAnimation = PlayerAnimations:: StandingStillForward;
 }
 
-player:: player(int posX, int posY) {
-    this -> posX = posX;
-    this -> posY = posY;
+Player:: Player(int posX, int posY) {
+    this -> posX = (float)posX;
+    this -> posY = (float)posY;
 }
 
-void player:: setX(int X) {
+void Player:: setX(float X) {
     this -> posX = X;
 }
 
-int player:: getX() {
+float Player:: getX() {
     return this -> posX;
 }
 
-void player:: setY(int Y) {
+void Player:: setY(float Y) {
     this -> posY = Y;
 }
 
-int player:: getY() {
+float Player:: getY() {
     return this -> posY;
 }
 
-PlayerAnimations player::getCurrentPlayerAnimation() {
+void Player::move(float dx, float dy) {
+    this -> posX += dx;
+    this -> posY += dy;
+}
+
+PlayerAnimations Player::getCurrentPlayerAnimation() {
     return this -> currentAnimation;
 }
 
-PlayerAnimations player:: RegisterPlayerAnimationsFromGrid(const char* sheetName, int cols, int rows, 
+PlayerAnimations Player:: RegisterPlayerAnimationsFromGrid(const char* sheetName, int cols, int rows, 
     int startX, int startY, PlayerAnimations startId) {
     PlayerAnimations animationId = startId;
     for (int row = 0; row < rows; row++) {
@@ -45,7 +50,7 @@ PlayerAnimations player:: RegisterPlayerAnimationsFromGrid(const char* sheetName
     return animationId;
 }
 
-void player:: RegisterPlayerAnimation(PlayerAnimations id, const char* sheetName, int sheetX, int sheetY) {
+void Player:: RegisterPlayerAnimation(PlayerAnimations id, const char* sheetName, int sheetX, int sheetY) {
     // Create frame info directly
     frameInfo frame;
     frame.frameId = id;

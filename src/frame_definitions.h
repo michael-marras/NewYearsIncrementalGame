@@ -5,6 +5,6 @@
 #include "textures.h"
 
 // fucntion to setup all player animation frames
-void SetupAnimations(player* playerManager, TextureManager* textureManager);
+void SetupAnimations(Player* playerManager, TextureManager* textureManager);
 
 #endif

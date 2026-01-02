@@ -60,12 +60,12 @@ struct SDLApplication {
         TextureManager* textureManager = context->getTextureManager();
         TileManager* tileManager = context->getTileManager();
         ObjectManager* objectManager = context->getObjectManager();
-        player* Player = context->getPlayer();
+        Player* player = context->getPlayer();
         Camera* camera = context->getCamera();
         
         SetupTiles(tileManager, textureManager);
         SetupObjects(objectManager, textureManager);
-        SetupAnimations(Player, textureManager);
+        SetupAnimations(player, textureManager);
         
         // Generate map from seed (change seed for different maps, or use time for random)
         unsigned int mapSeed = time(nullptr);  // Use same seed for same map, or use time(nullptr) for random
@@ -75,8 +75,9 @@ struct SDLApplication {
         context->setMap(generated.tileGridId);
         context->setObjectMap(generated.objectGridId);
 
-
-        camera->SnapToTarget(800, 800); // this is center of the map, can we done differently later
+        if (player) {
+            camera->SnapToTarget(player->getX(), player->getY());
+        }
         
         return true;
     }
@@ -162,7 +163,9 @@ struct SDLApplication {
         ObjectInfo* objInfo = objectManager->GetObjectAt(context->getObjectMap(), gridX, gridY);
 
         if (input.IsMouseButtonHeld(1)) {
-            objectManager->DamageInstance(context->getObjectMap(), gridX, gridY, 1);
+            if (objectManager->PlayerCanInteract(context->getObjectMap(), gridX, gridY, context->getPlayer())) {
+                objectManager->DamageInstance(context->getObjectMap(), gridX, gridY, 1);
+            }
         }
         
         
@@ -191,7 +194,13 @@ struct SDLApplication {
             moveX *= moveSpeed;
             moveY *= moveSpeed;
             
-            context->getCamera()->Move(moveX, moveY);
+            context->getPlayer()->move(moveX, moveY);
+        }
+        
+        // Make camera follow the player
+        Player* player = context->getPlayer();
+        if (player) {
+            camera->SnapToTarget(player->getX(), player->getY());
         }
     }
     
@@ -251,20 +260,22 @@ struct SDLApplication {
             for (int y = objectStartGridY; y < objectEndGridY; y++) {
                 for (int x = objectStartGridX; x < objectEndGridX; x++) {
                     if (objectGrid->IsValid(x, y) && objectGrid->HasObject(x, y)) {
-                    float worldX = x * TILE_RENDER_SIZE;
-                    float worldY = y * TILE_RENDER_SIZE;
-                    float renderX, renderY;
-                    camera->WorldToRender(worldX, worldY, renderX, renderY, VIRTUAL_WIDTH, VIRTUAL_HEIGHT);
+                        // Convert from tile top-left to tile center for center-based rendering
+                        float worldX = x * TILE_RENDER_SIZE + TILE_RENDER_SIZE / 2.0f;
+                        float worldY = y * TILE_RENDER_SIZE + TILE_RENDER_SIZE / 2.0f;
+                        float renderX, renderY;
+                        camera->WorldToRender(worldX, worldY, renderX, renderY, VIRTUAL_WIDTH, VIRTUAL_HEIGHT);
 
                         int objectId = objectGrid->GetObject(x, y);
                         ObjectInfo* objInfo = objectManager->GetObject(objectId);
                         
                         if (objInfo) {
-                            float objectBottomY = renderY + (objInfo->height * zoom);
-                            float objectRightX = renderX + (objInfo->width * zoom);
+                            // Check if object is visible (using center-based bounds)
+                            float halfWidth = (objInfo->width * zoom) / 2.0f;
+                            float halfHeight = (objInfo->height * zoom) / 2.0f;
                             
-                            if (objectRightX > 0 && renderX < VIRTUAL_WIDTH && 
-                                objectBottomY > 0 && renderY < VIRTUAL_HEIGHT) {
+                            if (renderX + halfWidth > 0 && renderX - halfWidth < VIRTUAL_WIDTH && 
+                                renderY + halfHeight > 0 && renderY - halfHeight < VIRTUAL_HEIGHT) {
                                 textureManager->RenderObject(objectManager, objectId, renderX, renderY, zoom);
                             }
                         }
@@ -274,11 +285,11 @@ struct SDLApplication {
         }
 
         //Render Player
-        player* Player = context -> getPlayer();
-        if (Player) {
-            float screenX = Player -> getX() - cameraX;
-            float screenY = Player -> getY() - cameraY;
-            textureManager->RenderPlayer(Player, screenX, screenY, PlayerAnimations::StandingStillForward);
+        Player* player = context -> getPlayer();
+        if (player) {
+            float renderX, renderY;
+            camera->WorldToRender(player->getX(), player->getY(), renderX, renderY, VIRTUAL_WIDTH, VIRTUAL_HEIGHT);
+            textureManager->RenderPlayer(player, renderX, renderY, PlayerAnimations::StandingStillForward);
         }
         
         // Convert mouse window coordinates to render/logical coordinates

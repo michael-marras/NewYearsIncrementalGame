@@ -5,6 +5,9 @@
 #include <unordered_map>
 #include <vector>
 
+// Forward declaration
+class Player;
+
 // Object information structure (template/definition data - shared by all instances)
 struct ObjectInfo {
     int id;                             // Unique object ID
@@ -148,6 +151,11 @@ public:
      * Get instance data for an object at a grid position (returns nullptr if not found)
      */
     ObjectInstance* GetInstance(int gridId, int x, int y) const;
+
+    /**
+     * Check if the object if a player can interact with the object
+     */
+    bool PlayerCanInteract(int gridId, int x, int y, Player* player);
     
     /**
      * Set instance health directly
