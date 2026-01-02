@@ -32,6 +32,10 @@ void Player::move(float dx, float dy) {
     this -> posY += dy;
 }
 
+void Player::setCurrentPlayerAnimation(PlayerAnimations animation) {
+    this -> currentAnimation = animation;
+}
+
 PlayerAnimations Player::getCurrentPlayerAnimation() {
     return this -> currentAnimation;
 }
@@ -41,8 +45,8 @@ PlayerAnimations Player:: RegisterPlayerAnimationsFromGrid(const char* sheetName
     PlayerAnimations animationId = startId;
     for (int row = 0; row < rows; row++) {
         for (int col = 0; col < cols; col++) {
-            int x = startX + (col * 15);  // 15 = TILE_SIZE
-            int y = startY + (row * 15);
+            int x = startX + (col * 16);  // 16a = TILE_SIZE
+            int y = startY + (row * 16);
             RegisterPlayerAnimation(animationId, sheetName, x, y);
             animationId = static_cast<PlayerAnimations>(static_cast<int>(animationId) + 1);
         }
@@ -57,8 +61,8 @@ void Player:: RegisterPlayerAnimation(PlayerAnimations id, const char* sheetName
     frame.sheetName = sheetName;
     frame.sheetX = sheetX;
     frame.sheetY = sheetY;
-    frame.width = 15;
-    frame.height = 15;
+    frame.width = 16;
+    frame.height = 16;
 
     Frames[id] = frame;
 }

@@ -25,6 +25,7 @@ struct SDLApplication {
     InputManager input;
     //to run indefinitely
     std::unique_ptr<GameContext> context = std::make_unique<GameContext>();
+    Player* player = context -> getPlayer();
 
     //constructor
     SDLApplication(const char* title) {
@@ -60,7 +61,7 @@ struct SDLApplication {
         TextureManager* textureManager = context->getTextureManager();
         TileManager* tileManager = context->getTileManager();
         ObjectManager* objectManager = context->getObjectManager();
-        Player* player = context->getPlayer();
+        player = context->getPlayer();
         Camera* camera = context->getCamera();
         
         SetupTiles(tileManager, textureManager);
@@ -174,14 +175,18 @@ struct SDLApplication {
         
         if (input.IsKeyHeld(SDLK_W)) {
             moveY -= 1.0f;
+            player -> setCurrentPlayerAnimation(PlayerAnimations::WalkingBackLeftFoot);
         }
         if (input.IsKeyHeld(SDLK_S)) {
             moveY += 1.0f;
+            player -> setCurrentPlayerAnimation(PlayerAnimations::WalkingForwardRightFoot);
         }
         if (input.IsKeyHeld(SDLK_A)) {
             moveX -= 1.0f;
+            player -> setCurrentPlayerAnimation(PlayerAnimations::WalkingLeftLeftFoot);
         }
         if (input.IsKeyHeld(SDLK_D)) {
+            player -> setCurrentPlayerAnimation(PlayerAnimations::WalkingRightRightFoot);
             moveX += 1.0f;
         }
         if (moveX != 0.0f || moveY != 0.0f) {
@@ -198,7 +203,6 @@ struct SDLApplication {
         }
         
         // Make camera follow the player
-        Player* player = context->getPlayer();
         if (player) {
             camera->SnapToTarget(player->getX(), player->getY());
         }
@@ -285,11 +289,10 @@ struct SDLApplication {
         }
 
         //Render Player
-        Player* player = context -> getPlayer();
         if (player) {
             float renderX, renderY;
             camera->WorldToRender(player->getX(), player->getY(), renderX, renderY, VIRTUAL_WIDTH, VIRTUAL_HEIGHT);
-            textureManager->RenderPlayer(player, renderX, renderY, PlayerAnimations::StandingStillForward);
+            textureManager->RenderPlayer(player, renderX, renderY, player -> getCurrentPlayerAnimation());
         }
         
         // Convert mouse window coordinates to render/logical coordinates

@@ -9,28 +9,27 @@ class TextureManager;
 
 // animations
 enum class PlayerAnimations: uint8_t {
-    // Standing Still
     StandingStillForward,
-    StandingStillBackward,
-    StandingStillLeft,
-    StandingStillRight,
-
-    // Walking Forward
     WalkingForwardLeftFoot,
+    WalkingForwardIntermediary,
     WalkingForwardRightFoot,
-    
-    // Walking Back
-    WalkingBackLeftFoot,
     WalkingBackRightFoot,
-    
-    // Walking Left
-    WalkingLeftRightFoot,
+    WalkingBackIntermediary,
+    WalkingBackLeftFoot,
+    StandingStillBack,
     WalkingLeftLeftFoot,
-
-    // Walking Right
-    WalkingRightLeftFoot,
+    WalkingLeftIntermediary,
+    WalkingLeftRightFoot,
+    StandStillLeft,
     WalkingRightRightFoot,
-
+    WalkingRightIntermediary,
+    WalkingRightLeftFoot,
+    StandingStillRight,
+    StandingStillForwardLeftHandUp,
+    StandingStillLeftRightHandUp,
+    StandingStillRightLeftHandUp,
+    StandingStillBackRightHandUp,
+    
     //Count of Player Animations
     PlayerAnimationsCount
 };
@@ -93,6 +92,11 @@ class Player {
          * Combined method to change both x and y
          */
         void move(float dx, float dy);
+
+        /**
+         * Set the current player animation
+         */
+        void setCurrentPlayerAnimation(PlayerAnimations animation);
 
         /** 
          * Get current Player Animation
