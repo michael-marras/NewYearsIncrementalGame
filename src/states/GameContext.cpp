@@ -4,6 +4,7 @@
 #include "../tiles.h"
 #include "../objects.h"
 #include "../camera.h"
+#include "../player.h"
 
 GameContext:: GameContext() {
     window = nullptr;
@@ -11,6 +12,7 @@ GameContext:: GameContext() {
     textureManager = nullptr;
     tileManager = nullptr;
     objectManager = nullptr;
+    Player = nullptr;
     camera = nullptr;
     map = -1;
     objectMap = -1;
@@ -24,6 +26,10 @@ GameContext:: ~GameContext() {
     if (objectManager) {
         delete objectManager;
         objectManager = nullptr;
+    }
+    if (Player) {
+        delete Player;
+        Player = nullptr;
     }
     if (tileManager) {
         delete tileManager;
@@ -53,6 +59,9 @@ void GameContext:: InitializeManagers(SDL_Window* window, SDL_Renderer* renderer
     }
     if (!objectManager) {
         objectManager = new ObjectManager();
+    }
+    if (!Player) {
+        Player = new player();
     }
     if (!camera) {
         camera = new Camera(0.0f, 0.0f);
@@ -156,4 +165,8 @@ int GameContext:: getObjectMap() const {
 
 void GameContext:: setObjectMap(int objectMapId) {
     objectMap = objectMapId;
+}
+
+player* GameContext:: getPlayer() {
+    return this -> Player;
 }

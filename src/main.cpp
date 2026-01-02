@@ -9,6 +9,7 @@
 #include "tiles.h"
 #include "objects.h"
 #include "tile_definitions.h"
+#include "frame_definitions.h"
 #include "object_definitions.h"
 #include "map_generation.h"
 #include "constants.h"
@@ -16,6 +17,7 @@
 #include "states/GameContext.h"
 #include "input_manager.h"
 #include <memory>
+#include "player.h"
 
 struct SDLApplication {
     SDL_Window* window;
@@ -58,10 +60,12 @@ struct SDLApplication {
         TextureManager* textureManager = context->getTextureManager();
         TileManager* tileManager = context->getTileManager();
         ObjectManager* objectManager = context->getObjectManager();
+        player* Player = context->getPlayer();
         Camera* camera = context->getCamera();
         
         SetupTiles(tileManager, textureManager);
         SetupObjects(objectManager, textureManager);
+        SetupAnimations(Player, textureManager);
         
         // Generate map from seed (change seed for different maps, or use time for random)
         unsigned int mapSeed = time(nullptr);  // Use same seed for same map, or use time(nullptr) for random
@@ -268,6 +272,32 @@ struct SDLApplication {
                 }
             }
         }
+
+        //Render Player
+        player* Player = context -> getPlayer();
+        if (Player) {
+            float screenX = Player -> getX() - cameraX;
+            float screenY = Player -> getY() - cameraY;
+            textureManager->RenderPlayer(Player, screenX, screenY, PlayerAnimations::StandingStillForward);
+        }
+        
+        // Convert mouse window coordinates to render/logical coordinates
+        float mouseScreenX = input.GetMouseX();
+        float mouseScreenY = input.GetMouseY();
+        float mouseRenderX, mouseRenderY;
+        SDL_RenderCoordinatesFromWindow(renderer, mouseScreenX, mouseScreenY, &mouseRenderX, &mouseRenderY);
+
+        float mouseWheelY = input.GetMouseWheelY();
+        
+        // Convert render coordinates to world coordinates
+        float worldX, worldY;
+        camera->ScreenToWorld(mouseRenderX, mouseRenderY, worldX, worldY);
+        int gridX = (int)(worldX / TILE_RENDER_SIZE);
+        int gridY = (int)(worldY / TILE_RENDER_SIZE);
+
+        // Get object at mouse position (if any)
+        ObjectInfo* objInfo = objectManager->GetObjectAt(context->getObjectMap(), gridX, gridY);
+        
         SDL_RenderPresent(renderer);
     }
 

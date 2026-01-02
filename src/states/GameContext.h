@@ -10,6 +10,7 @@ class TextureManager;
 class TileManager;
 class ObjectManager;
 class Camera;
+class player;
 
 class GameContext {
     private: 
@@ -28,6 +29,7 @@ class GameContext {
         bool Running = true;
         int map;
         int objectMap;
+        player* Player;
         // Entities
             // TODO
         // UI
@@ -154,5 +156,10 @@ class GameContext {
          * Set current object map ID (object grid)
          */
         void setObjectMap(int objectMapId);
+
+        /**
+         * Get Player Pointer
+         */ 
+        player* getPlayer();
 };
 #endif // GAMECONTEXT_H
