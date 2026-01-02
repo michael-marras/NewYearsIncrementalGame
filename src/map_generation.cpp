@@ -27,6 +27,7 @@ GeneratedMap GenerateMapFromSeed(unsigned int seed,
     ObjectInfo* bigRockObj = objectManager->GetObjectByName("winter_big_rock");
     ObjectInfo* mediumRockObj = objectManager->GetObjectByName("winter_medium_rock");
     ObjectInfo* bushObj = objectManager->GetObjectByName("winter_bush");
+    ObjectInfo* wellObj = objectManager->GetObjectByName("winter_well");
     
     // Procedurally place objects
     // Adjust these parameters to control object density and placement
@@ -34,6 +35,7 @@ GeneratedMap GenerateMapFromSeed(unsigned int seed,
     const int numBigRocks = (width * height) / 100;     // Big rock density
     const int numMediumRocks = (width * height) / 400;  // Medium rock density
     const int numBushes = (width * height) / 180;       // Bush density
+    const int numWells = 200;
     
     // Place trees
     if (treeObj) {
@@ -76,6 +78,17 @@ GeneratedMap GenerateMapFromSeed(unsigned int seed,
             int y = std::rand() % height;
             if (!objGrid->HasObject(x, y)) {
                 objGrid->SetObject(x, y, bushObj->id);
+            }
+        }
+    }
+
+    // Place wells
+    if (wellObj) {
+        for (int i = 0; i < numWells; i++) {
+            int x = std::rand() % width;
+            int y = std::rand() % height;
+            if (!objGrid->HasObject(x, y)) {
+                objGrid->SetObject(x, y, wellObj->id);
             }
         }
     }

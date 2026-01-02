@@ -9,20 +9,20 @@ SRC_DIR = .
 BUILD_DIR = .
 SDL_DIR = ../SDL
 SDL_INCLUDE = $(SDL_DIR)/include
-SDL_BUILD_CONFIG = $(SDL_DIR)/build/include-config-release
-SDL_LIB_DIR = $(SDL_DIR)/build/Release
+SDL_BUILD_CONFIG = $(SDL_DIR)/build/include-config-relwithdebinfo
+SDL_LIB_DIR = $(SDL_DIR)/build
 
 # Include paths
 INCLUDES = -I$(SDL_INCLUDE) -I$(SDL_BUILD_CONFIG)
 
 # Library paths and libraries
-LDFLAGS = -L$(SDL_LIB_DIR)
-LIBS = -lSDL3
+LDFLAGS = -L$(SDL_LIB_DIR) -Wl,-rpath,$(SDL_LIB_DIR)
+LIBS = -lSDL3 -framework OpenGL
 
 # Source and output files
-SRC = main.cpp textures.cpp tiles.cpp objects.cpp tile_definitions.cpp object_definitions.cpp map_generation.cpp camera.cpp
-OBJ = $(BUILD_DIR)/main.o $(BUILD_DIR)/textures.o $(BUILD_DIR)/tiles.o $(BUILD_DIR)/objects.o $(BUILD_DIR)/tile_definitions.o $(BUILD_DIR)/object_definitions.o $(BUILD_DIR)/map_generation.o $(BUILD_DIR)/camera.o
-TARGET = $(BUILD_DIR)/game.exe
+SRC = main.cpp textures.cpp tiles.cpp objects.cpp tile_definitions.cpp object_definitions.cpp map_generation.cpp camera.cpp states/GameContext.cpp player.cpp
+OBJ = main.o textures.o tiles.o objects.o tile_definitions.o object_definitions.o map_generation.o camera.o states/GameContext.o player.o
+TARGET = game
 
 # Default target
 all: $(TARGET)
@@ -30,46 +30,43 @@ all: $(TARGET)
 # Build the executable
 $(TARGET): $(OBJ)
 	$(CXX) $(OBJ) $(LDFLAGS) $(LIBS) -o $(TARGET)
-	@if exist "$(SDL_LIB_DIR)\SDL3.dll" copy /Y "$(SDL_LIB_DIR)\SDL3.dll" "$(BUILD_DIR)\SDL3.dll"
 	@echo Build complete: $(TARGET)
 
 # Compile source to object files
-$(BUILD_DIR)/main.o: main.cpp
-	$(CXX) $(CXXFLAGS) $(INCLUDES) -c main.cpp -o $(BUILD_DIR)/main.o
+main.o: main.cpp textures.h tiles.h objects.h tile_definitions.h object_definitions.h map_generation.h constants.h camera.h states/GameContext.h
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -c main.cpp -o main.o
 
-$(BUILD_DIR)/textures.o: textures.cpp textures.h
-	$(CXX) $(CXXFLAGS) $(INCLUDES) -c textures.cpp -o $(BUILD_DIR)/textures.o
+textures.o: textures.cpp textures.h
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -c textures.cpp -o textures.o
 
-$(BUILD_DIR)/tiles.o: tiles.cpp tiles.h
-	$(CXX) $(CXXFLAGS) $(INCLUDES) -c tiles.cpp -o $(BUILD_DIR)/tiles.o
+tiles.o: tiles.cpp tiles.h
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -c tiles.cpp -o tiles.o
 
-$(BUILD_DIR)/objects.o: objects.cpp objects.h
-	$(CXX) $(CXXFLAGS) $(INCLUDES) -c objects.cpp -o $(BUILD_DIR)/objects.o
+objects.o: objects.cpp objects.h
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -c objects.cpp -o objects.o
 
-$(BUILD_DIR)/tile_definitions.o: tile_definitions.cpp tile_definitions.h
-	$(CXX) $(CXXFLAGS) $(INCLUDES) -c tile_definitions.cpp -o $(BUILD_DIR)/tile_definitions.o
+tile_definitions.o: tile_definitions.cpp tile_definitions.h
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -c tile_definitions.cpp -o tile_definitions.o
 
-$(BUILD_DIR)/object_definitions.o: object_definitions.cpp object_definitions.h
-	$(CXX) $(CXXFLAGS) $(INCLUDES) -c object_definitions.cpp -o $(BUILD_DIR)/object_definitions.o
+object_definitions.o: object_definitions.cpp object_definitions.h
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -c object_definitions.cpp -o object_definitions.o
 
-$(BUILD_DIR)/map_generation.o: map_generation.cpp map_generation.h
-	$(CXX) $(CXXFLAGS) $(INCLUDES) -c map_generation.cpp -o $(BUILD_DIR)/map_generation.o
+map_generation.o: map_generation.cpp map_generation.h
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -c map_generation.cpp -o map_generation.o
 
-$(BUILD_DIR)/camera.o: camera.cpp camera.h
-	$(CXX) $(CXXFLAGS) $(INCLUDES) -c camera.cpp -o $(BUILD_DIR)/camera.o
+camera.o: camera.cpp camera.h
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -c camera.cpp -o camera.o
+
+states/GameContext.o: states/GameContext.cpp states/GameContext.h
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -c states/GameContext.cpp -o states/GameContext.o
+
+player.o: player.cpp player.h
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -c player.cpp -o player.o
 
 # Clean build artifacts
 clean:
-	@if exist $(BUILD_DIR)\main.o del /Q $(BUILD_DIR)\main.o
-	@if exist $(BUILD_DIR)\textures.o del /Q $(BUILD_DIR)\textures.o
-	@if exist $(BUILD_DIR)\tiles.o del /Q $(BUILD_DIR)\tiles.o
-	@if exist $(BUILD_DIR)\objects.o del /Q $(BUILD_DIR)\objects.o
-	@if exist $(BUILD_DIR)\tile_definitions.o del /Q $(BUILD_DIR)\tile_definitions.o
-	@if exist $(BUILD_DIR)\object_definitions.o del /Q $(BUILD_DIR)\object_definitions.o
-	@if exist $(BUILD_DIR)\map_generation.o del /Q $(BUILD_DIR)\map_generation.o
-	@if exist $(BUILD_DIR)\camera.o del /Q $(BUILD_DIR)\camera.o
-	@if exist $(TARGET) del /Q $(TARGET)
-	@if exist SDL3.dll del /Q SDL3.dll
+	rm -f $(OBJ) $(TARGET)
+	rm -f states/*.o
 	@echo Clean complete
 
 # Phony targets
