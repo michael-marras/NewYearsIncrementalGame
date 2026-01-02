@@ -5,7 +5,7 @@
 #include <unordered_map>
 #include <vector>
 
-// Object information structure
+// Object information structure (template/definition data - shared by all instances)
 struct ObjectInfo {
     int id;                    // Unique object ID
     std::string name;          // Human-readable name (e.g., "tree", "rock", "chest")
@@ -15,7 +15,34 @@ struct ObjectInfo {
     int width;                 // Object width
     int height;                // Object height
     bool interactable;         // Can player interact with this object?
+    int maxHealth = -1;        // Maximum health/durability (-1 = infinite/indestructible)
     // Add more properties as needed (collision, interaction type, etc.)
+};
+
+// Key for identifying object instances (grid position)
+struct ObjectInstanceKey {
+    int gridId;
+    int x, y;
+    
+    bool operator==(const ObjectInstanceKey& other) const {
+        return gridId == other.gridId && x == other.x && y == other.y;
+    }
+};
+
+// Hash function for ObjectInstanceKey
+struct ObjectInstanceKeyHash {
+    std::size_t operator()(const ObjectInstanceKey& key) const {
+        // Combine hash of gridId, x, y
+        return std::hash<int>()(key.gridId) ^ 
+               (std::hash<int>()(key.x) << 1) ^ 
+               (std::hash<int>()(key.y) << 2);
+    }
+};
+
+// Instance data for individual objects (per-instance state)
+struct ObjectInstance {
+    int currentHealth;         // Current health/durability
+    // Add more instance-specific properties as needed (state, timers, etc.)
 };
 
 // Object grid structure for game maps
@@ -60,7 +87,8 @@ public:
     
     // Register an object with an optional custom name
     void RegisterObject(int id, const char* sheetName, int sheetX, int sheetY, 
-                       int width, int height, bool interactable = false, const char* name = nullptr);
+                       int width, int height, bool interactable = false, const char* name = nullptr,
+                       int maxHealth = -1);
     
     // Register multiple objects from a sprite sheet at once
     void RegisterObjectsFromSheet(const char* sheetName, const int* objectData, int count, bool interactable = false);
@@ -88,6 +116,9 @@ public:
     // Get object grid by ID
     ObjectGrid* GetObjectGrid(int gridId);
     
+    // Get object info at a grid position (returns nullptr if no object at position)
+    ObjectInfo* GetObjectAt(int gridId, int x, int y);
+
     // Destroy object grid
     void DestroyObjectGrid(int gridId);
     
@@ -96,11 +127,50 @@ public:
     
     // Get number of object grids
     int GetGridCount() const { return (int)grids.size(); }
+    
+    // Instance data management (health/durability)
+    
+    /**
+     * Get or create instance data for an object at a grid position
+     * If instance doesn't exist, creates it with full health based on ObjectInfo
+     */
+    ObjectInstance* GetOrCreateInstance(int gridId, int x, int y);
+    
+    /**
+     * Get instance data for an object at a grid position (returns nullptr if not found)
+     */
+    ObjectInstance* GetInstance(int gridId, int x, int y) const;
+    
+    /**
+     * Set instance health directly
+     */
+    void SetInstanceHealth(int gridId, int x, int y, int health);
+    
+    /**
+     * Damage an object instance (returns true if object was destroyed)
+     */
+    bool DamageInstance(int gridId, int x, int y, int damage);
+    
+    /**
+     * Get current health of an object instance (returns -1 if not found or indestructible)
+     */
+    int GetInstanceHealth(int gridId, int x, int y) const;
+    
+    /**
+     * Remove instance data (when object is destroyed/removed)
+     */
+    void RemoveInstance(int gridId, int x, int y);
+    
+    /**
+     * Clear all instances for a grid (call when destroying grid)
+     */
+    void ClearInstances(int gridId);
 
 private:
     std::unordered_map<int, ObjectInfo> objects;           // Lookup by ID
     std::unordered_map<std::string, int> nameToId;         // Lookup by name
     std::unordered_map<int, ObjectGrid*> grids;            // Game maps/grids by ID
+    std::unordered_map<ObjectInstanceKey, ObjectInstance, ObjectInstanceKeyHash> instances;  // Instance data
     int nextGridId = 1;                                    // Next available grid ID
 };
 

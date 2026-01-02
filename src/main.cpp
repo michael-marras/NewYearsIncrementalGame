@@ -14,26 +14,20 @@
 #include "constants.h"
 #include "camera.h"
 #include "states/GameContext.h"
+#include "input_manager.h"
 #include <memory>
 
 struct SDLApplication {
     SDL_Window* window;
     SDL_Renderer* renderer;
-    TextureManager* textureManager;
-    TileManager* tileManager;
-    ObjectManager* objectManager;
-    Camera* camera;
-    int currentResolutionIndex = 5;
-    std::unordered_map<SDL_Keycode, bool> keysHeld;
+    InputManager input;
     //to run indefinitely
-    int map;
     std::unique_ptr<GameContext> context = std::make_unique<GameContext>();
-    int objectMap;
 
     //constructor
     SDLApplication(const char* title) {
         SDL_Init(SDL_INIT_VIDEO);
-        const ResolutionPreset& initialPreset = RESOLUTION_PRESETS[currentResolutionIndex];
+        const ResolutionPreset& initialPreset = RESOLUTION_PRESETS[context->getCurrentResolutionIndex()];
         window = SDL_CreateWindow(title, initialPreset.width, initialPreset.height, SDL_WINDOW_RESIZABLE);
         renderer = SDL_CreateRenderer(window, NULL);
         
@@ -44,20 +38,13 @@ struct SDLApplication {
                                  std::to_string(initialPreset.height) + ")";
         SDL_SetWindowTitle(window, windowTitle.c_str());
         
-        textureManager = new TextureManager(renderer);
-        tileManager = new TileManager();
-        objectManager = new ObjectManager();
-        camera = new Camera(0.0f, 0.0f);
+        context->InitializeManagers(window, renderer);
         
     }
 
     //destructor
     ~SDLApplication() {
-        delete camera;
-        delete objectManager;
-        delete tileManager;
-        delete textureManager;
-        
+        // Managers are cleaned up by GameContext destructor
         if (renderer) {
             SDL_DestroyRenderer(renderer);
         }
@@ -68,14 +55,21 @@ struct SDLApplication {
     }
 
     bool Initialize() {
+        TextureManager* textureManager = context->getTextureManager();
+        TileManager* tileManager = context->getTileManager();
+        ObjectManager* objectManager = context->getObjectManager();
+        Camera* camera = context->getCamera();
+        
         SetupTiles(tileManager, textureManager);
         SetupObjects(objectManager, textureManager);
         
         // Generate map from seed (change seed for different maps, or use time for random)
-        unsigned int mapSeed = 12345;  // Use same seed for same map, or use time(nullptr) for random
+        unsigned int mapSeed = time(nullptr);  // Use same seed for same map, or use time(nullptr) for random
         GeneratedMap generated = GenerateMapFromSeed(mapSeed, tileManager, objectManager, 100, 100);
-        map = generated.tileGridId;
-        objectMap = generated.objectGridId;
+        
+        // Set the generated map as the current active map in context
+        context->setMap(generated.tileGridId);
+        context->setObjectMap(generated.objectGridId);
 
 
         camera->SnapToTarget(800, 800); // this is center of the map, can we done differently later
@@ -88,6 +82,7 @@ struct SDLApplication {
         Input();
         Update();
         Render();
+        input.EndFrame();
     }
 
     //Advances out loop one iteration
@@ -100,30 +95,39 @@ struct SDLApplication {
                 context -> Quit();
             }
             else if(event.type == SDL_EVENT_KEY_DOWN) {
-                keysHeld[event.key.key] = true;
+                input.ProcessKeyDown(event.key.key);
                 
                 if (event.key.key == SDLK_ESCAPE) {
                     context -> Quit();
                 }
                 if (event.key.key == SDLK_UP) {
-                    context -> ChangeResolution(context -> getCurrentResolutionIndex() - 1, window);
+                    context -> ChangeResolution(context -> getCurrentResolutionIndex() - 1);
                 }
                 if (event.key.key == SDLK_DOWN) {
-                    context -> ChangeResolution(context -> getCurrentResolutionIndex() + 1, window);
+                    context -> ChangeResolution(context -> getCurrentResolutionIndex() + 1);
                 }
             }
             else if(event.type == SDL_EVENT_KEY_UP) {
-                keysHeld[event.key.key] = false;
+                input.ProcessKeyUp(event.key.key);
             }
             else if(event.type == SDL_EVENT_MOUSE_MOTION) {
+                input.ProcessMouseMotion(event.motion.x, event.motion.y, 
+                                         event.motion.xrel, event.motion.yrel);
             }
             else if(event.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
+                input.ProcessMouseButtonDown(event.button.button);
                 if(event.button.button == SDL_BUTTON_LEFT) {
                 }
                 if(event.button.button == SDL_BUTTON_MIDDLE) {
                 }
                 if(event.button.button == SDL_BUTTON_RIGHT) {
                 }
+            }
+            else if(event.type == SDL_EVENT_MOUSE_BUTTON_UP) {
+                input.ProcessMouseButtonUp(event.button.button);
+            }
+            else if(event.type == SDL_EVENT_MOUSE_WHEEL) {
+                input.ProcessMouseWheel(event.wheel.y);
             }
         }
     }
@@ -134,16 +138,16 @@ struct SDLApplication {
         float moveX = 0.0f;
         float moveY = 0.0f;
         
-        if (IsKeyHeld(SDLK_W)) {
+        if (input.IsKeyHeld(SDLK_W)) {
             moveY -= 1.0f;
         }
-        if (IsKeyHeld(SDLK_S)) {
+        if (input.IsKeyHeld(SDLK_S)) {
             moveY += 1.0f;
         }
-        if (IsKeyHeld(SDLK_A)) {
+        if (input.IsKeyHeld(SDLK_A)) {
             moveX -= 1.0f;
         }
-        if (IsKeyHeld(SDLK_D)) {
+        if (input.IsKeyHeld(SDLK_D)) {
             moveX += 1.0f;
         }
         if (moveX != 0.0f || moveY != 0.0f) {
@@ -156,20 +160,21 @@ struct SDLApplication {
             moveX *= moveSpeed;
             moveY *= moveSpeed;
             
-            camera->Move(moveX, moveY);
+            context->getCamera()->Move(moveX, moveY);
         }
     }
     
-    bool IsKeyHeld(SDL_Keycode key) const {
-        auto it = keysHeld.find(key);
-        return (it != keysHeld.end() && it->second);
-    }
 
     void Render() {
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
         SDL_RenderClear(renderer);
 
-        TileGrid* grid = tileManager->GetTileGrid(map);
+        TextureManager* textureManager = context->getTextureManager();
+        TileManager* tileManager = context->getTileManager();
+        ObjectManager* objectManager = context->getObjectManager();
+        Camera* camera = context->getCamera();
+
+        TileGrid* grid = tileManager->GetTileGrid(context->getMap());
         if (!grid) return;
  
         float cameraX = camera->GetX();
@@ -198,7 +203,7 @@ struct SDLApplication {
         }
         
         // Render objects (on top of tiles)
-        ObjectGrid* objectGrid = objectManager->GetObjectGrid(objectMap);
+        ObjectGrid* objectGrid = objectManager->GetObjectGrid(context->getObjectMap());
         if (objectGrid) {
             const int objectBufferTiles = 3;
             
@@ -229,6 +234,27 @@ struct SDLApplication {
                 }
             }
         }
+
+        // if (context.player) {
+        //     textureManager->RenderPlayer(class Player *player, float dstX, float dstY, int frame)
+        // }
+        
+        // Convert mouse window coordinates to render/logical coordinates
+        float mouseScreenX = input.GetMouseX();
+        float mouseScreenY = input.GetMouseY();
+        float mouseRenderX, mouseRenderY;
+        SDL_RenderCoordinatesFromWindow(renderer, mouseScreenX, mouseScreenY, &mouseRenderX, &mouseRenderY);
+
+        float mouseWheelY = input.GetMouseWheelY();
+        
+        // Convert render coordinates to world coordinates
+        float worldX, worldY;
+        camera->ScreenToWorld(mouseRenderX, mouseRenderY, worldX, worldY);
+        int gridX = (int)(worldX / TILE_RENDER_SIZE);
+        int gridY = (int)(worldY / TILE_RENDER_SIZE);
+
+        // Get object at mouse position (if any)
+        ObjectInfo* objInfo = objectManager->GetObjectAt(context->getObjectMap(), gridX, gridY);
         
         SDL_RenderPresent(renderer);
     }
@@ -236,7 +262,7 @@ struct SDLApplication {
     void FPSCount(Uint64* currentTick, Uint64* lastTime, Uint64* fps) {
         if (*currentTick > *lastTime + 1000) {
             *lastTime = *currentTick;
-            const ResolutionPreset& preset = RESOLUTION_PRESETS[currentResolutionIndex];
+            const ResolutionPreset& preset = RESOLUTION_PRESETS[context->getCurrentResolutionIndex()];
             std::string title = std::string(preset.name) + " (" + std::to_string(preset.width) + "x" + 
                               std::to_string(preset.height) + ") - FPS: " + std::to_string(*fps);
             SDL_SetWindowTitle(window, title.c_str());

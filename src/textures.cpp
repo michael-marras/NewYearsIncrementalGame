@@ -142,3 +142,11 @@ bool TextureManager::RenderObject(ObjectManager* objectManager, int objectId, fl
                        obj->width, obj->height, 
                        dstX, dstY, scale);
 }
+
+// bool TextureManager::RenderPlayer(Player* player, float dstX, float dstY, int frame) {
+//     if (!player) return false;
+
+//     FrameInfo* info = player->GetFrame(frame)
+
+//     return RenderSprite(info->sheetName.c_str(), info->sheetX, info->sheety, info->width, info->height, dstX, dstY, 3)
+// }

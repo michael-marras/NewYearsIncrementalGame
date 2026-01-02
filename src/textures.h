@@ -40,6 +40,9 @@ public:
     // Render an object by ID (requires ObjectManager - see objects.h)
     // This is a convenience function that looks up object info and renders it
     bool RenderObject(class ObjectManager* objectManager, int objectId, float dstX, float dstY, float scale = 1.0f);
+
+    // Render the player by the frame
+    bool RenderPlayer(class Player* player, float dstX, float dstY, int frame);
     
     // Clean up all textures (called automatically in destructor)
     void Cleanup();

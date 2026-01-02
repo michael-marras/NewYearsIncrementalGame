@@ -10,7 +10,8 @@ ObjectManager::~ObjectManager() {
 }
 
 void ObjectManager::RegisterObject(int id, const char* sheetName, int sheetX, int sheetY, 
-                                  int width, int height, bool interactable, const char* name) {
+                                  int width, int height, bool interactable, const char* name,
+                                  int maxHealth) {
     std::string objectName;
     
     // Use provided name, or generate default name if not provided
@@ -32,6 +33,7 @@ void ObjectManager::RegisterObject(int id, const char* sheetName, int sheetX, in
     obj.width = width;
     obj.height = height;
     obj.interactable = interactable;
+    obj.maxHealth = maxHealth;
     
     objects[id] = obj;
     nameToId[objectName] = id;
@@ -46,7 +48,7 @@ void ObjectManager::RegisterObjectsFromSheet(const char* sheetName, const int* o
         int y = objectData[i * 5 + 2];
         int w = objectData[i * 5 + 3];
         int h = objectData[i * 5 + 4];
-        RegisterObject(id, sheetName, x, y, w, h, interactable, nullptr);
+        RegisterObject(id, sheetName, x, y, w, h, interactable, nullptr, -1);
     }
 }
 
@@ -100,19 +102,145 @@ ObjectGrid* ObjectManager::GetObjectGrid(int gridId) {
     return nullptr;
 }
 
+ObjectInfo* ObjectManager::GetObjectAt(int gridId, int x, int y) {
+    ObjectGrid* grid = GetObjectGrid(gridId);
+    if (!grid || !grid->HasObject(x, y)) {
+        return nullptr;
+    }
+    
+    int objectId = grid->GetObject(x, y);
+    return GetObject(objectId);
+}
+
+void ObjectManager::DestroyAllGrids() {
+    for (auto& pair : grids) {
+        ClearInstances(pair.first);  // Clear instances before deleting grid
+        delete pair.second;
+    }
+    grids.clear();
+    instances.clear();  // Clear all instances
+    nextGridId = 1;
+}
+
 void ObjectManager::DestroyObjectGrid(int gridId) {
     auto it = grids.find(gridId);
     if (it != grids.end()) {
+        ClearInstances(gridId);  // Clear instances before deleting grid
         delete it->second;
         grids.erase(it);
     }
 }
 
-void ObjectManager::DestroyAllGrids() {
-    for (auto& pair : grids) {
-        delete pair.second;
+ObjectInstance* ObjectManager::GetOrCreateInstance(int gridId, int x, int y) {
+    ObjectInstanceKey key;
+    key.gridId = gridId;
+    key.x = x;
+    key.y = y;
+    
+    auto it = instances.find(key);
+    if (it != instances.end()) {
+        return &it->second;
     }
-    grids.clear();
-    nextGridId = 1;
+    
+    // Get the object at this position to determine max health
+    ObjectGrid* grid = GetObjectGrid(gridId);
+    if (!grid) return nullptr;
+    
+    int objectId = grid->GetObject(x, y);
+    if (objectId == 0) return nullptr;  // No object at this position
+    
+    ObjectInfo* objInfo = GetObject(objectId);
+    if (!objInfo) return nullptr;
+    
+    // Only create instance if object has finite health
+    if (objInfo->maxHealth <= 0) return nullptr;
+    
+    // Create new instance with full health
+    ObjectInstance instance;
+    instance.currentHealth = objInfo->maxHealth;
+    instances[key] = instance;
+    
+    return &instances[key];
+}
+
+ObjectInstance* ObjectManager::GetInstance(int gridId, int x, int y) const {
+    ObjectInstanceKey key;
+    key.gridId = gridId;
+    key.x = x;
+    key.y = y;
+    
+    auto it = instances.find(key);
+    if (it != instances.end()) {
+        return const_cast<ObjectInstance*>(&it->second);
+    }
+    return nullptr;
+}
+
+void ObjectManager::SetInstanceHealth(int gridId, int x, int y, int health) {
+    ObjectInstance* instance = GetOrCreateInstance(gridId, x, y);
+    if (instance) {
+        instance->currentHealth = health;
+    }
+}
+
+bool ObjectManager::DamageInstance(int gridId, int x, int y, int damage) {
+    ObjectInstance* instance = GetOrCreateInstance(gridId, x, y);
+    if (!instance) {
+        // Object doesn't have health tracking (indestructible)
+        return false;
+    }
+    
+    instance->currentHealth -= damage;
+    if (instance->currentHealth <= 0) {
+        // Object destroyed - remove from grid and clean up instance
+        ObjectGrid* grid = GetObjectGrid(gridId);
+        if (grid) {
+            grid->ClearObject(x, y);
+        }
+        RemoveInstance(gridId, x, y);
+        return true;  // Object was destroyed
+    }
+    
+    return false;  // Object still alive
+}
+
+int ObjectManager::GetInstanceHealth(int gridId, int x, int y) const {
+    ObjectInstance* instance = GetInstance(gridId, x, y);
+    if (instance) {
+        return instance->currentHealth;
+    }
+    
+    // No instance data - check if object has health tracking
+    ObjectGrid* grid = const_cast<ObjectManager*>(this)->GetObjectGrid(gridId);
+    if (!grid) return -1;
+    
+    int objectId = grid->GetObject(x, y);
+    if (objectId == 0) return -1;
+    
+    ObjectInfo* objInfo = const_cast<ObjectManager*>(this)->GetObject(objectId);
+    if (!objInfo) return -1;
+    
+    return objInfo->maxHealth > 0 ? objInfo->maxHealth : -1;
+}
+
+void ObjectManager::RemoveInstance(int gridId, int x, int y) {
+    ObjectInstanceKey key;
+    key.gridId = gridId;
+    key.x = x;
+    key.y = y;
+    
+    instances.erase(key);
+}
+
+void ObjectManager::ClearInstances(int gridId) {
+    // Remove all instances for this grid
+    auto it = instances.begin();
+    while (it != instances.end()) {
+        if (it->first.gridId == gridId) {
+            it = instances.erase(it);
+        } else {
+            ++it;
+        }
+    }
 }
 
