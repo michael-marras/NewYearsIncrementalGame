@@ -138,7 +138,7 @@ struct SDLApplication {
         ObjectManager* objectManager = context->getObjectManager();
         Camera* camera = context->getCamera();
 
-        const float moveSpeed = 1.0f;
+        const float moveSpeed = 1.5f;
         
         // Handle mouse wheel zoom (zooms toward screen center)
         float mouseWheelY = input.GetMouseWheelY();
