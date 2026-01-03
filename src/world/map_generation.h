@@ -4,10 +4,14 @@
 #include "world/tiles.h"
 #include "world/objects.h"
 
+// Forward declaration
+class ResourceManager;
+
 // Structure to hold generated map grid IDs
 struct GeneratedMap {
     int tileGridId;
     int objectGridId;
+    int resourceArrayId;
 };
 
 // Generate both tile map and objects from a seed
@@ -15,6 +19,7 @@ struct GeneratedMap {
 GeneratedMap GenerateMapFromSeed(unsigned int seed, 
                                  TileManager* tileManager, 
                                  ObjectManager* objectManager,
+                                 ResourceManager* resourceManager,
                                  int width, int height);
 
 #endif // MAP_GENERATION_H

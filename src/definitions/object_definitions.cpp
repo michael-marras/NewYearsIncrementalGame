@@ -17,7 +17,10 @@ void SetupObjects(ObjectManager* objectManager, TextureManager* textureManager) 
     objectManager->RegisterObject(8, "winter_objects", 48, 128, 16, 16, true, "winter_medium_gold_rock", 100, "winter_small_gold_rock");
     objectManager->RegisterObject(9, "winter_objects", 80, 128, 16, 16, true, "winter_small_gold_rock", 50, "");
 
-    objectManager->RegisterObject(10, "winter_objects", 0, 72, 16, 24, true, "winter_tree", 100);
+    std::vector<DropInstance> treeDrops = {
+        {9, 3}
+    };
+    objectManager->RegisterObject(10, "winter_objects", 0, 72, 16, 24, true, "winter_tree", 100, "", treeDrops);
     objectManager->RegisterObject(11, "winter_objects", 96, 80, 16, 16, true, "winter_bush", 50);
     objectManager->RegisterObject(12, "winter_objects", 1, 20, 15, 28, true, "winter_well", 200);
 

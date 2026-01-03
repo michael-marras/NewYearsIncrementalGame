@@ -5,6 +5,7 @@
 #include "world/objects.h"
 #include "core/camera.h"
 #include "entities/player.h"
+#include "items/resources.h"
 
 GameContext:: GameContext() {
     window = nullptr;
@@ -12,10 +13,12 @@ GameContext:: GameContext() {
     textureManager = nullptr;
     tileManager = nullptr;
     objectManager = nullptr;
+    resourceManager = nullptr;
     player = nullptr;
     camera = nullptr;
     map = -1;
     objectMap = -1;
+    resourceArray = -1;
 }
 
 GameContext:: ~GameContext() {
@@ -39,6 +42,10 @@ GameContext:: ~GameContext() {
         delete textureManager;
         textureManager = nullptr;
     }
+    if (resourceManager) {
+        delete resourceManager;
+        resourceManager = nullptr;
+    }
 }
 
 void GameContext:: InitializeManagers(SDL_Window* window, SDL_Renderer* renderer) {
@@ -59,6 +66,9 @@ void GameContext:: InitializeManagers(SDL_Window* window, SDL_Renderer* renderer
     }
     if (!objectManager) {
         objectManager = new ObjectManager();
+    }
+    if (!resourceManager) {
+        resourceManager = new ResourceManager();
     }
     if (!player) {
         player = new Player();
@@ -131,6 +141,10 @@ ObjectManager* GameContext:: getObjectManager() {
     return this -> objectManager;
 }
 
+ResourceManager* GameContext:: getResourceManager() {
+    return this -> resourceManager;
+}
+
 Camera* GameContext:: getCamera() {
     return this -> camera;
 }
@@ -145,6 +159,10 @@ void GameContext:: setTileManager(TileManager* manager) {
 
 void GameContext:: setObjectManager(ObjectManager* manager) {
     this -> objectManager = manager;
+}
+
+void GameContext:: setResourceManager(ResourceManager* manager) {
+    this -> resourceManager = manager;
 }
 
 void GameContext:: setCamera(Camera* camera) {
@@ -165,6 +183,14 @@ int GameContext:: getObjectMap() const {
 
 void GameContext:: setObjectMap(int objectMapId) {
     objectMap = objectMapId;
+}
+
+int GameContext:: getResourceArray() const {
+    return resourceArray;
+}
+
+void GameContext:: setResourceArray(int arrayMapId) {
+    resourceArray = arrayMapId;
 }
 
 Player* GameContext:: getPlayer() {

@@ -2,6 +2,7 @@
 #include "world/tiles.h"
 #include "entities/player.h"
 #include "world/objects.h"
+#include "items/resources.h"
 #include <SDL3/SDL.h>
 
 TextureManager::TextureManager(SDL_Renderer* renderer) 
@@ -159,4 +160,20 @@ bool TextureManager::RenderPlayer(Player* player, float dstX, float dstY, Player
     float topLeftY = dstY - (info.height * scale / 2.0f);
 
     return RenderSprite(info.sheetName.c_str(), info.sheetX, info.sheetY, info.width, info.height, topLeftX, topLeftY, scale);
+}
+
+bool TextureManager::RenderResource(ResourceManager* resourceManager, int resourceId, float dstX, float dstY, float scale) {
+    if (!resourceManager) return false;
+
+    ResourceInfo* resource = resourceManager->GetResource(resourceId);
+    if (!resource) return false;
+
+    // Convert center coordinates to top-left for SDL rendering
+    float topLeftX = dstX - (resource->width * scale / 2.0f);
+    float topLeftY = dstY - (resource->height * scale / 2.0f);
+
+    return RenderSprite(resource->sheetName.c_str(),
+                        resource->sheetX, resource->sheetY,
+                        resource->width, resource->height,
+                        topLeftX, topLeftY, scale);
 }

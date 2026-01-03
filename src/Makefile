@@ -25,8 +25,8 @@ LDFLAGS = -L$(SDL_LIB_DIR) -Wl,-rpath,$(SDL_LIB_DIR)
 LIBS = -lSDL3
 
 # Source and output files
-SRC = main.cpp core/textures.cpp world/tiles.cpp world/objects.cpp definitions/tile_definitions.cpp definitions/object_definitions.cpp world/map_generation.cpp core/camera.cpp core/input_manager.cpp entities/player.cpp definitions/frame_definitions.cpp states/GameContext.cpp
-OBJ = $(BUILD_DIR)/main.o $(BUILD_DIR)/textures.o $(BUILD_DIR)/tiles.o $(BUILD_DIR)/objects.o $(BUILD_DIR)/tile_definitions.o $(BUILD_DIR)/object_definitions.o $(BUILD_DIR)/map_generation.o $(BUILD_DIR)/camera.o $(BUILD_DIR)/input_manager.o $(BUILD_DIR)/player.o $(BUILD_DIR)/frame_definitions.o $(BUILD_DIR)/GameContext.o
+SRC = main.cpp core/textures.cpp world/tiles.cpp world/objects.cpp items/resources.cpp definitions/tile_definitions.cpp definitions/object_definitions.cpp definitions/resource_definitions.cpp world/map_generation.cpp core/camera.cpp core/input_manager.cpp entities/player.cpp definitions/frame_definitions.cpp states/GameContext.cpp
+OBJ = $(BUILD_DIR)/main.o $(BUILD_DIR)/textures.o $(BUILD_DIR)/tiles.o $(BUILD_DIR)/objects.o $(BUILD_DIR)/resources.o $(BUILD_DIR)/tile_definitions.o $(BUILD_DIR)/object_definitions.o $(BUILD_DIR)/resource_definitions.o $(BUILD_DIR)/map_generation.o $(BUILD_DIR)/camera.o $(BUILD_DIR)/input_manager.o $(BUILD_DIR)/player.o $(BUILD_DIR)/frame_definitions.o $(BUILD_DIR)/GameContext.o
 TARGET = $(BUILD_DIR)/game
 
 # Default target
@@ -50,11 +50,17 @@ $(BUILD_DIR)/tiles.o: world/tiles.cpp world/tiles.h
 $(BUILD_DIR)/objects.o: world/objects.cpp world/objects.h
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c world/objects.cpp -o $(BUILD_DIR)/objects.o
 
+$(BUILD_DIR)/resources.o: items/resources.cpp items/resources.h
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -c items/resources.cpp -o $(BUILD_DIR)/resources.o
+
 $(BUILD_DIR)/tile_definitions.o: definitions/tile_definitions.cpp definitions/tile_definitions.h
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c definitions/tile_definitions.cpp -o $(BUILD_DIR)/tile_definitions.o
 
 $(BUILD_DIR)/object_definitions.o: definitions/object_definitions.cpp definitions/object_definitions.h
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c definitions/object_definitions.cpp -o $(BUILD_DIR)/object_definitions.o
+
+$(BUILD_DIR)/resource_definitions.o: definitions/resource_definitions.cpp definitions/resource_definitions.h
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -c definitions/resource_definitions.cpp -o $(BUILD_DIR)/resource_definitions.o
 
 $(BUILD_DIR)/map_generation.o: world/map_generation.cpp world/map_generation.h
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c world/map_generation.cpp -o $(BUILD_DIR)/map_generation.o
@@ -80,8 +86,10 @@ clean:
 	rm -f $(BUILD_DIR)/textures.o
 	rm -f $(BUILD_DIR)/tiles.o
 	rm -f $(BUILD_DIR)/objects.o
+	rm -f $(BUILD_DIR)/resources.o
 	rm -f $(BUILD_DIR)/tile_definitions.o
 	rm -f $(BUILD_DIR)/object_definitions.o
+	rm -f $(BUILD_DIR)/resource_definitions.o
 	rm -f $(BUILD_DIR)/map_generation.o
 	rm -f $(BUILD_DIR)/camera.o
 	rm -f $(BUILD_DIR)/input_manager.o

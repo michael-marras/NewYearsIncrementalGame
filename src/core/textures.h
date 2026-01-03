@@ -46,6 +46,9 @@ public:
 
     // Render the player by the frame
     bool RenderPlayer(class Player* player, float dstX, float dstY, PlayerAnimations frame);
+
+    // Render the items on the ground
+    bool RenderResource(class ResourceManager* resourceManager, int resourceId, float dstX, float dstY, float scale = 1.0f);
     
     // Clean up all textures (called automatically in destructor)
     void Cleanup();

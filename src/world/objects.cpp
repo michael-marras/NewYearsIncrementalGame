@@ -15,7 +15,7 @@ ObjectManager::~ObjectManager() {
 
 void ObjectManager::RegisterObject(int id, const char* sheetName, int sheetX, int sheetY, 
                                   int width, int height, bool interactable, const char* name,
-                                  int maxHealth, const char* replacement) {
+                                  int maxHealth, const char* replacement, const std::vector<DropInstance>& drops) {
     std::string objectName;
     
     // Use provided name, or generate default name if not provided
@@ -39,6 +39,7 @@ void ObjectManager::RegisterObject(int id, const char* sheetName, int sheetX, in
     obj.interactable = interactable;
     obj.maxHealth = maxHealth;
     obj.death_replacement = replacement;
+    obj.drops = drops;  // Store the drops vector
     
     objects[id] = obj;
     nameToId[objectName] = id;

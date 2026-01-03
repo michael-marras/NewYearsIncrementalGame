@@ -8,19 +8,23 @@
 // Forward declaration
 class Player;
 
+struct DropInstance {
+    int resourceId;
+    int quantity;
+};
 // Object information structure (template/definition data - shared by all instances)
 struct ObjectInfo {
-    int id;                             // Unique object ID
-    std::string name;                   // Human-readable name (e.g., "tree", "rock", "chest")
-    std::string sheetName;              // Which sprite sheet it's in
-    int sheetX;                         // X position in sprite sheet (in pixels)
-    int sheetY;                         // Y position in sprite sheet (in pixels)
-    int width;                          // Object width
-    int height;                         // Object height
-    bool interactable;                  // Can player interact with this object?
-    int maxHealth = -1;                 // Maximum health/durability (-1 = infinite/indestructible)
-    std::string death_replacement = ""; // What replaces this object when it gets destroyed
-    // Add more properties as needed (collision, interaction type, etc.)
+    int id;
+    std::string name;
+    std::string sheetName;
+    int sheetX;
+    int sheetY;
+    int width;
+    int height;
+    bool interactable;
+    int maxHealth = -1;
+    std::string death_replacement = "";
+    std::vector<DropInstance> drops;
 };
 
 // Key for identifying object instances (grid position)
@@ -45,8 +49,7 @@ struct ObjectInstanceKeyHash {
 
 // Instance data for individual objects (per-instance state)
 struct ObjectInstance {
-    int currentHealth;         // Current health/durability
-    // Add more instance-specific properties as needed (state, timers, etc.)
+    int currentHealth;
 };
 
 // Object grid structure for game maps
@@ -92,7 +95,8 @@ public:
     // Register an object with an optional custom name
     void RegisterObject(int id, const char* sheetName, int sheetX, int sheetY, 
                        int width, int height, bool interactable = false, const char* name = nullptr,
-                       int maxHealth = -1, const char* replacement = "");
+                       int maxHealth = -1, const char* replacement = "",
+                       const std::vector<DropInstance>& drops = {});
     
     // Register multiple objects from a sprite sheet at once
     void RegisterObjectsFromSheet(const char* sheetName, const int* objectData, int count, bool interactable = false);

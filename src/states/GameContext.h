@@ -9,6 +9,7 @@
 class TextureManager;
 class TileManager;
 class ObjectManager;
+class ResourceManager;
 class Camera;
 class Player;
 
@@ -21,6 +22,7 @@ class GameContext {
         TextureManager* textureManager;
         TileManager* tileManager;
         ObjectManager* objectManager;
+        ResourceManager* resourceManager;
         Camera* camera;
         // Display/Rendering
         int currentResolutionIndex = 5;
@@ -29,6 +31,7 @@ class GameContext {
         bool Running = true;
         int map;
         int objectMap;
+        int resourceArray;
         Player* player;
         // Entities
             // TODO
@@ -112,6 +115,11 @@ class GameContext {
          * Get Object Manager
          */
         ObjectManager* getObjectManager();
+
+        /**
+         * Get Resource Manager
+         */
+         ResourceManager* getResourceManager();
         
         /**
          * Get Camera
@@ -132,6 +140,11 @@ class GameContext {
          * Set Object Manager
          */
         void setObjectManager(ObjectManager* manager);
+
+        /**
+         * Set Resource Manager
+         */
+         void setResourceManager(ResourceManager* manager);
         
         /**
          * Set Camera
@@ -156,6 +169,16 @@ class GameContext {
          * Set current object map ID (object grid)
          */
         void setObjectMap(int objectMapId);
+
+        /**
+         * Get current resource array
+         */
+         int getResourceArray() const;
+        
+         /**
+          * Set array object map id
+          */
+         void setResourceArray(int arrayMapId);
 
         /**
          * Get Player Pointer

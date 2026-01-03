@@ -11,6 +11,7 @@
 #include "definitions/tile_definitions.h"
 #include "definitions/frame_definitions.h"
 #include "definitions/object_definitions.h"
+#include "definitions/resource_definitions.h"
 #include "world/map_generation.h"
 #include "utils/constants.h"
 #include "core/camera.h"
@@ -18,6 +19,7 @@
 #include "core/input_manager.h"
 #include <memory>
 #include "entities/player.h"
+#include "items/resources.h"
 
 struct SDLApplication {
     SDL_Window* window;
@@ -61,20 +63,23 @@ struct SDLApplication {
         TextureManager* textureManager = context->getTextureManager();
         TileManager* tileManager = context->getTileManager();
         ObjectManager* objectManager = context->getObjectManager();
+        ResourceManager* resourceManager = context->getResourceManager();
         player = context->getPlayer();
         Camera* camera = context->getCamera();
         
         SetupTiles(tileManager, textureManager);
         SetupObjects(objectManager, textureManager);
         SetupAnimations(player, textureManager);
+        SetupResources(resourceManager, textureManager);
         
         // Generate map from seed (change seed for different maps, or use time for random)
         unsigned int mapSeed = time(nullptr);  // Use same seed for same map, or use time(nullptr) for random
-        GeneratedMap generated = GenerateMapFromSeed(mapSeed, tileManager, objectManager, 100, 100);
+        GeneratedMap generated = GenerateMapFromSeed(mapSeed, tileManager, objectManager, resourceManager, 100, 100);
         
         // Set the generated map as the current active map in context
         context->setMap(generated.tileGridId);
         context->setObjectMap(generated.objectGridId);
+        context->setResourceArray(generated.resourceArrayId);
 
         if (player) {
             camera->SnapToTarget(player->getX(), player->getY());
@@ -165,7 +170,43 @@ struct SDLApplication {
 
         if (input.IsMouseButtonHeld(1)) {
             if (objectManager->PlayerCanInteract(context->getObjectMap(), gridX, gridY, context->getPlayer())) {
-                objectManager->DamageInstance(context->getObjectMap(), gridX, gridY, 1);
+                // Get object info before damaging (to check for drops)
+                ObjectInfo* objBeforeDamage = objectManager->GetObjectAt(context->getObjectMap(), gridX, gridY);
+                
+                // Damage the object
+                bool wasDestroyed = objectManager->DamageInstance(context->getObjectMap(), gridX, gridY, 1);
+                
+                // If object was destroyed, drop resources
+                if (wasDestroyed && objBeforeDamage) {
+                    ResourceManager* resourceManager = context->getResourceManager();
+                    int resourceArrayId = context->getResourceArray();
+                    
+                    if (resourceManager && resourceArrayId >= 0) {
+                        // Calculate world position (center of tile)
+                        float baseX = gridX * TILE_RENDER_SIZE + TILE_RENDER_SIZE / 2.0f;
+                        float baseY = gridY * TILE_RENDER_SIZE + TILE_RENDER_SIZE / 2.0f;
+                        
+                        // Drop all resources from the object with random spread
+                        const float dropSpread = 12.0f;  // Maximum spread distance in pixels
+                        
+                        for (const DropInstance& drop : objBeforeDamage->drops) {
+                            // Drop each resource with a random offset
+                            for (int i = 0; i < drop.quantity; i++) {
+                                // Generate random offset within spread radius
+                                float angle = (float)(std::rand() % 360) * M_PI / 180.0f;
+                                float distance = (float)(std::rand() % (int)(dropSpread * 100)) / 100.0f;
+                                
+                                float offsetX = cosf(angle) * distance;
+                                float offsetY = sinf(angle) * distance;
+                                
+                                float worldX = baseX + offsetX;
+                                float worldY = baseY + offsetY;
+                                
+                                resourceManager->AddResource(resourceArrayId, worldX, worldY, drop.resourceId, 1);
+                            }
+                        }
+                    }
+                }
             }
         }
         
@@ -227,6 +268,18 @@ struct SDLApplication {
                 else {
                 }
             }
+        }
+        
+        // Update resources (falling animation and magnetic pickup)
+        ResourceManager* resourceManager = context->getResourceManager();
+        int resourceArrayId = context->getResourceArray();
+        if (resourceManager && resourceArrayId >= 0 && player) {
+            float playerX = player->getX();
+            float playerY = player->getY();
+            float deltaTime = (float)context->getDeltaTime();
+            
+            int pickedUp = resourceManager->Update(resourceArrayId, playerX, playerY, deltaTime);
+            // TODO: Add pickedUp resources to player inventory
         }
         
         // Make camera follow the player
@@ -314,6 +367,37 @@ struct SDLApplication {
                 }
             }
         }
+        
+        // Render resources in camera view
+        ResourceManager* resourceManager = context->getResourceManager();
+        if (resourceManager) {
+            int resourceArrayId = context->getResourceArray();
+            if (resourceArrayId >= 0) {
+                // Calculate world bounds for camera view area
+                float minX = cameraX - effectiveWidth / 2.0f;
+                float maxX = cameraX + effectiveWidth / 2.0f;
+                float minY = cameraY - effectiveHeight / 2.0f;
+                float maxY = cameraY + effectiveHeight / 2.0f;
+                
+                // Get all resources in the visible area
+                std::vector<ResourceInstance*> resources = resourceManager->GetResourcesInArea(
+                    resourceArrayId, minX, minY, maxX, maxY);
+                
+                // Render each resource
+                for (ResourceInstance* resource : resources) {
+                    if (resource) {
+                        float fallProgress = resource->fallTimer / 0.1f;
+                        if (fallProgress > 1.0f) fallProgress = 1.0f;
+                        float fallOffset = (1.0f - fallProgress) * (1.0f - fallProgress) * 20.0f;
+                        
+                        float renderX, renderY;
+                        camera->WorldToRender(resource->x, resource->y - fallOffset, renderX, renderY, VIRTUAL_WIDTH, VIRTUAL_HEIGHT);
+                        textureManager->RenderResource(resourceManager, resource->resourceId, renderX, renderY, zoom * 0.8);
+                    }
+                }
+            }
+        }
+        
 
         //Render Player
         if (player) {
@@ -321,7 +405,7 @@ struct SDLApplication {
             camera->WorldToRender(player->getX(), player->getY(), renderX, renderY, VIRTUAL_WIDTH, VIRTUAL_HEIGHT);
             textureManager->RenderPlayer(player, renderX, renderY, player -> getCurrentPlayerAnimation());
         }
-        
+
         // Convert mouse window coordinates to render/logical coordinates
         float mouseScreenX = input.GetMouseX();
         float mouseScreenY = input.GetMouseY();

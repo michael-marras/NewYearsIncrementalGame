@@ -1,4 +1,5 @@
 #include "world/map_generation.h"
+#include "items/resources.h"
 #include <cstdlib>
 #include <vector>
 #include <string>
@@ -13,6 +14,7 @@ struct ObjectPlacement {
 GeneratedMap GenerateMapFromSeed(unsigned int seed, 
                                  TileManager* tileManager, 
                                  ObjectManager* objectManager,
+                                 ResourceManager* resourceManager,
                                  int width, int height) {
     // Seed the random number generator for reproducible generation
     std::srand(seed);
@@ -24,10 +26,17 @@ GeneratedMap GenerateMapFromSeed(unsigned int seed,
     int objectGridId = objectManager->CreateObjectGrid(width, height);
     ObjectGrid* objGrid = objectManager->GetObjectGrid(objectGridId);
     
+    // Create resource array
+    int resourceArrayId = -1;
+    if (resourceManager) {
+        resourceArrayId = resourceManager->CreateResourceArray();
+    }
+    
     if (!objGrid) {
         GeneratedMap result;
         result.tileGridId = tileGridId;
         result.objectGridId = objectGridId;
+        result.resourceArrayId = resourceArrayId;
         return result;
     }
     
@@ -76,6 +85,7 @@ GeneratedMap GenerateMapFromSeed(unsigned int seed,
     GeneratedMap result;
     result.tileGridId = tileGridId;
     result.objectGridId = objectGridId;
+    result.resourceArrayId = resourceArrayId;
     return result;
 }
 
