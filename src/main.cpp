@@ -214,22 +214,17 @@ struct SDLApplication {
             {
                 if (player->getPlayerDirection() == Direction::BACK) {
                     player->setCurrentPlayerAnimation(PlayerAnimations:: StandingStillBack);
-                    SDL_Log("test1");
                 }
                 else if (player->getPlayerDirection() == Direction::FORWARD) {
                     player->setCurrentPlayerAnimation(PlayerAnimations:: StandingStillForward);
-                    SDL_Log("test2");
                 }
                 else if (player->getPlayerDirection() == Direction::LEFT) {
                     player->setCurrentPlayerAnimation(PlayerAnimations:: StandingStillLeft);
-                    SDL_Log("test3");
                 }
                 else if (player->getPlayerDirection() == Direction::RIGHT) {
                     player->setCurrentPlayerAnimation(PlayerAnimations:: StandingStillRight);
-                    SDL_Log("test4");
                 }
                 else {
-                    SDL_Log("else");
                 }
             }
         }
