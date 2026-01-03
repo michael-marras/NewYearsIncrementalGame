@@ -1,10 +1,10 @@
 #include "GameContext.h"
-#include "../constants.h"
-#include "../textures.h"
-#include "../tiles.h"
-#include "../objects.h"
-#include "../camera.h"
-#include "../player.h"
+#include "utils/constants.h"
+#include "core/textures.h"
+#include "world/tiles.h"
+#include "world/objects.h"
+#include "core/camera.h"
+#include "entities/player.h"
 
 GameContext:: GameContext() {
     window = nullptr;

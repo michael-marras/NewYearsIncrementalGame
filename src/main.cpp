@@ -5,19 +5,19 @@
 #include <cmath>
 #include <unordered_map>
 #include "SDL3/SDL_keycode.h"
-#include "textures.h"
-#include "tiles.h"
-#include "objects.h"
-#include "tile_definitions.h"
-#include "frame_definitions.h"
-#include "object_definitions.h"
-#include "map_generation.h"
-#include "constants.h"
-#include "camera.h"
+#include "core/textures.h"
+#include "world/tiles.h"
+#include "world/objects.h"
+#include "definitions/tile_definitions.h"
+#include "definitions/frame_definitions.h"
+#include "definitions/object_definitions.h"
+#include "world/map_generation.h"
+#include "utils/constants.h"
+#include "core/camera.h"
 #include "states/GameContext.h"
-#include "input_manager.h"
+#include "core/input_manager.h"
 #include <memory>
-#include "player.h"
+#include "entities/player.h"
 
 struct SDLApplication {
     SDL_Window* window;
