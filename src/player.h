@@ -20,7 +20,7 @@ enum class PlayerAnimations: uint8_t {
     WalkingLeftLeftFoot,
     WalkingLeftIntermediary,
     WalkingLeftRightFoot,
-    StandStillLeft,
+    StandingStillLeft,
     WalkingRightRightFoot,
     WalkingRightIntermediary,
     WalkingRightLeftFoot,
@@ -29,10 +29,12 @@ enum class PlayerAnimations: uint8_t {
     StandingStillLeftRightHandUp,
     StandingStillRightLeftHandUp,
     StandingStillBackRightHandUp,
-    
+
     //Count of Player Animations
     PlayerAnimationsCount
 };
+
+enum class Direction: uint8_t {LEFT, RIGHT, FORWARD, BACK};
 
 // Frame information structure
 struct frameInfo {
@@ -52,6 +54,7 @@ class Player {
 
         // Player Animation
         PlayerAnimations currentAnimation;
+        Direction playerDirection;
         int curretnAnimationDepth = 0;
 
         // Frames
@@ -92,6 +95,18 @@ class Player {
          * Combined method to change both x and y
          */
         void move(float dx, float dy);
+
+        /**
+         * Get Player Direction
+         */
+        Direction getPlayerDirection();
+
+        /**
+         * Set Player Direction
+         *
+         * @param playerDirection last direction player was facing
+         */
+        void setPlayerDirection(Direction playerDirection);
 
         /**
          * Set the current player animation

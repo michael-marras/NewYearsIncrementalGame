@@ -169,25 +169,30 @@ struct SDLApplication {
             }
         }
         
-        
+        // Update Player Movement and current animations
+
         float moveX = 0.0f;
         float moveY = 0.0f;
         
         if (input.IsKeyHeld(SDLK_W)) {
             moveY -= 1.0f;
-            player -> setCurrentPlayerAnimation(PlayerAnimations::WalkingBackLeftFoot);
+            player->setCurrentPlayerAnimation(PlayerAnimations::WalkingBackLeftFoot);
+            player->setPlayerDirection(Direction::BACK);
         }
         if (input.IsKeyHeld(SDLK_S)) {
             moveY += 1.0f;
-            player -> setCurrentPlayerAnimation(PlayerAnimations::WalkingForwardRightFoot);
+            player->setCurrentPlayerAnimation(PlayerAnimations::WalkingForwardRightFoot);
+            player->setPlayerDirection(Direction::FORWARD);
         }
         if (input.IsKeyHeld(SDLK_A)) {
             moveX -= 1.0f;
-            player -> setCurrentPlayerAnimation(PlayerAnimations::WalkingLeftLeftFoot);
+            player->setCurrentPlayerAnimation(PlayerAnimations::WalkingLeftLeftFoot);
+            player->setPlayerDirection(Direction::LEFT);
         }
         if (input.IsKeyHeld(SDLK_D)) {
-            player -> setCurrentPlayerAnimation(PlayerAnimations::WalkingRightRightFoot);
             moveX += 1.0f;
+            player->setCurrentPlayerAnimation(PlayerAnimations::WalkingRightRightFoot);
+            player->setPlayerDirection(Direction::RIGHT);
         }
         if (moveX != 0.0f || moveY != 0.0f) {
             float length = sqrtf(moveX * moveX + moveY * moveY);
@@ -199,7 +204,34 @@ struct SDLApplication {
             moveX *= moveSpeed;
             moveY *= moveSpeed;
             
-            context->getPlayer()->move(moveX, moveY);
+            player->move(moveX, moveY);
+        }
+        else {
+            if (player->getCurrentPlayerAnimation() != PlayerAnimations:: StandingStillBack    || 
+                player->getCurrentPlayerAnimation() != PlayerAnimations:: StandingStillForward ||
+                player->getCurrentPlayerAnimation() != PlayerAnimations:: StandingStillLeft    ||
+                player->getCurrentPlayerAnimation() != PlayerAnimations:: StandingStillRight) 
+            {
+                if (player->getPlayerDirection() == Direction::BACK) {
+                    player->setCurrentPlayerAnimation(PlayerAnimations:: StandingStillBack);
+                    SDL_Log("test1");
+                }
+                else if (player->getPlayerDirection() == Direction::FORWARD) {
+                    player->setCurrentPlayerAnimation(PlayerAnimations:: StandingStillForward);
+                    SDL_Log("test2");
+                }
+                else if (player->getPlayerDirection() == Direction::LEFT) {
+                    player->setCurrentPlayerAnimation(PlayerAnimations:: StandingStillLeft);
+                    SDL_Log("test3");
+                }
+                else if (player->getPlayerDirection() == Direction::RIGHT) {
+                    player->setCurrentPlayerAnimation(PlayerAnimations:: StandingStillRight);
+                    SDL_Log("test4");
+                }
+                else {
+                    SDL_Log("else");
+                }
+            }
         }
         
         // Make camera follow the player

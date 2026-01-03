@@ -1,43 +1,51 @@
 #include "player.h"
 
-Player:: Player() {
-    this -> posX = 800.0f;
-    this -> posY = 800.0f;
-    this -> currentAnimation = PlayerAnimations:: StandingStillForward;
+Player::Player() {
+    this->posX = 800.0f;
+    this->posY = 800.0f;
+    this->currentAnimation = PlayerAnimations:: StandingStillForward;
 }
 
-Player:: Player(int posX, int posY) {
-    this -> posX = (float)posX;
-    this -> posY = (float)posY;
+Player::Player(int posX, int posY) {
+    this->posX = (float)posX;
+    this->posY = (float)posY;
 }
 
-void Player:: setX(float X) {
-    this -> posX = X;
+void Player::setX(float X) {
+    this->posX = X;
 }
 
-float Player:: getX() {
-    return this -> posX;
+float Player::getX() {
+    return this->posX;
 }
 
-void Player:: setY(float Y) {
-    this -> posY = Y;
+void Player::setY(float Y) {
+    this->posY = Y;
 }
 
-float Player:: getY() {
-    return this -> posY;
+float Player::getY() {
+    return this->posY;
 }
 
 void Player::move(float dx, float dy) {
-    this -> posX += dx;
-    this -> posY += dy;
+    this->posX += dx;
+    this->posY += dy;
+}
+
+Direction Player::getPlayerDirection() {
+    return this->playerDirection;
+}
+
+void Player::setPlayerDirection(Direction playerDirection) {
+    this->playerDirection = playerDirection;
 }
 
 void Player::setCurrentPlayerAnimation(PlayerAnimations animation) {
-    this -> currentAnimation = animation;
+    this->currentAnimation = animation;
 }
 
 PlayerAnimations Player::getCurrentPlayerAnimation() {
-    return this -> currentAnimation;
+    return this->currentAnimation;
 }
 
 PlayerAnimations Player:: RegisterPlayerAnimationsFromGrid(const char* sheetName, int cols, int rows, 
