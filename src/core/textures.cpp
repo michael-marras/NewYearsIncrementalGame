@@ -149,11 +149,10 @@ bool TextureManager::RenderObject(ObjectManager* objectManager, int objectId, fl
                        topLeftX, topLeftY, scale);
 }
 
-bool TextureManager::RenderPlayer(Player* player, float dstX, float dstY, PlayerAnimations frame) {
+bool TextureManager::RenderPlayer(Player* player, float dstX, float dstY, PlayerAnimations frame, float scale) {
     if (!player) return false;
 
     frameInfo info = player->getFrame(frame);
-    float scale = 1.0f;
     
     // Convert center coordinates to top-left for SDL rendering
     float topLeftX = dstX - (info.width * scale / 2.0f);

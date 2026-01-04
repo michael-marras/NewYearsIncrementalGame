@@ -45,7 +45,7 @@ public:
     bool RenderObject(class ObjectManager* objectManager, int objectId, float dstX, float dstY, float scale = 1.0f);
 
     // Render the player by the frame
-    bool RenderPlayer(class Player* player, float dstX, float dstY, PlayerAnimations frame);
+    bool RenderPlayer(class Player* player, float dstX, float dstY, PlayerAnimations frame, float scale = 1.0f);
 
     // Render the items on the ground
     bool RenderResource(class ResourceManager* resourceManager, int resourceId, float dstX, float dstY, float scale = 1.0f);

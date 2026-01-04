@@ -36,6 +36,7 @@ class GameContext {
         Player* player;
         Planet* currentPlanet;
         int currentPlanetFace = 0;  // 0-5 for the 6 faces
+        Uint64 faceTransitionCooldown = 0;  // Cooldown in milliseconds after face transition
         // Entities
             // TODO
         // UI
@@ -218,5 +219,16 @@ class GameContext {
          * Returns true if a transition occurred
          */
         bool checkAndHandleFaceTransition(Player* player);
+        
+        /**
+         * Update face transition cooldown (call each frame)
+         */
+        void updateFaceTransitionCooldown();
+        
+        /**
+         * Check if face transition cooldown is active
+         * Returns true if player should not be able to move yet
+         */
+        bool isFaceTransitionCooldownActive() const;
 };
 #endif // GAMECONTEXT_H

@@ -269,6 +269,7 @@ bool GameContext:: checkAndHandleFaceTransition(Player* player) {
     int newFace = currentPlanetFace;
     float newX = playerX;
     float newY = playerY;
+    int direction = 0;
 
     PlanetFace faces[] = {
         PlanetFace::FRONT,
@@ -280,51 +281,69 @@ bool GameContext:: checkAndHandleFaceTransition(Player* player) {
     };
     
     PlanetFace currentFaceEnum = faces[currentPlanetFace];
-    
     if (playerY < 0) {
-        // Crossed top edge - move to face above current face
-        switch (currentFaceEnum) {
-            case PlanetFace::FRONT: newFace = 4; newX = playerX; newY = maxCoord - 1; break; // TOP (appear at bottom)
-            case PlanetFace::BACK: newFace = 4; newX = maxCoord - playerX; newY = maxCoord - 1; break; // TOP (flipped)
-            case PlanetFace::LEFT: newFace = 4; newX = 0; newY = playerX; break; // TOP
-            case PlanetFace::RIGHT: newFace = 4; newX = maxCoord; newY = maxCoord - playerX; break; // TOP
-            case PlanetFace::TOP: newFace = 1; newX = playerX; newY = maxCoord - 1; break; // BACK
-            case PlanetFace::BOTTOM: newFace = 0; newX = playerX; newY = 0; break; // FRONT (appear at top)
-        }
-        transitioned = true;
+        direction = 90;
     } else if (playerY >= maxCoord) {
-        // Crossed bottom edge - move to face below current face
-        switch (currentFaceEnum) {
-            case PlanetFace::FRONT: newFace = 5; newX = playerX; newY = 0; break; // BOTTOM (appear at top)
-            case PlanetFace::BACK: newFace = 5; newX = maxCoord - playerX; newY = 0; break; // BOTTOM (flipped)
-            case PlanetFace::LEFT: newFace = 5; newX = 0; newY = maxCoord - playerX; break; // BOTTOM
-            case PlanetFace::RIGHT: newFace = 5; newX = maxCoord; newY = playerX; break; // BOTTOM
-            case PlanetFace::TOP: newFace = 0; newX = playerX; newY = 0; break; // FRONT (appear at top)
-            case PlanetFace::BOTTOM: newFace = 1; newX = playerX; newY = 0; break; // BACK (appear at top)
-        }
-        transitioned = true;
+        direction = 270;
     } else if (playerX < 0) {
-        // Crossed left edge - move to face to the left
-        switch (currentFaceEnum) {
-            case PlanetFace::FRONT: newFace = 2; newX = maxCoord - 1; newY = playerY; break; // LEFT (appear at right)
-            case PlanetFace::BACK: newFace = 3; newX = 0; newY = playerY; break; // RIGHT (appear at left)
-            case PlanetFace::LEFT: newFace = 1; newX = maxCoord - 1; newY = playerY; break; // BACK (appear at right)
-            case PlanetFace::RIGHT: newFace = 0; newX = maxCoord - 1; newY = playerY; break; // FRONT (appear at right)
-            case PlanetFace::TOP: newFace = 2; newX = maxCoord - 1; newY = playerY; break; // LEFT
-            case PlanetFace::BOTTOM: newFace = 2; newX = maxCoord - 1; newY = playerY; break; // LEFT
-        }
-        transitioned = true;
+        direction = 180;
     } else if (playerX >= maxCoord) {
-        // Crossed right edge - move to face to the right
-        switch (currentFaceEnum) {
-            case PlanetFace::FRONT: newFace = 3; newX = 0; newY = playerY; break; // RIGHT (appear at left)
-            case PlanetFace::BACK: newFace = 2; newX = 0; newY = playerY; break; // LEFT (appear at left)
-            case PlanetFace::LEFT: newFace = 0; newX = 0; newY = playerY; break; // FRONT (appear at left)
-            case PlanetFace::RIGHT: newFace = 1; newX = 0; newY = playerY; break; // BACK (appear at left)
-            case PlanetFace::TOP: newFace = 3; newX = 0; newY = playerY; break; // RIGHT
-            case PlanetFace::BOTTOM: newFace = 3; newX = 0; newY = playerY; break; // RIGHT
+        direction = 0;
+    } else {
+        direction = -1;
+    }
+    
+    // Only process transitions if we actually crossed an edge
+    if (direction != -1) {
+        if (currentFaceEnum == PlanetFace::FRONT) {
+            switch (direction) {
+                case 0: newFace = 3; newX = 0; newY = playerY; break;
+                case 90: newFace = 4; newX = playerX; newY = maxCoord - 1; break;
+                case 180: newFace = 2; newX = maxCoord - 1; newY = playerY; break;
+                case 270: newFace = 5; newX = playerX; newY = 0; break;
+            }
+            transitioned = true;
+        } else if (currentFaceEnum == PlanetFace::BACK) {
+            switch (direction) {
+                case 0: newFace = 2; newX = 0; newY = playerY; break;
+                case 90: newFace = 4; newX = playerX; newY = 0; break;
+                case 180: newFace = 3; newX = maxCoord - 1; newY = playerY; break;
+                case 270: newFace = 5; newX = playerX; newY = maxCoord - 1; break;
+            }
+            transitioned = true;
+        } else if (currentFaceEnum == PlanetFace::LEFT) {
+            switch (direction) {
+                case 0: newFace = 0; newX = 0; newY = playerY; break;
+                case 90: newFace = 4; newX = 0; newY = playerX; break;
+                case 180: newFace = 1; newX = maxCoord - 1; newY = playerY; break;
+                case 270: newFace = 5; newX = 0; newY = maxCoord - playerX; break;
+            }
+            transitioned = true;
+        } else if (currentFaceEnum == PlanetFace::RIGHT) {
+            switch (direction) {
+                case 0: newFace = 1; newX = 0; newY = playerY; break;
+                case 90: newFace = 4; newX = maxCoord - 1; newY = maxCoord - playerX; break;
+                case 180: newFace = 0; newX = maxCoord - 1; newY = playerY; break;
+                case 270: newFace = 5; newX = maxCoord - 1; newY = playerX; break;
+            }
+            transitioned = true;
+        } else if (currentFaceEnum == PlanetFace::TOP) {
+            switch (direction) {
+                case 0: newFace = 3; newX = maxCoord - playerY; newY = 0; break;
+                case 90: newFace = 1; newX = playerX; newY = 0; break;
+                case 180: newFace = 2; newX = playerY; newY = 0; break;
+                case 270: newFace = 0; newX = playerX; newY = 0; break;
+            }
+            transitioned = true;
+        } else if (currentFaceEnum == PlanetFace::BOTTOM) {
+            switch (direction) {
+                case 0: newFace = 3; newX = playerY; newY = maxCoord - 1; break;
+                case 90: newFace = 0; newX = playerX; newY = maxCoord - 1; break;
+                case 180: newFace = 2; newX = maxCoord - playerY; newY = maxCoord - 1; break;
+                case 270: newFace = 1; newX = playerX; newY = maxCoord - 1; break;
+            }
+            transitioned = true;
         }
-        transitioned = true;
     }
     
     if (transitioned) {
@@ -332,8 +351,39 @@ bool GameContext:: checkAndHandleFaceTransition(Player* player) {
         updateMapsFromPlanet();
         player->setX(newX);
         player->setY(newY);
+        
+        // Set player direction based on which edge they appear on
+        const float epsilon = 0.5f;
+        if (newY < epsilon) {
+            player->setPlayerDirection(Direction::FORWARD);
+        } else if (newY > maxCoord - 1 - epsilon) {
+            player->setPlayerDirection(Direction::BACK);
+        } else if (newX < epsilon) {
+            player->setPlayerDirection(Direction::RIGHT);
+        } else if (newX > maxCoord - 1 - epsilon) {
+            player->setPlayerDirection(Direction::LEFT);
+        }
+        
+        // Set cooldown to 30ms after face transition
+        faceTransitionCooldown = 30;
+        
         return true;
     }
     
     return false;
+}
+
+void GameContext::updateFaceTransitionCooldown() {
+    if (faceTransitionCooldown > 0) {
+        Uint64 deltaTime = getDeltaTime();
+        if (faceTransitionCooldown > deltaTime) {
+            faceTransitionCooldown -= deltaTime;
+        } else {
+            faceTransitionCooldown = 0;
+        }
+    }
+}
+
+bool GameContext::isFaceTransitionCooldownActive() const {
+    return faceTransitionCooldown > 0;
 }
