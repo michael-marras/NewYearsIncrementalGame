@@ -22,6 +22,7 @@
 #include "entities/player.h"
 #include "items/resources.h"
 #include "ui/hud.h"
+#include "world/planet.h"
 
 struct SDLApplication {
     SDL_Window* window;
@@ -83,17 +84,22 @@ struct SDLApplication {
         SetupObjects(objectManager, textureManager, resourceManager);
         SetupAnimations(player, textureManager);
         
-        // Generate map from seed (change seed for different maps, or use time for random)
-        unsigned int mapSeed = time(nullptr);  // Use same seed for same map, or use time(nullptr) for random
-        GeneratedMap generated = GenerateMapFromSeed(mapSeed, tileManager, objectManager, resourceManager, 100, 100);
+        // Generate planet from seed
+        unsigned int planetSeed = time(nullptr);
+        Planet* planet = GeneratePlanetFromSeed(planetSeed, tileManager, objectManager, resourceManager, PlanetSize::TINY);
         
-        // Set the generated map as the current active map in context
-        context->setMap(generated.tileGridId);
-        context->setObjectMap(generated.objectGridId);
-        context->setResourceArray(generated.resourceArrayId);
-
+        // Set the planet as current planet
+        context->setCurrentPlanet(planet);
+        context->setCurrentPlanetFace(0);
+        
+        // Spawn player in the center of the starting face
         if (player) {
-            camera->SnapToTarget(player->getX(), player->getY());
+            int radius = GetPlanetRadius(PlanetSize::TINY);
+            float centerX = (radius * TILE_RENDER_SIZE) / 2.0f;
+            float centerY = (radius * TILE_RENDER_SIZE) / 2.0f;
+            player->setX(centerX);
+            player->setY(centerY);
+            camera->SnapToTarget(centerX, centerY);
         }
         
         return true;
@@ -254,6 +260,9 @@ struct SDLApplication {
             moveY *= moveSpeed;
             
             player->move(moveX, moveY);
+            
+            // Check for face transitions when player walks off edge
+            context->checkAndHandleFaceTransition(player);
         }
         else {
             if (player->getCurrentPlayerAnimation() != PlayerAnimations:: StandingStillBack    || 

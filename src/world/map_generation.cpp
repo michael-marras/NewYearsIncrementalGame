@@ -1,5 +1,6 @@
 #include "world/map_generation.h"
 #include "items/resources.h"
+#include "world/planet.h"
 #include <cstdlib>
 #include <vector>
 #include <string>
@@ -51,7 +52,7 @@ GeneratedMap GenerateMapFromSeed(unsigned int seed,
         {"winter_big_gold_rock", 0.00083f, 0},
         {"winter_medium_gold_rock", 0.000625f, 0},
         {"winter_bush", 0.0056f, 0},
-        {"winter_well", 0.0f, 20},
+        {"winter_well", 0.0001f, 0},
     };
     
     // Loop through all object placements
@@ -87,5 +88,36 @@ GeneratedMap GenerateMapFromSeed(unsigned int seed,
     result.objectGridId = objectGridId;
     result.resourceArrayId = resourceArrayId;
     return result;
+}
+
+Planet* GeneratePlanetFromSeed(unsigned int seed,
+                                TileManager* tileManager,
+                                ObjectManager* objectManager,
+                                ResourceManager* resourceManager,
+                                PlanetSize size) {
+    Planet* planet = new Planet();
+    
+    // Get the radius (width/height) for this planet size
+    int radius = GetPlanetRadius(size);
+    
+    // Array of all 6 faces
+    PlanetFace faces[] = {
+        PlanetFace::FRONT,
+        PlanetFace::BACK,
+        PlanetFace::LEFT,
+        PlanetFace::RIGHT,
+        PlanetFace::TOP,
+        PlanetFace::BOTTOM
+    };
+    
+    // Generate each face with a slightly different seed (seed + face index)
+    // This ensures each face is unique but reproducible
+    for (int i = 0; i < 6; i++) {
+        unsigned int faceSeed = seed + i;
+        GeneratedMap faceMap = GenerateMapFromSeed(faceSeed, tileManager, objectManager, resourceManager, radius, radius);
+        planet->SetFaceData(faces[i], faceMap.tileGridId, faceMap.objectGridId, faceMap.resourceArrayId);
+    }
+    
+    return planet;
 }
 

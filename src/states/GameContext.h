@@ -12,6 +12,7 @@ class ObjectManager;
 class ResourceManager;
 class Camera;
 class Player;
+class Planet;
 
 class GameContext {
     private: 
@@ -33,6 +34,8 @@ class GameContext {
         int objectMap;
         int resourceArray;
         Player* player;
+        Planet* currentPlanet;
+        int currentPlanetFace = 0;  // 0-5 for the 6 faces
         // Entities
             // TODO
         // UI
@@ -184,5 +187,36 @@ class GameContext {
          * Get Player Pointer
          */ 
         Player* getPlayer();
+        
+        /**
+         * Get current planet
+         */
+        Planet* getCurrentPlanet() const;
+        
+        /**
+         * Set current planet
+         */
+        void setCurrentPlanet(Planet* planet);
+        
+        /**
+         * Get current planet face (0=FRONT, 1=BACK, 2=LEFT, 3=RIGHT, 4=TOP, 5=BOTTOM)
+         */
+        int getCurrentPlanetFace() const;
+        
+        /**
+         * Set current planet face (0=FRONT, 1=BACK, 2=LEFT, 3=RIGHT, 4=TOP, 5=BOTTOM)
+         */
+        void setCurrentPlanetFace(int face);
+        
+        /**
+         * Update context maps to use current planet's current face
+         */
+        void updateMapsFromPlanet();
+        
+        /**
+         * Check if player is off edge and handle face transition
+         * Returns true if a transition occurred
+         */
+        bool checkAndHandleFaceTransition(Player* player);
 };
 #endif // GAMECONTEXT_H

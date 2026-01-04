@@ -25,8 +25,8 @@ LDFLAGS = -L$(SDL_LIB_DIR) -Wl,-rpath,$(SDL_LIB_DIR)
 LIBS = -lSDL3
 
 # Source and output files
-SRC = main.cpp core/textures.cpp world/tiles.cpp world/objects.cpp items/resources.cpp definitions/tile_definitions.cpp definitions/object_definitions.cpp definitions/resource_definitions.cpp world/map_generation.cpp core/camera.cpp core/input_manager.cpp entities/player.cpp definitions/frame_definitions.cpp states/GameContext.cpp ui/hud.cpp
-OBJ = $(BUILD_DIR)/main.o $(BUILD_DIR)/textures.o $(BUILD_DIR)/tiles.o $(BUILD_DIR)/objects.o $(BUILD_DIR)/resources.o $(BUILD_DIR)/tile_definitions.o $(BUILD_DIR)/object_definitions.o $(BUILD_DIR)/resource_definitions.o $(BUILD_DIR)/map_generation.o $(BUILD_DIR)/camera.o $(BUILD_DIR)/input_manager.o $(BUILD_DIR)/player.o $(BUILD_DIR)/frame_definitions.o $(BUILD_DIR)/GameContext.o $(BUILD_DIR)/hud.o
+SRC = main.cpp core/textures.cpp world/tiles.cpp world/objects.cpp items/resources.cpp definitions/tile_definitions.cpp definitions/object_definitions.cpp definitions/resource_definitions.cpp world/map_generation.cpp world/planet.cpp core/camera.cpp core/input_manager.cpp entities/player.cpp definitions/frame_definitions.cpp states/GameContext.cpp ui/hud.cpp
+OBJ = $(BUILD_DIR)/main.o $(BUILD_DIR)/textures.o $(BUILD_DIR)/tiles.o $(BUILD_DIR)/objects.o $(BUILD_DIR)/resources.o $(BUILD_DIR)/tile_definitions.o $(BUILD_DIR)/object_definitions.o $(BUILD_DIR)/resource_definitions.o $(BUILD_DIR)/map_generation.o $(BUILD_DIR)/planet.o $(BUILD_DIR)/camera.o $(BUILD_DIR)/input_manager.o $(BUILD_DIR)/player.o $(BUILD_DIR)/frame_definitions.o $(BUILD_DIR)/GameContext.o $(BUILD_DIR)/hud.o
 TARGET = $(BUILD_DIR)/game
 
 # Default target
@@ -65,6 +65,9 @@ $(BUILD_DIR)/resource_definitions.o: definitions/resource_definitions.cpp defini
 $(BUILD_DIR)/map_generation.o: world/map_generation.cpp world/map_generation.h
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c world/map_generation.cpp -o $(BUILD_DIR)/map_generation.o
 
+$(BUILD_DIR)/planet.o: world/planet.cpp world/planet.h
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -c world/planet.cpp -o $(BUILD_DIR)/planet.o
+
 $(BUILD_DIR)/camera.o: core/camera.cpp core/camera.h
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c core/camera.cpp -o $(BUILD_DIR)/camera.o
 
@@ -94,6 +97,7 @@ clean:
 	rm -f $(BUILD_DIR)/object_definitions.o
 	rm -f $(BUILD_DIR)/resource_definitions.o
 	rm -f $(BUILD_DIR)/map_generation.o
+	rm -f $(BUILD_DIR)/planet.o
 	rm -f $(BUILD_DIR)/camera.o
 	rm -f $(BUILD_DIR)/input_manager.o
 	rm -f $(BUILD_DIR)/player.o

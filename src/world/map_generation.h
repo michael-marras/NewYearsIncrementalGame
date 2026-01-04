@@ -3,6 +3,7 @@
 
 #include "world/tiles.h"
 #include "world/objects.h"
+#include "world/planet.h"
 
 // Forward declaration
 class ResourceManager;
@@ -21,6 +22,15 @@ GeneratedMap GenerateMapFromSeed(unsigned int seed,
                                  ObjectManager* objectManager,
                                  ResourceManager* resourceManager,
                                  int width, int height);
+
+// Generate a cube planet with 6 faces from a seed
+// Returns a Planet with all 6 faces initialized
+// Uses the planet size to determine the radius (width/height) of each face
+Planet* GeneratePlanetFromSeed(unsigned int seed,
+                                TileManager* tileManager,
+                                ObjectManager* objectManager,
+                                ResourceManager* resourceManager,
+                                PlanetSize size);
 
 #endif // MAP_GENERATION_H
 

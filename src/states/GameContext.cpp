@@ -6,6 +6,7 @@
 #include "core/camera.h"
 #include "entities/player.h"
 #include "items/resources.h"
+#include "world/planet.h"
 
 GameContext:: GameContext() {
     window = nullptr;
@@ -19,6 +20,8 @@ GameContext:: GameContext() {
     map = -1;
     objectMap = -1;
     resourceArray = -1;
+    currentPlanet = nullptr;
+    currentPlanetFace = 0;
 }
 
 GameContext:: ~GameContext() {
@@ -45,6 +48,10 @@ GameContext:: ~GameContext() {
     if (resourceManager) {
         delete resourceManager;
         resourceManager = nullptr;
+    }
+    if (currentPlanet) {
+        delete currentPlanet;
+        currentPlanet = nullptr;
     }
 }
 
@@ -195,4 +202,138 @@ void GameContext:: setResourceArray(int arrayMapId) {
 
 Player* GameContext:: getPlayer() {
     return this -> player;
+}
+
+Planet* GameContext:: getCurrentPlanet() const {
+    return currentPlanet;
+}
+
+void GameContext:: setCurrentPlanet(Planet* planet) {
+    currentPlanet = planet;
+}
+
+int GameContext:: getCurrentPlanetFace() const {
+    return currentPlanetFace;
+}
+
+void GameContext:: setCurrentPlanetFace(int face) {
+    if (face >= 0 && face < 6) {
+        currentPlanetFace = face;
+        updateMapsFromPlanet();
+    }
+}
+
+void GameContext:: updateMapsFromPlanet() {
+    if (!currentPlanet) {
+        return;
+    }
+    
+    // Convert face index to PlanetFace enum
+    PlanetFace faces[] = {
+        PlanetFace::FRONT,
+        PlanetFace::BACK,
+        PlanetFace::LEFT,
+        PlanetFace::RIGHT,
+        PlanetFace::TOP,
+        PlanetFace::BOTTOM
+    };
+    
+    if (currentPlanetFace >= 0 && currentPlanetFace < 6) {
+        PlanetFace face = faces[currentPlanetFace];
+        const PlanetFaceData* faceData = currentPlanet->GetFaceData(face);
+        if (faceData) {
+            map = faceData->tileGridId;
+            objectMap = faceData->objectGridId;
+            resourceArray = faceData->resourceArrayId;
+        }
+    }
+}
+
+bool GameContext:: checkAndHandleFaceTransition(Player* player) {
+    if (!currentPlanet || !player) {
+        return false;
+    }
+    
+    TileGrid* grid = tileManager->GetTileGrid(map);
+    if (!grid) {
+        return false;
+    }
+    
+    int radius = grid->width;
+    float maxCoord = radius * TILE_RENDER_SIZE;
+    
+    float playerX = player->getX();
+    float playerY = player->getY();
+    
+    bool transitioned = false;
+    int newFace = currentPlanetFace;
+    float newX = playerX;
+    float newY = playerY;
+
+    PlanetFace faces[] = {
+        PlanetFace::FRONT,
+        PlanetFace::BACK,
+        PlanetFace::LEFT,
+        PlanetFace::RIGHT,
+        PlanetFace::TOP,
+        PlanetFace::BOTTOM
+    };
+    
+    PlanetFace currentFaceEnum = faces[currentPlanetFace];
+    
+    if (playerY < 0) {
+        // Crossed top edge - move to face above current face
+        switch (currentFaceEnum) {
+            case PlanetFace::FRONT: newFace = 4; newX = playerX; newY = maxCoord - 1; break; // TOP (appear at bottom)
+            case PlanetFace::BACK: newFace = 4; newX = maxCoord - playerX; newY = maxCoord - 1; break; // TOP (flipped)
+            case PlanetFace::LEFT: newFace = 4; newX = 0; newY = playerX; break; // TOP
+            case PlanetFace::RIGHT: newFace = 4; newX = maxCoord; newY = maxCoord - playerX; break; // TOP
+            case PlanetFace::TOP: newFace = 1; newX = playerX; newY = maxCoord - 1; break; // BACK
+            case PlanetFace::BOTTOM: newFace = 0; newX = playerX; newY = 0; break; // FRONT (appear at top)
+        }
+        transitioned = true;
+    } else if (playerY >= maxCoord) {
+        // Crossed bottom edge - move to face below current face
+        switch (currentFaceEnum) {
+            case PlanetFace::FRONT: newFace = 5; newX = playerX; newY = 0; break; // BOTTOM (appear at top)
+            case PlanetFace::BACK: newFace = 5; newX = maxCoord - playerX; newY = 0; break; // BOTTOM (flipped)
+            case PlanetFace::LEFT: newFace = 5; newX = 0; newY = maxCoord - playerX; break; // BOTTOM
+            case PlanetFace::RIGHT: newFace = 5; newX = maxCoord; newY = playerX; break; // BOTTOM
+            case PlanetFace::TOP: newFace = 0; newX = playerX; newY = 0; break; // FRONT (appear at top)
+            case PlanetFace::BOTTOM: newFace = 1; newX = playerX; newY = 0; break; // BACK (appear at top)
+        }
+        transitioned = true;
+    } else if (playerX < 0) {
+        // Crossed left edge - move to face to the left
+        switch (currentFaceEnum) {
+            case PlanetFace::FRONT: newFace = 2; newX = maxCoord - 1; newY = playerY; break; // LEFT (appear at right)
+            case PlanetFace::BACK: newFace = 3; newX = 0; newY = playerY; break; // RIGHT (appear at left)
+            case PlanetFace::LEFT: newFace = 1; newX = maxCoord - 1; newY = playerY; break; // BACK (appear at right)
+            case PlanetFace::RIGHT: newFace = 0; newX = maxCoord - 1; newY = playerY; break; // FRONT (appear at right)
+            case PlanetFace::TOP: newFace = 2; newX = maxCoord - 1; newY = playerY; break; // LEFT
+            case PlanetFace::BOTTOM: newFace = 2; newX = maxCoord - 1; newY = playerY; break; // LEFT
+        }
+        transitioned = true;
+    } else if (playerX >= maxCoord) {
+        // Crossed right edge - move to face to the right
+        switch (currentFaceEnum) {
+            case PlanetFace::FRONT: newFace = 3; newX = 0; newY = playerY; break; // RIGHT (appear at left)
+            case PlanetFace::BACK: newFace = 2; newX = 0; newY = playerY; break; // LEFT (appear at left)
+            case PlanetFace::LEFT: newFace = 0; newX = 0; newY = playerY; break; // FRONT (appear at left)
+            case PlanetFace::RIGHT: newFace = 1; newX = 0; newY = playerY; break; // BACK (appear at left)
+            case PlanetFace::TOP: newFace = 3; newX = 0; newY = playerY; break; // RIGHT
+            case PlanetFace::BOTTOM: newFace = 3; newX = 0; newY = playerY; break; // RIGHT
+        }
+        transitioned = true;
+    }
+    
+    if (transitioned) {
+        currentPlanetFace = newFace;
+        updateMapsFromPlanet();
+        player->setX(newX);
+        player->setY(newY);
+        return true;
+    }
+    
+    return false;
 }
