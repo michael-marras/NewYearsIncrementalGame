@@ -75,5 +75,18 @@ void Player:: RegisterPlayerAnimation(PlayerAnimations id, const char* sheetName
     Frames[id] = frame;
 }
 
+bool Player::HasResource(int resourceId) const {
+    auto it = inventory.find(resourceId);
+    return it != inventory.end() && it->second > 0;
+}
+
+int Player::GetResourceQuantity(int resourceId) const {
+    auto it = inventory.find(resourceId);
+    return (it != inventory.end()) ? it->second : 0;
+}
+
+void Player::AddResource(int resourceId, int quantity) {
+    inventory[resourceId] += quantity;
+}
 
 

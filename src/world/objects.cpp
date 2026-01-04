@@ -228,7 +228,6 @@ bool ObjectManager::DamageInstance(int gridId, int x, int y, int damage) {
     }
     
     instance->currentHealth -= damage;
-    SDL_Log("%d", instance->currentHealth);
     if (instance->currentHealth <= 0) {
         // Object destroyed - check for replacement
         ObjectGrid* grid = GetObjectGrid(gridId);

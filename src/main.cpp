@@ -4,6 +4,7 @@
 #include <ctime>
 #include <cmath>
 #include <unordered_map>
+#include <vector>
 #include "SDL3/SDL_keycode.h"
 #include "core/textures.h"
 #include "world/tiles.h"
@@ -20,6 +21,7 @@
 #include <memory>
 #include "entities/player.h"
 #include "items/resources.h"
+#include "ui/hud.h"
 
 struct SDLApplication {
     SDL_Window* window;
@@ -28,6 +30,7 @@ struct SDLApplication {
     //to run indefinitely
     std::unique_ptr<GameContext> context = std::make_unique<GameContext>();
     Player* player = context -> getPlayer();
+    HUD* hud = nullptr;
 
     //constructor
     SDLApplication(const char* title) {
@@ -45,10 +48,18 @@ struct SDLApplication {
         
         context->InitializeManagers(window, renderer);
         
+        // Initialize HUD
+        hud = new HUD(renderer);
     }
 
     //destructor
     ~SDLApplication() {
+        // Clean up HUD
+        if (hud) {
+            delete hud;
+            hud = nullptr;
+        }
+        
         // Managers are cleaned up by GameContext destructor
         if (renderer) {
             SDL_DestroyRenderer(renderer);
@@ -68,9 +79,9 @@ struct SDLApplication {
         Camera* camera = context->getCamera();
         
         SetupTiles(tileManager, textureManager);
-        SetupObjects(objectManager, textureManager);
+        SetupResources(resourceManager, textureManager);  // Must be before SetupObjects so resources can be looked up
+        SetupObjects(objectManager, textureManager, resourceManager);
         SetupAnimations(player, textureManager);
-        SetupResources(resourceManager, textureManager);
         
         // Generate map from seed (change seed for different maps, or use time for random)
         unsigned int mapSeed = time(nullptr);  // Use same seed for same map, or use time(nullptr) for random
@@ -186,23 +197,20 @@ struct SDLApplication {
                         float baseX = gridX * TILE_RENDER_SIZE + TILE_RENDER_SIZE / 2.0f;
                         float baseY = gridY * TILE_RENDER_SIZE + TILE_RENDER_SIZE / 2.0f;
                         
-                        // Drop all resources from the object with random spread
-                        const float dropSpread = 12.0f;  // Maximum spread distance in pixels
+                        // Drop all resources with initial velocity
+                        const float INITIAL_SPEED = 1000.0f;  // Initial velocity (pixels per second)
                         
                         for (const DropInstance& drop : objBeforeDamage->drops) {
-                            // Drop each resource with a random offset
+                            // Drop each resource with random direction
                             for (int i = 0; i < drop.quantity; i++) {
-                                // Generate random offset within spread radius
+                                // Random angle for direction
                                 float angle = (float)(std::rand() % 360) * M_PI / 180.0f;
-                                float distance = (float)(std::rand() % (int)(dropSpread * 100)) / 100.0f;
                                 
-                                float offsetX = cosf(angle) * distance;
-                                float offsetY = sinf(angle) * distance;
+                                // Calculate initial velocity components
+                                float vx = cosf(angle) * INITIAL_SPEED;
+                                float vy = sinf(angle) * INITIAL_SPEED;
                                 
-                                float worldX = baseX + offsetX;
-                                float worldY = baseY + offsetY;
-                                
-                                resourceManager->AddResource(resourceArrayId, worldX, worldY, drop.resourceId, 1);
+                                resourceManager->AddResource(resourceArrayId, baseX, baseY, drop.resourceId, 1, vx, vy);
                             }
                         }
                     }
@@ -278,8 +286,7 @@ struct SDLApplication {
             float playerY = player->getY();
             float deltaTime = (float)context->getDeltaTime();
             
-            int pickedUp = resourceManager->Update(resourceArrayId, playerX, playerY, deltaTime);
-            // TODO: Add pickedUp resources to player inventory
+            resourceManager->Update(resourceArrayId, playerX, playerY, deltaTime, player);
         }
         
         // Make camera follow the player
@@ -332,8 +339,16 @@ struct SDLApplication {
         }
         
         // Render objects (on top of tiles)
+        // Two-pass rendering: objects behind player first, then player, then objects in front
+        struct ObjectToRender {
+            int objectId;
+            float renderX;
+            float renderY;
+        };
+        std::vector<ObjectToRender> objectsInFront;
+        
         ObjectGrid* objectGrid = objectManager->GetObjectGrid(context->getObjectMap());
-        if (objectGrid) {
+        if (objectGrid && player) {
             const int objectBufferTiles = 3;
             
             int objectStartGridY = startGridY - objectBufferTiles;
@@ -341,10 +356,11 @@ struct SDLApplication {
             int objectStartGridX = startGridX;
             int objectEndGridX = startGridX + tilesX;
             
+            float playerY = player->getY();
+            
             for (int y = objectStartGridY; y < objectEndGridY; y++) {
                 for (int x = objectStartGridX; x < objectEndGridX; x++) {
                     if (objectGrid->IsValid(x, y) && objectGrid->HasObject(x, y)) {
-                        // Convert from tile top-left to tile center for center-based rendering
                         float worldX = x * TILE_RENDER_SIZE + TILE_RENDER_SIZE / 2.0f;
                         float worldY = y * TILE_RENDER_SIZE + TILE_RENDER_SIZE / 2.0f;
                         float renderX, renderY;
@@ -354,13 +370,17 @@ struct SDLApplication {
                         ObjectInfo* objInfo = objectManager->GetObject(objectId);
                         
                         if (objInfo) {
-                            // Check if object is visible (using center-based bounds)
                             float halfWidth = (objInfo->width * zoom) / 2.0f;
                             float halfHeight = (objInfo->height * zoom) / 2.0f;
                             
                             if (renderX + halfWidth > 0 && renderX - halfWidth < VIRTUAL_WIDTH && 
                                 renderY + halfHeight > 0 && renderY - halfHeight < VIRTUAL_HEIGHT) {
-                                textureManager->RenderObject(objectManager, objectId, renderX, renderY, zoom);
+                                
+                                if (worldY > playerY) {
+                                    objectsInFront.push_back({objectId, renderX, renderY});
+                                } else {
+                                    textureManager->RenderObject(objectManager, objectId, renderX, renderY, zoom);
+                                }
                             }
                         }
                     }
@@ -368,30 +388,23 @@ struct SDLApplication {
             }
         }
         
-        // Render resources in camera view
+        // Render resources
         ResourceManager* resourceManager = context->getResourceManager();
         if (resourceManager) {
             int resourceArrayId = context->getResourceArray();
             if (resourceArrayId >= 0) {
-                // Calculate world bounds for camera view area
                 float minX = cameraX - effectiveWidth / 2.0f;
                 float maxX = cameraX + effectiveWidth / 2.0f;
                 float minY = cameraY - effectiveHeight / 2.0f;
                 float maxY = cameraY + effectiveHeight / 2.0f;
                 
-                // Get all resources in the visible area
                 std::vector<ResourceInstance*> resources = resourceManager->GetResourcesInArea(
                     resourceArrayId, minX, minY, maxX, maxY);
                 
-                // Render each resource
                 for (ResourceInstance* resource : resources) {
                     if (resource) {
-                        float fallProgress = resource->fallTimer / 0.1f;
-                        if (fallProgress > 1.0f) fallProgress = 1.0f;
-                        float fallOffset = (1.0f - fallProgress) * (1.0f - fallProgress) * 20.0f;
-                        
                         float renderX, renderY;
-                        camera->WorldToRender(resource->x, resource->y - fallOffset, renderX, renderY, VIRTUAL_WIDTH, VIRTUAL_HEIGHT);
+                        camera->WorldToRender(resource->x, resource->y, renderX, renderY, VIRTUAL_WIDTH, VIRTUAL_HEIGHT);
                         textureManager->RenderResource(resourceManager, resource->resourceId, renderX, renderY, zoom * 0.8);
                     }
                 }
@@ -404,6 +417,13 @@ struct SDLApplication {
             float renderX, renderY;
             camera->WorldToRender(player->getX(), player->getY(), renderX, renderY, VIRTUAL_WIDTH, VIRTUAL_HEIGHT);
             textureManager->RenderPlayer(player, renderX, renderY, player -> getCurrentPlayerAnimation());
+        }
+        
+        // Render objects in front of player
+        if (objectManager) {
+            for (const ObjectToRender& obj : objectsInFront) {
+                textureManager->RenderObject(objectManager, obj.objectId, obj.renderX, obj.renderY, zoom);
+            }
         }
 
         // Convert mouse window coordinates to render/logical coordinates
@@ -422,6 +442,12 @@ struct SDLApplication {
 
         // Get object at mouse position (if any)
         ObjectInfo* objInfo = objectManager->GetObjectAt(context->getObjectMap(), gridX, gridY);
+        
+        // Render HUD overlay (on top of everything)
+        // resourceManager is already defined above, reuse it
+        if (hud && player && resourceManager && textureManager) {
+            hud->Render(player, resourceManager, textureManager);
+        }
         
         SDL_RenderPresent(renderer);
     }

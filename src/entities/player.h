@@ -60,6 +60,9 @@ class Player {
         // Frames
         std::unordered_map<PlayerAnimations, frameInfo> Frames;
 
+        // Inventory (resourceId -> quantity)
+        std::unordered_map<int, int> inventory;
+
     public:
         /**
          * Default Constructor
@@ -135,5 +138,20 @@ class Player {
         frameInfo getFrame(PlayerAnimations frame) {
             return this -> Frames[frame];
         }
+
+        /**
+         * check if player has a resource
+         */
+        bool HasResource(int resourceId) const;
+
+        /**
+         * check how much of a resource the player has
+         */
+        int GetResourceQuantity(int resourceId) const;
+
+        /**
+         * add resources into the player's inventory, handles lazy init
+         */
+        void AddResource(int resourceId, int quantity);
 };
 #endif
