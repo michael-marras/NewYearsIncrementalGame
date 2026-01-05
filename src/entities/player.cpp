@@ -4,6 +4,8 @@ Player::Player() {
     this->posX = 800.0f;
     this->posY = 800.0f;
     this->currentAnimation = PlayerAnimations:: StandingStillForward;
+    this->playerWalkingStage = WalkingStages:: NOT_WALKING;
+    this->playerWalkingStage = WalkingStages:: NOT_WALKING;
 }
 
 Player::Player(int posX, int posY) {
@@ -73,6 +75,14 @@ void Player:: RegisterPlayerAnimation(PlayerAnimations id, const char* sheetName
     frame.height = 16;
 
     Frames[id] = frame;
+}
+
+WalkingStages Player:: getPlayerWalkingStage() {
+    return this->playerWalkingStage;
+}
+
+void Player:: setPlayerWalkingStage(WalkingStages walkingStage) {
+    this->playerWalkingStage = walkingStage;
 }
 
 bool Player::HasResource(int resourceId) const {

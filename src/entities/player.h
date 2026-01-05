@@ -36,6 +36,10 @@ enum class PlayerAnimations: uint8_t {
 
 enum class Direction: uint8_t {LEFT, RIGHT, FORWARD, BACK};
 
+enum class WalkingStages : uint8_t {NOT_WALKING, LEFT_FOOT, RIGHT_FOOT, INTERMEDIARY};
+
+enum class WalkingStages : uint8_t {NOT_WALKING, LEFT_FOOT, RIGHT_FOOT, INTERMEDIARY};
+
 // Frame information structure
 struct frameInfo {
     PlayerAnimations frameId;   // Unique frame id
@@ -55,7 +59,8 @@ class Player {
         // Player Animation
         PlayerAnimations currentAnimation;
         Direction playerDirection;
-        int curretnAnimationDepth = 0;
+        WalkingStages playerWalkingStage;
+        WalkingStages playerWalkingStage;
 
         // Frames
         std::unordered_map<PlayerAnimations, frameInfo> Frames;

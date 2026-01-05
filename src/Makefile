@@ -1,7 +1,8 @@
 # Makefile for compiling main.cpp with SDL3 (macOS/Unix version)
 
 # Compiler settings
-CXX = g++
+CXX = clang++
+CXX = clang++
 CXXFLAGS = -std=c++17 -Wall -Wextra
 
 # Directories
@@ -39,7 +40,8 @@ TARGET = $(BUILD_DIR)/game
 # Default target
 all: $(TARGET)
 
-# Build the executable
+# Link the object files into the final executable
+# Link the object files into the final executable
 $(TARGET): $(OBJ)
 	$(CXX) $(OBJ) $(LDFLAGS) $(LIBS) -o $(TARGET)
 	@echo Build complete: $(TARGET)
