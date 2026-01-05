@@ -1,0 +1,236 @@
+#include "items/resources.h"
+#include "utils/constants.h"
+#include "entities/player.h"
+#include <SDL3/SDL.h>
+#include <cstdio>
+#include <cstring>
+#include <cmath>
+
+ResourceManager::ResourceManager() {
+}
+
+ResourceManager::~ResourceManager() {
+    DestroyAllArrays();
+}
+
+void ResourceManager::RegisterResource(int id, const char* sheetName, int sheetX, int sheetY,
+                                       int width, int height, bool pickupable, const char* name) {
+    std::string resourceName;
+
+    // Use provided name, or generate default name if not provided
+    if (name && name[0] != '\0') {
+        resourceName = name;
+    } else {
+        char defaultName[32];
+        snprintf(defaultName, sizeof(defaultName), "object_%d", id);
+        resourceName = defaultName;
+    }
+
+    // Create Resource Info
+    ResourceInfo resource;
+    resource.id = id;
+    resource.name = resourceName;
+    resource.sheetName = sheetName;
+    resource.sheetX = sheetX;
+    resource.sheetY = sheetY;
+    resource.width = width;
+    resource.height = height;
+    resource.pickupable = pickupable;
+
+    resourceTypes[id] = resource;
+    nameToId[resourceName] = id;
+}
+
+ResourceInfo* ResourceManager::GetResource(int id) {
+    auto it = resourceTypes.find(id);
+    if (it != resourceTypes.end()) {
+        return &it->second;
+    }
+    return nullptr;
+}
+
+ResourceInfo* ResourceManager::GetResourceByName(const char* name) {
+    auto it = nameToId.find(name);
+    if (it != nameToId.end()) {
+        return GetResource(it->second);
+    }
+    return nullptr;
+}
+
+bool ResourceManager::HasResource(int id) {
+    return resourceTypes.find(id) != resourceTypes.end();
+}
+
+int ResourceManager::CreateResourceArray() {
+    ResourceArray* array = new ResourceArray();
+    int arrayId = nextArrayId++;
+    resourceArrays[arrayId] = array;
+    return arrayId;
+}
+
+ResourceArray* ResourceManager::GetResourceArray(int arrayId) {
+    auto it = resourceArrays.find(arrayId);
+    if (it != resourceArrays.end()) {
+        return it->second;
+    }
+    return nullptr;
+}
+
+void ResourceManager::AddResource(int arrayId, float x, float y, int resourceId, int quantity, float vx, float vy) {
+    ResourceArray* array = GetResourceArray(arrayId);
+
+    if (!array) return;
+
+    ResourceInstance instance;
+    instance.x = x;
+    instance.y = y;
+    instance.resourceId = resourceId;
+    instance.quantity = quantity;
+    instance.vx = vx;
+    instance.vy = vy;
+
+    array->resources.push_back(instance);
+}
+
+ResourceInstance* ResourceManager::GetResourceNear(int arrayId, float worldX, float worldY, float pickupRange) {
+    ResourceArray* array = GetResourceArray(arrayId);
+    if (!array) return nullptr;
+
+    ResourceInstance* closest = nullptr;
+    float closestDist = pickupRange;
+
+    for (ResourceInstance& resource : array->resources) {
+        float dx = resource.x - worldX;
+        float dy = resource.y - worldY;
+        float dist = sqrtf(dx * dx + dy * dy);
+
+        if (dist < closestDist) {
+            closestDist = dist;
+            closest = &resource;
+        }
+    }
+    return closest;
+}
+
+int ResourceManager::PickupResource(int arrayId, float worldX, float worldY, float pickupRange) {
+    ResourceInstance* resource = GetResourceNear(arrayId, worldX, worldY, pickupRange);
+    if (!resource) return 0;
+
+    int quantity = resource->quantity;
+
+    ResourceArray* array = GetResourceArray(arrayId);
+    if (!array) return 0;
+
+    for (size_t i = 0; i < array->resources.size(); i++) {
+        if (&array->resources[i] == resource) {
+            array->resources.erase(array->resources.begin() + i);
+            break;
+        }
+    }
+
+    return quantity;
+}
+
+std::vector<ResourceInstance*> ResourceManager::GetResourcesInArea(int arrayId, float minX, float minY, float maxX, float maxY) {
+    std::vector<ResourceInstance*> result;
+    ResourceArray* array = GetResourceArray(arrayId);
+    if (!array) return result;
+
+    for (ResourceInstance& resource : array->resources) {
+        if (resource.x >= minX && resource.x <= maxX
+        && resource.y >= minY && resource.y <= maxY) {
+            result.push_back(&resource);
+        }
+    }
+
+    return result;
+}
+
+void ResourceManager::DestroyResourceArray(int arrayId) {
+    auto it = resourceArrays.find(arrayId);
+
+    if (it != resourceArrays.end()) {
+        delete it->second;
+        resourceArrays.erase(it);
+    }
+
+}
+
+void ResourceManager::DestroyAllArrays() {
+    for (auto& pair : resourceArrays) {
+        delete pair.second;
+    }
+    resourceArrays.clear();
+}
+
+void ResourceManager::Update(int arrayId, float playerX, float playerY, float deltaTimeMs, Player* player) {
+    ResourceArray* resourceArray = GetResourceArray(arrayId);
+    if (!resourceArray) {
+        return;
+    }
+    
+    // Constants for resource behavior
+    const float VELOCITY_DECAY = 0.92f;
+    const float VELOCITY_THRESHOLD = 5.0f;
+    const float MAGNETIC_RANGE = 20.0f;
+    const float PICKUP_RANGE = 8.0f;
+    const float MAGNETIC_FORCE = 150.0f;
+    const float DELTA_TIME_SEC = deltaTimeMs / 1000.0f;
+    
+    // Iterate through resources (use indices so we can remove while iterating)
+    for (size_t i = resourceArray->resources.size(); i > 0; i--) {
+        size_t idx = i - 1;  // Iterate backwards to safely remove
+        ResourceInstance& resource = resourceArray->resources[idx];
+        
+        // 1. Apply velocity and decay it
+        resource.x += resource.vx * DELTA_TIME_SEC;
+        resource.y += resource.vy * DELTA_TIME_SEC;
+        
+        // Decay velocity
+        resource.vx *= VELOCITY_DECAY;
+        resource.vy *= VELOCITY_DECAY;
+        
+        // Check if resource has stopped moving
+        float speed = sqrtf(resource.vx * resource.vx + resource.vy * resource.vy);
+        bool isStopped = speed < VELOCITY_THRESHOLD;
+        
+        // 2. Check distance to player for magnetic pickup (only if stopped)
+        float dx = playerX - resource.x;
+        float dy = playerY - resource.y;
+        float distance = sqrtf(dx * dx + dy * dy);
+        
+        // Check for pickup first (even if very close)
+        if (distance < PICKUP_RANGE && isStopped) {
+            // Auto-pickup when very close (only after resource has stopped)
+            if (player) {
+                // Add to player inventory
+                player->AddResource(resource.resourceId, resource.quantity);
+                
+                // Get resource info for logging
+                ResourceInfo* resourceInfo = GetResource(resource.resourceId);
+                if (resourceInfo) {
+                    SDL_Log("Picked up %d x %s (Resource ID: %d)", 
+                            resource.quantity, 
+                            resourceInfo->name.c_str(), 
+                            resource.resourceId);
+                } else {
+                    SDL_Log("Picked up %d x Resource ID: %d", resource.quantity, resource.resourceId);
+                }
+            }
+            
+            resourceArray->resources.erase(resourceArray->resources.begin() + idx);
+            continue;  // Skip to next resource
+        } else if (distance < MAGNETIC_RANGE && isStopped && distance > 0.001f) {
+            // Apply magnetic pull (only after resource has stopped)
+            // Set velocity instead of directly modifying position to work with velocity system
+            float pullStrength = 1.0f - (distance / MAGNETIC_RANGE);  // Stronger when closer
+            float normalizedX = dx / distance;
+            float normalizedY = dy / distance;
+            
+            // Set velocity for magnetic pull (will be applied next frame)
+            resource.vx = normalizedX * MAGNETIC_FORCE * pullStrength;
+            resource.vy = normalizedY * MAGNETIC_FORCE * pullStrength;
+        }
+    }
+}
+
