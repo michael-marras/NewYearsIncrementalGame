@@ -6,6 +6,8 @@ Player::Player() {
     this->currentAnimation = PlayerAnimations:: StandingStillForward;
     this->playerWalkingStage = WalkingStages:: NOT_WALKING;
     this->playerWalkingStage = WalkingStages:: NOT_WALKING;
+    this->IdlePunchingDeltaTime = 0;
+    this->playerState=IDLE; 
 }
 
 Player::Player(int posX, int posY) {
@@ -77,6 +79,10 @@ void Player:: RegisterPlayerAnimation(PlayerAnimations id, const char* sheetName
     Frames[id] = frame;
 }
 
+frameInfo Player:: getFrame(PlayerAnimations frame) {
+    return this->Frames[frame];
+}
+
 WalkingStages Player:: getPlayerWalkingStage() {
     return this->playerWalkingStage;
 }
@@ -97,6 +103,26 @@ int Player::GetResourceQuantity(int resourceId) const {
 
 void Player::AddResource(int resourceId, int quantity) {
     inventory[resourceId] += quantity;
+}
+
+Uint64 Player::getIdlePunchingDeltaTime() {
+    return this->IdlePunchingDeltaTime;
+}
+
+void Player::setIdlePunchingDeltaTime(int IdlePuncingDeltaTime) {
+    this->IdlePunchingDeltaTime = IdlePuncingDeltaTime;
+}
+
+PlayerStates Player::getPlayerState() {
+    return this->playerState;
+}
+
+void Player::setPlayerState(PlayerStates playerState) {
+    this->playerState = playerState; 
+}
+
+void Player::incrementIdlePunchingTime(Uint64 deltaTime) {
+    this->IdlePunchingDeltaTime += deltaTime;
 }
 
 

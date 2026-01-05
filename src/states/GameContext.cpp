@@ -387,3 +387,4 @@ void GameContext::updateFaceTransitionCooldown() {
 bool GameContext::isFaceTransitionCooldownActive() const {
     return faceTransitionCooldown > 0;
 }
+

@@ -229,6 +229,8 @@ struct SDLApplication {
         
         // Update Player Movement and current animations
         // Only allow movement if face transition cooldown is not active
+        PlayerAnimations currentAnimation = player->getCurrentPlayerAnimation();
+
         if (!context->isFaceTransitionCooldownActive()) {
             float moveX = 0.0f;
             float moveY = 0.0f;
@@ -238,21 +240,22 @@ struct SDLApplication {
                 player->setCurrentPlayerAnimation(PlayerAnimations::WalkingBackLeftFoot);
                 player->setPlayerDirection(Direction::BACK);
             }
-            if (input.IsKeyHeld(SDLK_S)) {
+            else if (input.IsKeyHeld(SDLK_S)) {
                 moveY += 1.0f;
                 player->setCurrentPlayerAnimation(PlayerAnimations::WalkingForwardRightFoot);
                 player->setPlayerDirection(Direction::FORWARD);
             }
-            if (input.IsKeyHeld(SDLK_A)) {
+            else if (input.IsKeyHeld(SDLK_A)) {
                 moveX -= 1.0f;
                 player->setCurrentPlayerAnimation(PlayerAnimations::WalkingLeftLeftFoot);
                 player->setPlayerDirection(Direction::LEFT);
             }
-            if (input.IsKeyHeld(SDLK_D)) {
+            else if (input.IsKeyHeld(SDLK_D)) {
                 moveX += 1.0f;
                 player->setCurrentPlayerAnimation(PlayerAnimations::WalkingRightRightFoot);
                 player->setPlayerDirection(Direction::RIGHT);
             }
+    
             if (moveX != 0.0f || moveY != 0.0f) {
                 float length = sqrtf(moveX * moveX + moveY * moveY);
                 if (length > 0.0f) {
@@ -264,33 +267,104 @@ struct SDLApplication {
                 moveY *= moveSpeed;
                 
                 player->move(moveX, moveY);
+                player->setPlayerState(WALKING);
                 
                 // Check for face transitions when player walks off edge
                 context->checkAndHandleFaceTransition(player);
             }
-        }
-        else {
-            if (player->getCurrentPlayerAnimation() != PlayerAnimations:: StandingStillBack    || 
-                player->getCurrentPlayerAnimation() != PlayerAnimations:: StandingStillForward ||
-                player->getCurrentPlayerAnimation() != PlayerAnimations:: StandingStillLeft    ||
-                player->getCurrentPlayerAnimation() != PlayerAnimations:: StandingStillRight) 
-            {
-                if (player->getPlayerDirection() == Direction::BACK) {
-                    player->setCurrentPlayerAnimation(PlayerAnimations:: StandingStillBack);
+            // Idle animations
+            else {
+                if ((currentAnimation != PlayerAnimations:: StandingStillBack   || 
+                    currentAnimation != PlayerAnimations:: StandingStillForward ||
+                    currentAnimation != PlayerAnimations:: StandingStillLeft    ||
+                    currentAnimation != PlayerAnimations:: StandingStillRight)  &&
+                    player->getPlayerState() != PUNCHING) 
+                {
+                    if (player->getPlayerDirection() == Direction::BACK) {
+                        player->setCurrentPlayerAnimation(PlayerAnimations:: StandingStillBack);
+                    }
+                    else if (player->getPlayerDirection() == Direction::FORWARD) {
+                        player->setCurrentPlayerAnimation(PlayerAnimations:: StandingStillForward);
+                    }
+                    else if (player->getPlayerDirection() == Direction::LEFT) {
+                        player->setCurrentPlayerAnimation(PlayerAnimations:: StandingStillLeft);
+                    }
+                    else if (player->getPlayerDirection() == Direction::RIGHT) {
+                        player->setCurrentPlayerAnimation(PlayerAnimations:: StandingStillRight);
+                    }
+                    else {
+                        SDL_Log("test");
+                    }
                 }
-                else if (player->getPlayerDirection() == Direction::FORWARD) {
-                    player->setCurrentPlayerAnimation(PlayerAnimations:: StandingStillForward);
+                // Idle punching animation
+                if (input.IsMouseButtonHeld(1)) {
+                    bool firstPunch = false;
+
+                    // Check Animation Time Requirements
+                    if (player->getPlayerState() == PUNCHING) {
+                        player->incrementIdlePunchingTime(context->getDeltaTime());
+                        firstPunch = false;
+                    } 
+                    else {
+                        player->setIdlePunchingDeltaTime(0);
+                        firstPunch = true;
+                    }
+                    player->setPlayerState(PUNCHING);
+
+                    // Set punching animation based on direction
+                    if (player->getPlayerDirection() == Direction::BACK) {
+                        SDL_Log("animation delta time: '%d' delta time: '%d'", player->getIdlePunchingDeltaTime(), context->getDeltaTime());
+                        if (firstPunch) {
+                            player->setCurrentPlayerAnimation(PlayerAnimations:: StandingStillBackRightHandUp);
+                        }
+                        else if (currentAnimation == PlayerAnimations:: StandingStillBack && player->getIdlePunchingDeltaTime() >= 4) {
+                            player->setCurrentPlayerAnimation(PlayerAnimations:: StandingStillBackRightHandUp);
+
+                            player->setIdlePunchingDeltaTime(0);
+                        }
+                        else if (currentAnimation == PlayerAnimations:: StandingStillBackRightHandUp && player->getIdlePunchingDeltaTime() >= 4) {
+                            player->setCurrentPlayerAnimation(PlayerAnimations:: StandingStillBack);
+
+                            player->setIdlePunchingDeltaTime(0);
+                        }
+
+                        
+                    }
+                    else if (player->getPlayerDirection() == Direction::FORWARD) {
+                        SDL_Log("le ponching forward");
+                        if (currentAnimation == PlayerAnimations:: StandingStillForward) {
+                            player->setCurrentPlayerAnimation(PlayerAnimations:: StandingStillForwardLeftHandUp);
+                        }
+                        else {
+                            player->setCurrentPlayerAnimation(PlayerAnimations:: StandingStillForward);
+                        }
+                    }
+                    else if (player->getPlayerDirection() == Direction::LEFT) {
+                        SDL_Log("le ponching left");
+                        if (currentAnimation == PlayerAnimations:: StandingStillLeft) {
+                            player->setCurrentPlayerAnimation(PlayerAnimations:: StandingStillLeftRightHandUp);
+                        }
+                        else {
+                            player->setCurrentPlayerAnimation(PlayerAnimations:: StandingStillLeft);
+                        }
+                    }
+                    else if (player->getPlayerDirection() == Direction::RIGHT) {
+                        SDL_Log("le ponching right");
+                        if (currentAnimation == PlayerAnimations:: StandingStillRight) {
+                            player->setCurrentPlayerAnimation(PlayerAnimations:: StandingStillRightLeftHandUp);
+                        }
+                        else {
+                            player->setCurrentPlayerAnimation(PlayerAnimations:: StandingStillRight);
+                        }
+                    }
                 }
-                else if (player->getPlayerDirection() == Direction::LEFT) {
-                    player->setCurrentPlayerAnimation(PlayerAnimations:: StandingStillLeft);
-                }
-                else if (player->getPlayerDirection() == Direction::RIGHT) {
-                    player->setCurrentPlayerAnimation(PlayerAnimations:: StandingStillRight);
-                }
-                else {
+                else if (!input.IsMouseButtonHeld(1)) {
+                    player->setIdlePunchingDeltaTime(0);
+                    player->setPlayerState(IDLE);
                 }
             }
         }
+        
         
         // Update resources (falling animation and magnetic pickup)
         ResourceManager* resourceManager = context->getResourceManager();

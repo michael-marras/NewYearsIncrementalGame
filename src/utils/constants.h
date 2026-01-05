@@ -4,7 +4,7 @@
 #include <SDL3/SDL.h>
 
 // Game constants
-const Uint64 FPS = 100;
+const Uint64 FPS = 60;
 const Uint64 TARGETFRAMETIME = 1000 / FPS;
 
 // Window settings

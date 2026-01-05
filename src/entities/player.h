@@ -7,6 +7,14 @@
 // Forward Declarations
 class TextureManager;
 
+typedef uint64_t Uint64;
+
+enum PlayerStates: uint8_t {
+    IDLE,
+    WALKING,
+    PUNCHING
+};
+
 // animations
 enum class PlayerAnimations: uint8_t {
     StandingStillForward,
@@ -38,8 +46,6 @@ enum class Direction: uint8_t {LEFT, RIGHT, FORWARD, BACK};
 
 enum class WalkingStages : uint8_t {NOT_WALKING, LEFT_FOOT, RIGHT_FOOT, INTERMEDIARY};
 
-enum class WalkingStages : uint8_t {NOT_WALKING, LEFT_FOOT, RIGHT_FOOT, INTERMEDIARY};
-
 // Frame information structure
 struct frameInfo {
     PlayerAnimations frameId;   // Unique frame id
@@ -59,8 +65,9 @@ class Player {
         // Player Animation
         PlayerAnimations currentAnimation;
         Direction playerDirection;
+        PlayerStates playerState;
         WalkingStages playerWalkingStage;
-        WalkingStages playerWalkingStage;
+        Uint64 IdlePunchingDeltaTime;
 
         // Frames
         std::unordered_map<PlayerAnimations, frameInfo> Frames;
@@ -140,9 +147,17 @@ class Player {
         /**
          * get frameInfo structure from Frames
          */
-        frameInfo getFrame(PlayerAnimations frame) {
-            return this -> Frames[frame];
-        }
+        frameInfo getFrame(PlayerAnimations frame);
+
+        /**
+         * Get playerWalkingStage
+         */
+        WalkingStages getPlayerWalkingStage();
+
+        /**
+         * Set playerWalkingStage
+         */
+        void setPlayerWalkingStage(WalkingStages walkingStage);
 
         /**
          * check if player has a resource
@@ -158,5 +173,30 @@ class Player {
          * add resources into the player's inventory, handles lazy init
          */
         void AddResource(int resourceId, int quantity);
+
+        /**
+         * Get playerIdlePuncingDeltaTime
+         */
+        Uint64 getIdlePunchingDeltaTime();
+
+        /**
+        * Set playerIdlePuncingDeltaTime
+        */
+        void setIdlePunchingDeltaTime(int IdlePuncingDeltaTime);
+
+        /**
+         * Get playerState
+         */
+        PlayerStates getPlayerState();
+
+        /**
+         * Set playerState
+         */
+        void setPlayerState(PlayerStates playerState);
+
+        /**
+         * Increment IdlePunchingDeltaTime
+         */
+        void incrementIdlePunchingTime(Uint64 deltaTime); 
 };
 #endif

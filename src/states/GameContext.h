@@ -28,6 +28,7 @@ class GameContext {
         // Display/Rendering
         int currentResolutionIndex = 5;
         Uint64 DeltaTime = 0;
+
         // Game World
         bool Running = true;
         int map;
