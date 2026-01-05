@@ -16,14 +16,18 @@ SDL_LIB_DIR = $(SDL_DIR)/build
 
 # Include paths (try both possible config directories)
 # Add current directory so subdirectories can find each other's headers
-FREETYPE_CFLAGS = -I/opt/homebrew/opt/freetype/include/freetype2
+
+# Auto-detect FreeType paths (works across different systems)
+# Try freetype-config first (macOS Homebrew), then pkg-config (Linux), then fallback paths
+FREETYPE_CFLAGS := $(shell freetype-config --cflags 2>/dev/null || pkg-config --cflags freetype2 2>/dev/null || echo "-I/opt/homebrew/opt/freetype/include/freetype2 -I/usr/local/include/freetype2 -I/usr/include/freetype2")
+FREETYPE_LDFLAGS := $(shell freetype-config --libs 2>/dev/null | sed 's/-lfreetype//' || pkg-config --libs-only-L freetype2 2>/dev/null || echo "-L/opt/homebrew/opt/freetype/lib -L/usr/local/lib -L/usr/lib")
+FREETYPE_LIBS := -lfreetype
+
 INCLUDES = -I. -I$(SDL_INCLUDE) -I$(SDL_BUILD_CONFIG) -I$(SDL_BUILD_CONFIG_ALT) $(FREETYPE_CFLAGS)
 
 # Library paths and libraries
 # On macOS, SDL3 builds as libSDL3.0.dylib, but we link with -lSDL3
 
-FREETYPE_LDFLAGS = -L/opt/homebrew/opt/freetype/lib
-FREETYPE_LIBS = -lfreetype
 LDFLAGS = -L$(SDL_LIB_DIR) -Wl,-rpath,$(SDL_LIB_DIR) $(FREETYPE_LDFLAGS)
 LIBS = -lSDL3 $(FREETYPE_LIBS)
 
