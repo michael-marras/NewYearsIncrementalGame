@@ -35,8 +35,8 @@ class GameContext {
         int resourceArray;
         Player* player;
         Planet* currentPlanet;
-        int currentPlanetFace = 0;  // 0-5 for the 6 faces
-        Uint64 faceTransitionCooldown = 0;  // Cooldown in milliseconds after face transition
+        int currentPlanetFace = 0;
+        Uint64 faceTransitionCooldown = 0;
         // Entities
             // TODO
         // UI

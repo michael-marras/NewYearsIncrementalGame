@@ -7,6 +7,7 @@
 
 // Forward declarations
 class TextureManager;
+class TextRenderer;
 
 // HUD (Heads-Up Display) for gameplay overlay
 class HUD {
@@ -19,12 +20,10 @@ public:
     
 private:
     SDL_Renderer* renderer;
+    TextRenderer* textRenderer;
     
-    // Helper function to render text (simple numeric font)
+    // Helper function to render text using TextRenderer
     void RenderText(const char* text, float x, float y, SDL_Color color);
-    
-    // Render a single digit (0-9) using simple geometric shapes
-    void RenderDigit(char digit, float x, float y, SDL_Color color);
     
     // Render resource counter
     void RenderResourceCounter(Player* player, ResourceManager* resourceManager, TextureManager* textureManager, float startX, float startY);

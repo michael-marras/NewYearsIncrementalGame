@@ -1,12 +1,36 @@
 #include "ui/hud.h"
+#include "ui/text_renderer.h"
 #include "core/textures.h"
 #include <cstdio>
 #include <cstring>
+#include <SDL3/SDL.h>
 
-HUD::HUD(SDL_Renderer* renderer) : renderer(renderer) {
+HUD::HUD(SDL_Renderer* renderer) : renderer(renderer), textRenderer(nullptr) {
+    // Create text renderer
+    textRenderer = new TextRenderer(renderer);
+    
+    // Get base path for font loading
+    const char* basePath = SDL_GetBasePath();
+    char* fontPath = nullptr;
+    if (basePath) {
+        SDL_asprintf(&fontPath, "%sfonts/pixelfont.otf", basePath);
+    } else {
+        SDL_asprintf(&fontPath, "fonts/pixelfont.otf");
+    }
+    
+    // Load font at size 16
+    if (!textRenderer->LoadFont(fontPath, 16)) {
+        SDL_Log("Warning: Failed to load font, text rendering may not work");
+    }
+    
+    SDL_free(fontPath);
 }
 
 HUD::~HUD() {
+    if (textRenderer) {
+        delete textRenderer;
+        textRenderer = nullptr;
+    }
 }
 
 void HUD::Render(Player* player, ResourceManager* resourceManager, TextureManager* textureManager) {
@@ -56,7 +80,7 @@ void HUD::RenderResourceCounter(Player* player, ResourceManager* resourceManager
             
             SDL_Color color = {255, 255, 255, 255};
             float textX = startX + iconSize + iconTextSpacing;
-            float textY = iconCenterY - 5.0f;
+            float textY = iconCenterY;
             RenderText(buffer, textX, textY, color);
             
             yOffset += lineHeight;
@@ -65,62 +89,10 @@ void HUD::RenderResourceCounter(Player* player, ResourceManager* resourceManager
 }
 
 void HUD::RenderText(const char* text, float x, float y, SDL_Color color) {
-    if (!text || !renderer) {
+    if (!text || !textRenderer) {
         return;
     }
     
-    float charX = x;
-    const float charWidth = 6.0f;
-    
-    for (int i = 0; text[i] != '\0'; i++) {
-        if (text[i] >= '0' && text[i] <= '9') {
-            RenderDigit(text[i], charX, y, color);
-        }
-        charX += charWidth;
-    }
-}
-
-void HUD::RenderDigit(char digit, float x, float y, SDL_Color color) {
-    if (!renderer || digit < '0' || digit > '9') {
-        return;
-    }
-    
-    SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
-    
-    const float w = 8.0f;
-    const float h = 10.0f;
-    const float t = 2.0f;
-    
-    bool segments[10][7] = {
-        {true,  true,  true,  false, true,  true,  true },  // 0
-        {false, false, true,  false, false, true,  false},  // 1
-        {true,  false, true,  true,  true,  false, true },  // 2
-        {true,  false, true,  true,  false, true,  true },  // 3
-        {false, true,  true,  true,  false, true,  false},  // 4
-        {true,  true,  false, true,  false, true,  true },  // 5
-        {true,  true,  false, true,  true,  true,  true },  // 6
-        {true,  false, true,  false, false, true,  false},  // 7
-        {true,  true,  true,  true,  true,  true,  true },  // 8
-        {true,  true,  true,  true,  false, true,  true }   // 9
-    };
-    
-    int d = digit - '0';
-    bool* seg = segments[d];
-    
-    // Draw segments as rectangles
-    // Top
-    if (seg[0]) { SDL_FRect r = {x+1, y, w-2, t}; SDL_RenderFillRect(renderer, &r); }
-    // Top-left
-    if (seg[1]) { SDL_FRect r = {x, y+1, t, h/2-1}; SDL_RenderFillRect(renderer, &r); }
-    // Top-right
-    if (seg[2]) { SDL_FRect r = {x+w-t, y+1, t, h/2-1}; SDL_RenderFillRect(renderer, &r); }
-    // Middle
-    if (seg[3]) { SDL_FRect r = {x+1, y+h/2-t/2, w-2, t}; SDL_RenderFillRect(renderer, &r); }
-    // Bottom-left
-    if (seg[4]) { SDL_FRect r = {x, y+h/2+1, t, h/2-1}; SDL_RenderFillRect(renderer, &r); }
-    // Bottom-right
-    if (seg[5]) { SDL_FRect r = {x+w-t, y+h/2+1, t, h/2-1}; SDL_RenderFillRect(renderer, &r); }
-    // Bottom
-    if (seg[6]) { SDL_FRect r = {x+1, y+h-t, w-2, t}; SDL_RenderFillRect(renderer, &r); }
+    textRenderer->RenderText(text, x, y, "left-center", color);
 }
 
