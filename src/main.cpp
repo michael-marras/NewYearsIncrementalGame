@@ -23,6 +23,7 @@
 #include "items/resources.h"
 #include "ui/hud.h"
 #include "world/planet.h"
+#include "core/Animations.h"
 #include "world/planet_tree.h"
 
 struct SDLApplication {
@@ -168,6 +169,7 @@ struct SDLApplication {
         TileManager* tileManager = context->getTileManager();
         ObjectManager* objectManager = context->getObjectManager();
         Camera* camera = context->getCamera();
+        std::unique_ptr<Animations> animation = std::make_unique<Animations>();
 
         const float moveSpeed = 1.5f;
         
@@ -308,42 +310,36 @@ struct SDLApplication {
 
                     // Check Animation Time Requirements
                     if (player->getPlayerState() == PUNCHING) {
-                        player->incrementIdlePunchingTime(context->getDeltaTime());
+                        player->incrementAnimationTime(context->getDeltaTime());
                         firstPunch = false;
+                        animation->setFirstTime(false);
                     } 
-                    else {
-                        player->setIdlePunchingDeltaTime(0);
+                    else if (player->getPlayerState()){
+                        player->setAnimationTime(0);
                         firstPunch = true;
                     }
                     player->setPlayerState(PUNCHING);
 
                     // Set punching animation based on direction
                     if (player->getPlayerDirection() == Direction::BACK) {
-                        SDL_Log("animation delta time: '%d' delta time: '%d'", player->getIdlePunchingDeltaTime(), context->getDeltaTime());
-                        if (firstPunch) {
-                            player->setCurrentPlayerAnimation(PlayerAnimations:: StandingStillBackRightHandUp);
-                        }
-                        else if (currentAnimation == PlayerAnimations:: StandingStillBack && player->getIdlePunchingDeltaTime() >= 4) {
-                            player->setCurrentPlayerAnimation(PlayerAnimations:: StandingStillBackRightHandUp);
-
-                            player->setIdlePunchingDeltaTime(0);
-                        }
-                        else if (currentAnimation == PlayerAnimations:: StandingStillBackRightHandUp && player->getIdlePunchingDeltaTime() >= 4) {
-                            player->setCurrentPlayerAnimation(PlayerAnimations:: StandingStillBack);
-
-                            player->setIdlePunchingDeltaTime(0);
-                        }
-
-                        
+                        SDL_Log("animation delta time: '%d' delta time: '%d'", player->getAnimationTime(), context->getDeltaTime());
+                        animation->AnimatePlayer(player, PUNCHING);            
                     }
                     else if (player->getPlayerDirection() == Direction::FORWARD) {
                         SDL_Log("le ponching forward");
-                        if (currentAnimation == PlayerAnimations:: StandingStillForward) {
+                        if (firstPunch) {
                             player->setCurrentPlayerAnimation(PlayerAnimations:: StandingStillForwardLeftHandUp);
                         }
-                        else {
-                            player->setCurrentPlayerAnimation(PlayerAnimations:: StandingStillForward);
+                        else if (currentAnimation == PlayerAnimations:: StandingStillForward && player->getAnimationTime() >= 6) {
+                            player->setCurrentPlayerAnimation(PlayerAnimations:: StandingStillForwardLeftHandUp);
+
+                            player->setAnimationTime(0);
                         }
+                        else if (currentAnimation == PlayerAnimations:: StandingStillForwardLeftHandUp && player->getAnimationTime() >= 6) {
+                            player->setCurrentPlayerAnimation(PlayerAnimations:: StandingStillForward);
+
+                            player->setAnimationTime(0);
+                        }   
                     }
                     else if (player->getPlayerDirection() == Direction::LEFT) {
                         SDL_Log("le ponching left");
@@ -365,7 +361,7 @@ struct SDLApplication {
                     }
                 }
                 else if (!input.IsMouseButtonHeld(1)) {
-                    player->setIdlePunchingDeltaTime(0);
+                    player->setAnimationTime(0);
                     player->setPlayerState(IDLE);
                 }
             }

@@ -57,23 +57,6 @@ struct frameInfo {
 };
 
 class Player {
-    private:
-        // Position
-        float posX;
-        float posY;
-
-        // Player Animation
-        PlayerAnimations currentAnimation;
-        Direction playerDirection;
-        PlayerStates playerState;
-        WalkingStages playerWalkingStage;
-        Uint64 IdlePunchingDeltaTime;
-
-        // Frames
-        std::unordered_map<PlayerAnimations, frameInfo> Frames;
-
-        // Inventory (resourceId -> quantity)
-        std::unordered_map<int, int> inventory;
 
     public:
         /**
@@ -177,12 +160,12 @@ class Player {
         /**
          * Get playerIdlePuncingDeltaTime
          */
-        Uint64 getIdlePunchingDeltaTime();
+        Uint64 getAnimationTime();
 
         /**
         * Set playerIdlePuncingDeltaTime
         */
-        void setIdlePunchingDeltaTime(int IdlePuncingDeltaTime);
+        void setAnimationTime(int animationTime);
 
         /**
          * Get playerState
@@ -195,8 +178,27 @@ class Player {
         void setPlayerState(PlayerStates playerState);
 
         /**
-         * Increment IdlePunchingDeltaTime
+         * Increment animationTime
          */
-        void incrementIdlePunchingTime(Uint64 deltaTime); 
+        void incrementAnimationTime(Uint64 deltaTime);
+        
+    private:
+        // Position
+        float posX;
+        float posY;
+
+        // Player Animation
+        PlayerAnimations currentAnimation;
+        Direction playerDirection;
+        PlayerStates playerState;
+        WalkingStages playerWalkingStage;
+        Uint64 animationTime;
+
+        // Frames
+        std::unordered_map<PlayerAnimations, frameInfo> Frames;
+
+        // Inventory (resourceId -> quantity)
+        std::unordered_map<int, int> inventory;
+
 };
 #endif

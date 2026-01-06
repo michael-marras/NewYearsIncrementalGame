@@ -33,8 +33,8 @@ LDFLAGS = -L$(SDL_LIB_DIR) -Wl,-rpath,$(SDL_LIB_DIR) $(FREETYPE_LDFLAGS)
 LIBS = -lSDL3 $(FREETYPE_LIBS)
 
 # Source and output files
-SRC = main.cpp core/textures.cpp world/tiles.cpp world/objects.cpp items/resources.cpp definitions/tile_definitions.cpp definitions/object_definitions.cpp definitions/resource_definitions.cpp world/map_generation.cpp world/planet.cpp world/planet_tree.cpp core/camera.cpp core/input_manager.cpp entities/player.cpp definitions/frame_definitions.cpp states/GameContext.cpp ui/hud.cpp ui/text_renderer.cpp
-OBJ = $(BUILD_DIR)/main.o $(BUILD_DIR)/textures.o $(BUILD_DIR)/tiles.o $(BUILD_DIR)/objects.o $(BUILD_DIR)/resources.o $(BUILD_DIR)/tile_definitions.o $(BUILD_DIR)/object_definitions.o $(BUILD_DIR)/resource_definitions.o $(BUILD_DIR)/map_generation.o $(BUILD_DIR)/planet.o $(BUILD_DIR)/planet_tree.o $(BUILD_DIR)/camera.o $(BUILD_DIR)/input_manager.o $(BUILD_DIR)/player.o $(BUILD_DIR)/frame_definitions.o $(BUILD_DIR)/GameContext.o $(BUILD_DIR)/hud.o $(BUILD_DIR)/text_renderer.o
+SRC = main.cpp core/textures.cpp world/tiles.cpp world/objects.cpp items/resources.cpp definitions/tile_definitions.cpp definitions/object_definitions.cpp definitions/resource_definitions.cpp world/map_generation.cpp world/planet.cpp world/planet_tree.cpp core/camera.cpp core/input_manager.cpp entities/player.cpp definitions/frame_definitions.cpp states/GameContext.cpp ui/hud.cpp ui/text_renderer.cpp core/Animations.cpp
+OBJ = $(BUILD_DIR)/main.o $(BUILD_DIR)/textures.o $(BUILD_DIR)/tiles.o $(BUILD_DIR)/objects.o $(BUILD_DIR)/resources.o $(BUILD_DIR)/tile_definitions.o $(BUILD_DIR)/object_definitions.o $(BUILD_DIR)/resource_definitions.o $(BUILD_DIR)/map_generation.o $(BUILD_DIR)/planet.o $(BUILD_DIR)/planet_tree.o $(BUILD_DIR)/camera.o $(BUILD_DIR)/input_manager.o $(BUILD_DIR)/player.o $(BUILD_DIR)/frame_definitions.o $(BUILD_DIR)/GameContext.o $(BUILD_DIR)/hud.o $(BUILD_DIR)/text_renderer.o $(BUILD_DIR)/Animations.o
 TARGET = $(BUILD_DIR)/game
 
 # Default target
@@ -101,6 +101,9 @@ $(BUILD_DIR)/hud.o: ui/hud.cpp ui/hud.h
 $(BUILD_DIR)/text_renderer.o: ui/text_renderer.cpp ui/text_renderer.h
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c ui/text_renderer.cpp -o $(BUILD_DIR)/text_renderer.o
 
+$(BUILD_DIR)/Animations.o: core/Animations.cpp core/Animations.h
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -c core/Animations.cpp -o $(BUILD_DIR)/Animations.o
+
 # Clean build artifacts
 clean:
 	rm -f $(BUILD_DIR)/main.o
@@ -121,6 +124,7 @@ clean:
 	rm -f $(BUILD_DIR)/GameContext.o
 	rm -f $(BUILD_DIR)/hud.o
 	rm -f $(BUILD_DIR)/text_renderer.o
+	rm -f $(BUILD_DIR)/Animations.o
 	rm -f $(TARGET)
 	@echo Clean complete
 

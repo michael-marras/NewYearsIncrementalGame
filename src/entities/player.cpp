@@ -6,7 +6,7 @@ Player::Player() {
     this->currentAnimation = PlayerAnimations:: StandingStillForward;
     this->playerWalkingStage = WalkingStages:: NOT_WALKING;
     this->playerWalkingStage = WalkingStages:: NOT_WALKING;
-    this->IdlePunchingDeltaTime = 0;
+    this->animationTime = 0;
     this->playerState=IDLE; 
 }
 
@@ -105,12 +105,12 @@ void Player::AddResource(int resourceId, int quantity) {
     inventory[resourceId] += quantity;
 }
 
-Uint64 Player::getIdlePunchingDeltaTime() {
-    return this->IdlePunchingDeltaTime;
+Uint64 Player::getAnimationTime() {
+    return this->animationTime;
 }
 
-void Player::setIdlePunchingDeltaTime(int IdlePuncingDeltaTime) {
-    this->IdlePunchingDeltaTime = IdlePuncingDeltaTime;
+void Player::setAnimationTime(int animationTime) {
+    this->animationTime = animationTime;
 }
 
 PlayerStates Player::getPlayerState() {
@@ -121,8 +121,8 @@ void Player::setPlayerState(PlayerStates playerState) {
     this->playerState = playerState; 
 }
 
-void Player::incrementIdlePunchingTime(Uint64 deltaTime) {
-    this->IdlePunchingDeltaTime += deltaTime;
+void Player::incrementAnimationTime(Uint64 deltaTime) {
+    this->animationTime += deltaTime;
 }
 
 
