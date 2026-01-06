@@ -23,6 +23,7 @@
 #include "items/resources.h"
 #include "ui/hud.h"
 #include "world/planet.h"
+#include "world/planet_tree.h"
 
 struct SDLApplication {
     SDL_Window* window;
@@ -80,16 +81,13 @@ struct SDLApplication {
         Camera* camera = context->getCamera();
         
         SetupTiles(tileManager, textureManager);
-        SetupResources(resourceManager, textureManager);  // Must be before SetupObjects so resources can be looked up
+        SetupResources(resourceManager, textureManager);
         SetupObjects(objectManager, textureManager, resourceManager);
         SetupAnimations(player, textureManager);
         
-        // Generate planet from seed
-        unsigned int planetSeed = time(nullptr);
-        Planet* planet = GeneratePlanetFromSeed(planetSeed, tileManager, objectManager, resourceManager, PlanetSize::TINY);
+        context->GeneratePlanetTree();
         
-        // Set the planet as current planet
-        context->setCurrentPlanet(planet);
+        context->setCurrentPlanetById(0);
         context->setCurrentPlanetFace(0);
         
         // Spawn player in the center of the starting face
@@ -124,15 +122,23 @@ struct SDLApplication {
             }
             else if(event.type == SDL_EVENT_KEY_DOWN) {
                 input.ProcessKeyDown(event.key.key);
-                
-                if (event.key.key == SDLK_ESCAPE) {
-                    context -> Quit();
-                }
-                if (event.key.key == SDLK_UP) {
-                    context -> ChangeResolution(context -> getCurrentResolutionIndex() - 1);
-                }
-                if (event.key.key == SDLK_DOWN) {
-                    context -> ChangeResolution(context -> getCurrentResolutionIndex() + 1);
+
+                switch (event.key.key) {
+                    case SDLK_ESCAPE: context -> Quit(); break;
+                    case SDLK_UP: context -> ChangeResolution(context -> getCurrentResolutionIndex() - 1); break;
+                    case SDLK_DOWN: context -> ChangeResolution(context -> getCurrentResolutionIndex() + 1); break;
+                    case SDLK_LEFT: {
+                        int newPlanetId = context->getCurrentPlanetId() - 1;
+                        if (newPlanetId >= 0) {
+                            context->setCurrentPlanetById(newPlanetId);
+                        }
+                        break;
+                    }
+                    case SDLK_RIGHT: {
+                        int newPlanetId = context->getCurrentPlanetId() + 1;
+                        context->setCurrentPlanetById(newPlanetId);
+                        break;
+                    }
                 }
             }
             else if(event.type == SDL_EVENT_KEY_UP) {

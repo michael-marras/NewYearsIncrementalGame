@@ -13,6 +13,7 @@ class ResourceManager;
 class Camera;
 class Player;
 class Planet;
+class PlanetTree;
 
 class GameContext {
     private: 
@@ -36,8 +37,10 @@ class GameContext {
         int resourceArray;
         Player* player;
         Planet* currentPlanet;
+        int currentPlanetId = 0;
         int currentPlanetFace = 0;
         Uint64 faceTransitionCooldown = 0;
+        PlanetTree* planetTree;
         // Entities
             // TODO
         // UI
@@ -231,5 +234,26 @@ class GameContext {
          * Returns true if player should not be able to move yet
          */
         bool isFaceTransitionCooldownActive() const;
+        
+        /**
+         * TEMPORARY: Generate 50 planets in the planet tree
+         * Call this after InitializeManagers
+         */
+        void GeneratePlanetTree();
+        
+        /**
+         * Get the planet tree
+         */
+        PlanetTree* getPlanetTree() const;
+        
+        /**
+         * Get current planet ID
+         */
+        int getCurrentPlanetId() const;
+        
+        /**
+         * Set current planet by ID (finds planet in tree and sets it)
+         */
+        bool setCurrentPlanetById(int planetId);
 };
 #endif // GAMECONTEXT_H

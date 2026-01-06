@@ -7,6 +7,9 @@
 #include "entities/player.h"
 #include "items/resources.h"
 #include "world/planet.h"
+#include "world/planet_tree.h"
+#include "world/map_generation.h"
+#include <ctime>
 
 GameContext:: GameContext() {
     window = nullptr;
@@ -22,6 +25,7 @@ GameContext:: GameContext() {
     resourceArray = -1;
     currentPlanet = nullptr;
     currentPlanetFace = 0;
+    planetTree = nullptr;
 }
 
 GameContext:: ~GameContext() {
@@ -53,6 +57,10 @@ GameContext:: ~GameContext() {
         delete currentPlanet;
         currentPlanet = nullptr;
     }
+    if (planetTree) {
+        delete planetTree;
+        planetTree = nullptr;
+    }
 }
 
 void GameContext:: InitializeManagers(SDL_Window* window, SDL_Renderer* renderer) {
@@ -83,6 +91,75 @@ void GameContext:: InitializeManagers(SDL_Window* window, SDL_Renderer* renderer
     if (!camera) {
         camera = new Camera(0.0f, 0.0f);
     }
+}
+
+void GameContext::GeneratePlanetTree() {
+    if (!tileManager || !objectManager || !resourceManager) {
+        SDL_Log("Error: Managers not initialized. Cannot generate planets.");
+        return;
+    }
+    
+    // Generate root planet (Planet 0)
+    unsigned int seed0 = static_cast<unsigned int>(time(nullptr));
+    Planet* planet0 = GeneratePlanetFromSeed(seed0, tileManager, objectManager, resourceManager, PlanetSize::TINY);
+    
+    // Create tree with root planet
+    planetTree = new PlanetTree(planet0);
+    
+    // Generate remaining 49 planets
+    for (int i = 1; i < 50; i++) {
+        // Find a parent that has an available slot
+        int parentId = -1;
+        for (int j = 0; j < i; j++) {
+            PlanetNode* node = planetTree->FindPlanet(j);
+            if (node && (!node->left || !node->right)) {
+                parentId = j;
+                break;
+            }
+        }
+        
+        if (parentId == -1) {
+            SDL_Log("Warning: Could not find available parent for planet %d", i);
+            continue;
+        }
+        
+        // Generate new planet with unique seed
+        unsigned int seed = static_cast<unsigned int>(time(nullptr) + i);
+        Planet* newPlanet = GeneratePlanetFromSeed(seed, tileManager, objectManager, resourceManager, PlanetSize::TINY);
+        
+        // Add to tree
+        int childId = planetTree->AddChild(parentId, newPlanet);
+        if (childId == -1) {
+            SDL_Log("Warning: Failed to add planet %d to tree", i);
+            delete newPlanet;  // Clean up if add failed
+        }
+    }
+    
+    SDL_Log("Generated 50 planets in planet tree");
+}
+
+PlanetTree* GameContext::getPlanetTree() const {
+    return planetTree;
+}
+
+int GameContext::getCurrentPlanetId() const {
+    return currentPlanetId;
+}
+
+bool GameContext::setCurrentPlanetById(int planetId) {
+    if (!planetTree) {
+        return false;
+    }
+    
+    PlanetNode* node = planetTree->FindPlanet(planetId);
+    if (node && node->planet) {
+        currentPlanetId = planetId;
+        currentPlanet = node->planet;
+        updateMapsFromPlanet();
+        return true;
+    }
+    
+    return false;
 }
 
 void GameContext:: ResetGameWorld() {
