@@ -188,11 +188,11 @@ void ResourceManager::Update(int arrayId, float playerX, float playerY, float de
         return;
     }
     
-    const float SHOOT_OUT_DURATION = 15.0f;
-    const float IDLE_DURATION = 10.0f;
+    const float SHOOT_OUT_DURATION = 150.0f;
+    const float IDLE_DURATION = 100.0f;
     const float MAGNETIC_RANGE = 30.0f;
     const float PICKUP_RANGE = 10.0f;
-    const float MAGNETIC_ACCELERATION = 12000.0f;
+    const float MAGNETIC_ACCELERATION = 120.0f;
     const float MAX_MAGNETIC_SPEED = 500.0f;
     const float DELTA_TIME_SEC = deltaTimeMs / 1000.0f;
     
