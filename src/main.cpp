@@ -25,6 +25,7 @@
 #include "world/planet.h"
 #include "core/Animations.h"
 #include "world/planet_tree.h"
+#include "world/BigBangEngine.h"
 
 struct SDLApplication {
     SDL_Window* window;
@@ -271,6 +272,7 @@ struct SDLApplication {
             float moveX = 0.0f;
             float moveY = 0.0f;
             
+            // Check vertical movement (W/S)
             if (input.IsKeyHeld(SDLK_W)) {
                 moveY -= 1.0f;
                 player->setCurrentPlayerAnimation(PlayerAnimations::WalkingBackLeftFoot);
@@ -281,7 +283,9 @@ struct SDLApplication {
                 player->setCurrentPlayerAnimation(PlayerAnimations::WalkingForwardRightFoot);
                 player->setPlayerDirection(Direction::FORWARD);
             }
-            else if (input.IsKeyHeld(SDLK_A)) {
+            
+            // Check horizontal movement (A/D) - independent of vertical
+            if (input.IsKeyHeld(SDLK_A)) {
                 moveX -= 1.0f;
                 player->setCurrentPlayerAnimation(PlayerAnimations::WalkingLeftLeftFoot);
                 player->setPlayerDirection(Direction::LEFT);
@@ -452,6 +456,32 @@ struct SDLApplication {
                     int tileId = grid->GetTile(x, y);
                     
                     textureManager->RenderTile(tileManager, tileId, renderX, renderY, zoom);
+                }
+            }
+        }
+        
+        // Render BigBangEngine if viewing TOP face
+        if (context->getCurrentPlanet() && context->getCurrentPlanetFace() == 4 /* TOP */) {
+            Planet* planet = context->getCurrentPlanet();
+            BigBangEngine* engine = planet->GetPortalEngine();
+            if (engine) {
+                // Ensure the portal texture is loaded
+                engine->EnsureTextureLoaded(textureManager);
+                // Update animation
+                engine->Update((float)context->getDeltaTime());
+                
+                // Compute center of current grid (TOP face)
+                int mapId = context->getMap();
+                TileGrid* topGrid = tileManager->GetTileGrid(mapId);
+                if (topGrid) {
+                    float centerX = (topGrid->width / 2.0f) * TILE_RENDER_SIZE + TILE_RENDER_SIZE / 2.0f;
+                    float centerY = (topGrid->height / 2.0f) * TILE_RENDER_SIZE + TILE_RENDER_SIZE / 2.0f;
+                    
+                    float portalRenderX, portalRenderY;
+                    camera->WorldToRender(centerX, centerY, portalRenderX, portalRenderY, VIRTUAL_WIDTH, VIRTUAL_HEIGHT);
+                    
+                    // Scale: 0.5 → 32x32 world units (2x2 tiles) for a 64x64 frame
+                    engine->Render(textureManager, portalRenderX, portalRenderY, zoom * 0.5f);
                 }
             }
         }

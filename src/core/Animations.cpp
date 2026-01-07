@@ -11,12 +11,12 @@ void Animations::AnimatePlayer(Player* player, PlayerStates playerState) {
             player->setCurrentPlayerAnimation(PlayerAnimations:: StandingStillBackRightHandUp);
             return;
         }
-        else if (player->getCurrentPlayerAnimation() == PlayerAnimations:: StandingStillBack && player->getAnimationTime() >= 6) {
+        else if (player->getCurrentPlayerAnimation() == PlayerAnimations:: StandingStillBack && player->getAnimationTime() >= 100) {
             player->setCurrentPlayerAnimation(PlayerAnimations:: StandingStillBackRightHandUp);
 
             player->setAnimationTime(0);
         }
-        else if (player->getCurrentPlayerAnimation() == PlayerAnimations:: StandingStillBackRightHandUp && player->getAnimationTime() >= 6) {
+        else if (player->getCurrentPlayerAnimation() == PlayerAnimations:: StandingStillBackRightHandUp && player->getAnimationTime() >= 100) {
             player->setCurrentPlayerAnimation(PlayerAnimations:: StandingStillBack);
 
             player->setAnimationTime(0);

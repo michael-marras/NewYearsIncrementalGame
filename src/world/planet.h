@@ -2,6 +2,7 @@
 #define PLANET_H
 
 #include <unordered_map>
+#include "world/BigBangEngine.h"
 
 // Enum for the 6 faces of a cube planet
 enum class PlanetFace {
@@ -130,6 +131,9 @@ private:
     float currentEnergy = 0.0f;
     float energyCost = 0.0f;
     int childrenGenerated = 0;
+    BigBangEngine portalEngine;
+public:
+    BigBangEngine* GetPortalEngine() { return &portalEngine; }
 };
 
 #endif // PLANET_H

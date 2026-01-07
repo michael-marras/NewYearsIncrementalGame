@@ -262,7 +262,16 @@ bool GameContext:: isRunning() {
 }
 
 void GameContext:: setDeltaTime(Uint64* currentTick) {
-    this -> DeltaTime = SDL_GetTicks() - *currentTick;
+    Uint64 now = SDL_GetTicks();
+    if (lastFrameTime == 0) {
+        // First frame - initialize
+        lastFrameTime = now;
+        this->DeltaTime = 16; // Default to ~60 FPS for first frame
+    } else {
+        // Calculate actual frame-to-frame delta
+        this->DeltaTime = now - lastFrameTime;
+        lastFrameTime = now;
+    }
 }
 
 Uint64 GameContext:: getDeltaTime() {
