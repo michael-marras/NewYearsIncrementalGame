@@ -19,11 +19,37 @@ void BigBangEngine::EnsureTextureLoaded(TextureManager* textureManager) {
 
 void BigBangEngine::Update(float deltaTimeMs) {
     if (deltaTimeMs <= 0.0f) return;
+    
+    // Update frame animation
     frameAccumulatorMs += deltaTimeMs;
     while (frameAccumulatorMs >= frameDurationMs) {
         frameAccumulatorMs -= frameDurationMs;
         currentFrame = (currentFrame + 1) % kTotalFrames;
     }
+    
+    // Smoothly interpolate display scale toward target scale
+    // Growth rate: 4 scale units (5-1) over 4000ms = 1 scale unit per 1000ms
+    float scalePerMs = 4.0f / kGrowthTimeMs;
+    float maxChange = scalePerMs * deltaTimeMs;
+    
+    if (displayScale < targetScale) {
+        displayScale += maxChange;
+        if (displayScale > targetScale) displayScale = targetScale;
+    } else if (displayScale > targetScale) {
+        displayScale -= maxChange;
+        if (displayScale < targetScale) displayScale = targetScale;
+    }
+}
+
+void BigBangEngine::SetTargetEnergyRatio(float ratio) {
+    if (ratio < 0.0f) ratio = 0.0f;
+    if (ratio > 1.0f) ratio = 1.0f;
+    targetScale = 1.0f + 4.0f * ratio;
+}
+
+void BigBangEngine::ResetScale() {
+    targetScale = 1.0f;
+    displayScale = 1.0f;
 }
 
 void BigBangEngine::Render(TextureManager* textureManager, float worldX, float worldY, float scale) const {
@@ -32,9 +58,10 @@ void BigBangEngine::Render(TextureManager* textureManager, float worldX, float w
     int srcX, srcY, srcW, srcH;
     GetFrameSrc(currentFrame, srcX, srcY, srcW, srcH);
 
-    // The engine should render centered on worldX/worldY
-    // TextureManager::RenderSprite treats dstX/dstY as the center
-    textureManager->RenderSprite(kPortalTextureName, srcX, srcY, srcW, srcH, worldX, worldY, scale);
+    float topLeftX = worldX - (srcW * scale / 2.0f);
+    float topLeftY = worldY - (srcH * scale / 2.0f);
+
+    textureManager->RenderSprite(kPortalTextureName, srcX, srcY, srcW, srcH, topLeftX, topLeftY, scale);
 }
 
 void BigBangEngine::GetFrameSrc(int frameIndex, int& srcX, int& srcY, int& srcW, int& srcH) const {

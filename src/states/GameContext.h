@@ -27,7 +27,7 @@ class GameContext {
         ResourceManager* resourceManager;
         Camera* camera;
         // Display/Rendering
-        int currentResolutionIndex = 5;
+        int currentResolutionIndex = 3;
         Uint64 DeltaTime = 0;
         Uint64 lastFrameTime = 0;
 

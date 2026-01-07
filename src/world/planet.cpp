@@ -89,6 +89,10 @@ bool Planet::CanGenerateChild() const {
     return childrenGenerated < 2 && currentEnergy >= energyCost;
 }
 
+bool Planet::HasChildCapacity() const {
+    return childrenGenerated < 2;
+}
+
 void Planet::ConsumeEnergyForChild() {
     if (currentEnergy >= energyCost) {
         currentEnergy -= energyCost;

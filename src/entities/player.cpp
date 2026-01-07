@@ -137,3 +137,18 @@ void Player::RemoveResource(int resourceId) {
     this->inventory.erase(resourceId);
 }
 
+void Player::ConsumeResource(int resourceId, int quantity) {
+    if (quantity <= 0) {
+        return;
+    }
+    auto it = this->inventory.find(resourceId);
+    if (it == this->inventory.end()) {
+        return;
+    }
+    if (it->second <= quantity) {
+        this->inventory.erase(it);
+    } else {
+        it->second -= quantity;
+    }
+}
+

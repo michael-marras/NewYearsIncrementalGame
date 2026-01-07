@@ -42,6 +42,22 @@ enum class PlayerAnimations: uint8_t {
     PlayerAnimationsCount
 };
 
+/* This was my idea for a way to store a bit simpler, but you don't have to do it this way (sudo code)
+
+playerAnimation = { <- map
+    WALKING : { <- map
+        Front: Array[3] <- these would be arrays with each frame, so like the 3 forward walking frames
+        BACK: Array[3]
+        LEFT: Array[3]
+        RIGHT: Array[3]
+        }
+}
+
+That way when you want to do the player walking forward animation you can get it by playerAnimation.WALKING.FRONT
+and it gives you the 3 frames for it instead of having to type out all 3 frame enums
+
+*/
+
 enum class Direction: uint8_t {LEFT, RIGHT, FORWARD, BACK};
 
 enum class WalkingStages : uint8_t {NOT_WALKING, LEFT_FOOT, RIGHT_FOOT, INTERMEDIARY};
@@ -199,6 +215,15 @@ class Player {
          * @param resourceId The resource ID to remove
          */
         void RemoveResource(int resourceId);
+
+        /**
+         * Consume a specific quantity of a resource.
+         * If quantity exceeds what's available, removes the entry.
+         *
+         * @param resourceId The resource ID to consume
+         * @param quantity The amount to consume (>= 0)
+         */
+        void ConsumeResource(int resourceId, int quantity);
         
     private:
         // Position

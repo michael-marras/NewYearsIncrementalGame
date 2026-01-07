@@ -505,9 +505,8 @@ bool GameContext:: checkAndHandleFaceTransition(Player* player) {
         } else if (newX > maxCoord - 1 - epsilon) {
             player->setPlayerDirection(Direction::LEFT);
         }
-        
-        // Set cooldown to 30ms after face transition
-        faceTransitionCooldown = 30;
+
+        faceTransitionCooldown = 500;
         
         return true;
     }

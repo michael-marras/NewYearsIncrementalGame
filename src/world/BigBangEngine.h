@@ -33,6 +33,19 @@ public:
     // Configure animation speed (milliseconds per frame)
     void SetFrameDurationMs(float ms) { frameDurationMs = ms; }
 
+    // Set the target scale based on energy ratio (0.0 to 1.0)
+    // Portal will grow from 1x to 5x over time
+    void SetTargetEnergyRatio(float ratio);
+    
+    // Get current display scale (smoothly interpolated)
+    float GetDisplayScale() const { return displayScale; }
+    
+    // Check if portal has finished growing to full size (5x)
+    bool IsFullyGrown() const { return displayScale >= 4.99f; }
+    
+    // Reset portal scale to 1x (after generation)
+    void ResetScale();
+
     // Accessors
     int GetCurrentFrame() const { return currentFrame; }
 
@@ -41,9 +54,13 @@ private:
     void GetFrameSrc(int frameIndex, int& srcX, int& srcY, int& srcW, int& srcH) const;
 
 private:
-    int currentFrame = 0;          // 0..6
-    float frameAccumulatorMs = 0;  // time accumulator for frame stepping
-    float frameDurationMs = 100.0f; // default: 10 FPS
+    int currentFrame = 0;
+    float frameAccumulatorMs = 0;
+    float frameDurationMs = 100.0f;
+    
+    float targetScale = 1.0f;
+    float displayScale = 1.0f;
+    static constexpr float kGrowthTimeMs = 4000.0f;
 };
 
 #endif // BIG_BANG_ENGINE_H

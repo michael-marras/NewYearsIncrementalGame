@@ -42,7 +42,7 @@ void SetupObjects(ObjectManager* objectManager, TextureManager* textureManager, 
         {6, "winter_objects", 64, 128, 16, 16, true, "winter_small_iron_rock", 37, "", {{"raw_iron", 1}}},
         
         // Gold Rocks
-        {7, "winter_objects", 16, 128, 16, 23, true, "winter_big_gold_rock", 200, "winter_medium_gold_rock", {{"raw_gold", 3}}},
+        {7, "winter_objects", 16, 128, 16, 23, true, "winter_big_gold_rock", 200, "winter_medium_gold_rock", {{"raw_gold", 100}}},
         {8, "winter_objects", 48, 128, 16, 16, true, "winter_medium_gold_rock", 100, "winter_small_gold_rock", {{"raw_gold", 2}}},
         {9, "winter_objects", 80, 128, 16, 16, true, "winter_small_gold_rock", 50, "", {{"raw_gold", 1}}},
         

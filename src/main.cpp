@@ -82,6 +82,11 @@ struct SDLApplication {
         player = context->getPlayer();
         Camera* camera = context->getCamera();
         
+        // Allow zoom out to 0.01 (100x zoomed out)
+        if (camera) {
+            camera->SetZoomBounds(0.8f, 10.0f);
+        }
+        
         SetupTiles(tileManager, textureManager);
         SetupResources(resourceManager, textureManager);
         SetupObjects(objectManager, textureManager, resourceManager);
@@ -127,18 +132,74 @@ struct SDLApplication {
 
                 switch (event.key.key) {
                     case SDLK_ESCAPE: context -> Quit(); break;
-                    case SDLK_UP: context -> ChangeResolution(context -> getCurrentResolutionIndex() - 1); break;
-                    case SDLK_DOWN: context -> ChangeResolution(context -> getCurrentResolutionIndex() + 1); break;
+                    case SDLK_UP: {
+                        // Navigate to parent planet
+                        PlanetTree* tree = context->getPlanetTree();
+                        if (tree) {
+                            int currentPlanetId = context->getCurrentPlanetId();
+                            PlanetNode* parent = tree->GetParent(currentPlanetId);
+                            if (parent && context->setCurrentPlanetById(parent->planetId)) {
+                                // Set to TOP face so portal is visible
+                                context->setCurrentPlanetFace(4); // TOP
+                                // Respawn player at center of new planet
+                                int radius = GetPlanetRadius(PlanetSize::TINY);
+                                float centerX = (radius * TILE_RENDER_SIZE) / 2.0f;
+                                float centerY = (radius * TILE_RENDER_SIZE) / 2.0f;
+                                player->setX(centerX);
+                                player->setY(centerY);
+                                Camera* camera = context->getCamera();
+                                if (camera) camera->SnapToTarget(centerX, centerY);
+                            }
+                        }
+                        break;
+                    }
+                    case SDLK_DOWN: {
+                        // Cycle through all resolutions
+                        int currentIndex = context->getCurrentResolutionIndex();
+                        int nextIndex = (currentIndex + 1) % RESOLUTION_PRESET_COUNT;
+                        context->ChangeResolution(nextIndex);
+                        break;
+                    }
                     case SDLK_LEFT: {
-                        int newPlanetId = context->getCurrentPlanetId() - 1;
-                        if (newPlanetId >= 0) {
-                            context->setCurrentPlanetById(newPlanetId);
+                        // Navigate to left child planet
+                        PlanetTree* tree = context->getPlanetTree();
+                        if (tree) {
+                            int currentPlanetId = context->getCurrentPlanetId();
+                            int leftChildId = tree->GetLeftChildId(currentPlanetId);
+                            if (leftChildId >= 0 && context->setCurrentPlanetById(leftChildId)) {
+                                // Set to TOP face so portal is visible
+                                context->setCurrentPlanetFace(4); // TOP
+                                // Respawn player at center of new planet
+                                int radius = GetPlanetRadius(PlanetSize::TINY);
+                                float centerX = (radius * TILE_RENDER_SIZE) / 2.0f;
+                                float centerY = (radius * TILE_RENDER_SIZE) / 2.0f;
+                                player->setX(centerX);
+                                player->setY(centerY);
+                                Camera* camera = context->getCamera();
+                                if (camera) camera->SnapToTarget(centerX, centerY);
+                            }
                         }
                         break;
                     }
                     case SDLK_RIGHT: {
-                        int newPlanetId = context->getCurrentPlanetId() + 1;
-                        context->setCurrentPlanetById(newPlanetId);
+                        // Navigate to right child planet
+                        PlanetTree* tree = context->getPlanetTree();
+                        if (tree) {
+                            int currentPlanetId = context->getCurrentPlanetId();
+                            int rightChildId = tree->GetRightChildId(currentPlanetId);
+                            if (rightChildId >= 0 && context->setCurrentPlanetById(rightChildId)) {
+                                // Set to TOP face so portal is visible
+                                context->setCurrentPlanetFace(4); // TOP
+                                // Respawn player at center of new planet
+                                int radius = GetPlanetRadius(PlanetSize::TINY);
+                                float centerX = (radius * TILE_RENDER_SIZE) / 2.0f;
+                                float centerY = (radius * TILE_RENDER_SIZE) / 2.0f;
+                                player->setX(centerX);
+                                player->setY(centerY);
+                                Camera* camera = context->getCamera();
+                                if (camera) camera->SnapToTarget(centerX, centerY);
+                            }
+                        }
                         break;
                     }
                     case SDLK_E: {
@@ -150,22 +211,64 @@ struct SDLApplication {
                             return;
                         }
 
-                        std::unordered_map<int, int>* inventory = player -> getInventory();
-
-                        for (const auto& pair : *inventory) {
-                            int resourceId = pair.first;
-                            int quantity = pair.second;
-
-                            float energy = resourceManager->GetResourceValue(resourceId, quantity);
-
-                            currentPlanet->AddEnergy(energy);
-
-                            player->RemoveResource(resourceId);
-
-                            char energyMsg[128];
-                            snprintf(energyMsg, sizeof(energyMsg), "Your planet now has %.1f/%.1f energy", 
-                                    currentPlanet->GetCurrentEnergy(), currentPlanet->GetEnergyCost());
-                            SDL_Log("%s", energyMsg);
+                        // Only feed resources for ONE child per E press
+                        // Check if planet can accept more energy (has capacity and not already full)
+                        if (!currentPlanet->HasChildCapacity()) {
+                            SDL_Log("Planet has already generated maximum children");
+                            break;
+                        }
+                        
+                        if (currentPlanet->CanGenerateChild()) {
+                            // Already has enough energy - generate the child
+                            context->GeneratePlanetInTree(context->getCurrentPlanetId());
+                            SDL_Log("Generated child planet!");
+                            break;
+                        }
+                        
+                        std::unordered_map<int, int>* inventory = player->getInventory();
+                        std::vector<std::pair<int, int>> entries(inventory->begin(), inventory->end());
+                        
+                        float energyCost = currentPlanet->GetEnergyCost();
+                        float missing = energyCost - currentPlanet->GetCurrentEnergy();
+                        
+                        // Process each resource type; only accept what is needed to reach ONE child
+                        for (const auto& entry : entries) {
+                            if (missing <= 0.0f) break; // Already have enough for this child
+                            
+                            int resourceId = entry.first;
+                            int remainingQty = entry.second;
+                            
+                            float energyPerUnit = resourceManager->GetResourceValue(resourceId);
+                            
+                            // Skip non-energy resources
+                            if (energyPerUnit <= 0.0f) {
+                                continue;
+                            }
+                            
+                            // Calculate exact units needed to fill the gap (not more)
+                            int unitsNeeded = (int)ceilf(missing / energyPerUnit);
+                            if (unitsNeeded < 1) unitsNeeded = 1;
+                            int consumeNow = (remainingQty < unitsNeeded) ? remainingQty : unitsNeeded;
+                            
+                            // Only add the exact energy needed, not more
+                            float addEnergy = energyPerUnit * (float)consumeNow;
+                            if (addEnergy > missing) {
+                                addEnergy = missing;
+                            }
+                            
+                            currentPlanet->AddEnergy(addEnergy);
+                            player->ConsumeResource(resourceId, consumeNow);
+                            missing -= addEnergy;
+                        }
+                        
+                        char energyMsg[128];
+                        snprintf(energyMsg, sizeof(energyMsg), "Your planet now has %.1f/%.1f energy", 
+                                currentPlanet->GetCurrentEnergy(), currentPlanet->GetEnergyCost());
+                        SDL_Log("%s", energyMsg);
+                        
+                        // Check if we now have enough to generate
+                        if (currentPlanet->CanGenerateChild()) {
+                            SDL_Log("Energy requirement met! Press E again to generate child planet.");
                         }
 
                     }
@@ -352,45 +455,7 @@ struct SDLApplication {
                     }
                     player->setPlayerState(PUNCHING);
 
-                    // Set punching animation based on direction
-                    if (player->getPlayerDirection() == Direction::BACK) {
-                        SDL_Log("animation delta time: '%d' delta time: '%d'", player->getAnimationTime(), context->getDeltaTime());
-                        animation->AnimatePlayer(player, PUNCHING);            
-                    }
-                    else if (player->getPlayerDirection() == Direction::FORWARD) {
-                        SDL_Log("le ponching forward");
-                        if (firstPunch) {
-                            player->setCurrentPlayerAnimation(PlayerAnimations:: StandingStillForwardLeftHandUp);
-                        }
-                        else if (currentAnimation == PlayerAnimations:: StandingStillForward && player->getAnimationTime() >= 6) {
-                            player->setCurrentPlayerAnimation(PlayerAnimations:: StandingStillForwardLeftHandUp);
-
-                            player->setAnimationTime(0);
-                        }
-                        else if (currentAnimation == PlayerAnimations:: StandingStillForwardLeftHandUp && player->getAnimationTime() >= 6) {
-                            player->setCurrentPlayerAnimation(PlayerAnimations:: StandingStillForward);
-
-                            player->setAnimationTime(0);
-                        }   
-                    }
-                    else if (player->getPlayerDirection() == Direction::LEFT) {
-                        SDL_Log("le ponching left");
-                        if (currentAnimation == PlayerAnimations:: StandingStillLeft) {
-                            player->setCurrentPlayerAnimation(PlayerAnimations:: StandingStillLeftRightHandUp);
-                        }
-                        else {
-                            player->setCurrentPlayerAnimation(PlayerAnimations:: StandingStillLeft);
-                        }
-                    }
-                    else if (player->getPlayerDirection() == Direction::RIGHT) {
-                        SDL_Log("le ponching right");
-                        if (currentAnimation == PlayerAnimations:: StandingStillRight) {
-                            player->setCurrentPlayerAnimation(PlayerAnimations:: StandingStillRightLeftHandUp);
-                        }
-                        else {
-                            player->setCurrentPlayerAnimation(PlayerAnimations:: StandingStillRight);
-                        }
-                    }
+                    animation->AnimatePlayer(player, PUNCHING);
                 }
                 else if (!input.IsMouseButtonHeld(1)) {
                     player->setAnimationTime(0);
@@ -411,7 +476,16 @@ struct SDLApplication {
             resourceManager->Update(resourceArrayId, playerX, playerY, deltaTime, player);
         }
         
-        // Make camera follow the player
+        Planet* currentPlanet = context->getCurrentPlanet();
+        if (currentPlanet && currentPlanet->CanGenerateChild()) {
+            BigBangEngine* engine = currentPlanet->GetPortalEngine();
+            if (engine && engine->IsFullyGrown()) {
+                int currentPlanetId = context->getCurrentPlanetId();
+                context->GeneratePlanetInTree(currentPlanetId);
+                engine->ResetScale();
+            }
+        }
+        
         if (player) {
             camera->SnapToTarget(player->getX(), player->getY());
         }
@@ -467,27 +541,35 @@ struct SDLApplication {
             if (engine) {
                 // Ensure the portal texture is loaded
                 engine->EnsureTextureLoaded(textureManager);
-                // Update animation
+                
+                // Set target scale based on current energy ratio
+                float currentEnergy = planet->GetCurrentEnergy();
+                float energyCost = planet->GetEnergyCost();
+                float energyRatio = (energyCost > 0.0f) ? (currentEnergy / energyCost) : 0.0f;
+                if (energyRatio > 1.0f) energyRatio = 1.0f;
+                engine->SetTargetEnergyRatio(energyRatio);
+                
+                // Update animation and growth interpolation
                 engine->Update((float)context->getDeltaTime());
                 
-                // Compute center of current grid (TOP face)
+                // Compute center of current grid (TOP face) - match player spawn calculation
                 int mapId = context->getMap();
                 TileGrid* topGrid = tileManager->GetTileGrid(mapId);
                 if (topGrid) {
-                    float centerX = (topGrid->width / 2.0f) * TILE_RENDER_SIZE + TILE_RENDER_SIZE / 2.0f;
-                    float centerY = (topGrid->height / 2.0f) * TILE_RENDER_SIZE + TILE_RENDER_SIZE / 2.0f;
+                    // Use same calculation as player spawn: (width * TILE_RENDER_SIZE) / 2.0f
+                    float centerX = (topGrid->width * TILE_RENDER_SIZE) / 2.0f;
+                    float centerY = (topGrid->height * TILE_RENDER_SIZE) / 2.0f;
                     
                     float portalRenderX, portalRenderY;
                     camera->WorldToRender(centerX, centerY, portalRenderX, portalRenderY, VIRTUAL_WIDTH, VIRTUAL_HEIGHT);
                     
-                    // Scale: 0.5 → 32x32 world units (2x2 tiles) for a 64x64 frame
-                    engine->Render(textureManager, portalRenderX, portalRenderY, zoom * 0.5f);
+                    // Use smoothly interpolated display scale
+                    float portalScale = engine->GetDisplayScale();
+                    engine->Render(textureManager, portalRenderX, portalRenderY, zoom * 0.5f * portalScale);
                 }
             }
         }
         
-        // Render objects (on top of tiles)
-        // Two-pass rendering: objects behind player first, then player, then objects in front
         struct ObjectToRender {
             int objectId;
             float renderX;

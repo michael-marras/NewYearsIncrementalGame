@@ -24,6 +24,15 @@ class PlanetTree {
     int AddChild(int parentId, Planet* childPlanet);
 
     PlanetNode* FindPlanet(int planetId);
+    
+    // Get parent of a planet (returns nullptr if root or not found)
+    PlanetNode* GetParent(int planetId);
+    
+    // Get left child planet ID (returns -1 if no left child)
+    int GetLeftChildId(int planetId);
+    
+    // Get right child planet ID (returns -1 if no right child)
+    int GetRightChildId(int planetId);
 
     ~PlanetTree();
 
@@ -33,6 +42,9 @@ class PlanetTree {
     
     PlanetNode* FindPlanetRecursive(PlanetNode* node, int planetId);
     void DeleteNodeRecursive(PlanetNode* node);
+    
+    // Helper to find parent recursively
+    PlanetNode* FindParentRecursive(PlanetNode* current, int targetPlanetId);
 };
 
 #endif // PLANET_TREE_H

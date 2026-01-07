@@ -33,17 +33,17 @@ int PlanetTree::AddChild(int parentId, Planet* childPlanet) {
 
     if (parent->left && parent->right) return -1;
 
-    int childId = nextPlanetId;
+    int childId;
     if (!parent->left) {
-        parent->left = new PlanetNode(nextPlanetId, childPlanet);
+        childId = 2 * parentId + 1;
+        parent->left = new PlanetNode(childId, childPlanet);
     } else {
-        parent->right = new PlanetNode(nextPlanetId, childPlanet);
+        childId = 2 * parentId + 2;
+        parent->right = new PlanetNode(childId, childPlanet);
     }
-    nextPlanetId += 1;
     return childId;
 }
 
-// Find planet by ID - simple iterative approach using parent calculation
 PlanetNode* PlanetTree::FindPlanet(int planetId) {
     if (!root) return nullptr;
     if (planetId == 0) return root;
@@ -83,4 +83,41 @@ PlanetNode* PlanetTree::FindPlanet(int planetId) {
     }
     
     return current;
+}
+
+PlanetNode* PlanetTree::GetParent(int planetId) {
+    if (!root || planetId == 0) return nullptr;
+    return FindParentRecursive(root, planetId);
+}
+
+PlanetNode* PlanetTree::FindParentRecursive(PlanetNode* current, int targetPlanetId) {
+    if (!current) return nullptr;
+    
+    if (current->left && current->left->planetId == targetPlanetId) {
+        return current;
+    }
+    if (current->right && current->right->planetId == targetPlanetId) {
+        return current;
+    }
+    
+    PlanetNode* result = FindParentRecursive(current->left, targetPlanetId);
+    if (result) return result;
+    
+    return FindParentRecursive(current->right, targetPlanetId);
+}
+
+int PlanetTree::GetLeftChildId(int planetId) {
+    PlanetNode* node = FindPlanet(planetId);
+    if (node && node->left) {
+        return node->left->planetId;
+    }
+    return -1;
+}
+
+int PlanetTree::GetRightChildId(int planetId) {
+    PlanetNode* node = FindPlanet(planetId);
+    if (node && node->right) {
+        return node->right->planetId;
+    }
+    return -1;
 }

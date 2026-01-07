@@ -104,6 +104,11 @@ public:
     bool CanGenerateChild() const;
 
     /**
+     * True if this planet can still create more children (independent of energy amount).
+     */
+    bool HasChildCapacity() const;
+
+    /**
      * Spend energy generating child planet
      */
     void ConsumeEnergyForChild();

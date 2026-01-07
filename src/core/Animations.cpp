@@ -1,28 +1,65 @@
 #include "Animations.h"
+#include <array>
 
 Animations::Animations() {
     this->firstTime     = true;
     this->animationTime = 0;
 }
-
+/*
+This is what I was mentioning about making a list of the frames for one specific animation group
+It just makes it easier because you can go through it and the only diff is which array to use
+You don't need a whole new if elif else conditional for each direction
+*/
 void Animations::AnimatePlayer(Player* player, PlayerStates playerState) {
-    if (playerState == PUNCHING && player->getPlayerDirection() == Direction:: BACK) {
-        if (this -> firstTime) {
-            player->setCurrentPlayerAnimation(PlayerAnimations:: StandingStillBackRightHandUp);
-            return;
-        }
-        else if (player->getCurrentPlayerAnimation() == PlayerAnimations:: StandingStillBack && player->getAnimationTime() >= 100) {
-            player->setCurrentPlayerAnimation(PlayerAnimations:: StandingStillBackRightHandUp);
+    if (playerState == PUNCHING) {
 
-            player->setAnimationTime(0);
+        /*
+        These could even prob be defined somewhere else
+        */
+        std::array<PlayerAnimations, 2> frames;
+        switch (player->getPlayerDirection()) {
+            case Direction::BACK:
+                frames = {
+                    PlayerAnimations::StandingStillBack,
+                    PlayerAnimations::StandingStillBackRightHandUp
+                };
+                break;
+            case Direction::FORWARD:
+                frames = {
+                    PlayerAnimations::StandingStillForward,
+                    PlayerAnimations::StandingStillForwardLeftHandUp
+                };
+                break;
+            case Direction::LEFT:
+                frames = {
+                    PlayerAnimations::StandingStillLeft,
+                    PlayerAnimations::StandingStillLeftRightHandUp
+                };
+                break;
+            case Direction::RIGHT:
+                frames = {
+                    PlayerAnimations::StandingStillRight,
+                    PlayerAnimations::StandingStillRightLeftHandUp
+                };
+                break;
         }
-        else if (player->getCurrentPlayerAnimation() == PlayerAnimations:: StandingStillBackRightHandUp && player->getAnimationTime() >= 100) {
-            player->setCurrentPlayerAnimation(PlayerAnimations:: StandingStillBack);
-
-            player->setAnimationTime(0);
+        
+        {
+            if (this->firstTime) {
+                player->setCurrentPlayerAnimation(frames[1]);
+                return;
+            }
+            else if (player->getCurrentPlayerAnimation() == frames[0] && player->getAnimationTime() >= 100) {
+                player->setCurrentPlayerAnimation(frames[1]);
+                player->setAnimationTime(0);
+            }
+            else if (player->getCurrentPlayerAnimation() == frames[1] && player->getAnimationTime() >= 100) {
+                player->setCurrentPlayerAnimation(frames[0]);
+                player->setAnimationTime(0);
+            }
+            
+            this->firstTime = false;
         }
-
-        this->firstTime = false;
     }
 }
 
