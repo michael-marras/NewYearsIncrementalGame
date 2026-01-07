@@ -1,23 +1,22 @@
-#ifndef MORTALSTATE_H
-#define MORTALSTATE_H
+#ifndef GODSTATE_H
+#define GODSTATE_H
 
 #include "BaseState.h"
 
-class MortalState : public BaseState {
+class GodState : public BaseState {
     public:
 
-        MortalState();
+        GodState();
 
-        ~MortalState();
+        ~GodState();
 
-        void setDependencies(GameContext* ctx, SDL_Renderer* rend, InputManager* inp, Player* plyr, HUD* h) {
+        void setDependencies(GameContext* ctx, SDL_Renderer* rend, InputManager* inp, Player* plyr) {
             context = ctx;
             renderer = rend;
             inputManager = inp;
             player = plyr;
-            hud = h;
         }
-
+        
         /**
          * Handle the state's inputs
          */
@@ -45,4 +44,4 @@ class MortalState : public BaseState {
 };
 
 
-#endif // MORTALSTATE_H
+#endif // GODSTATE_H

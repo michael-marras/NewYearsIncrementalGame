@@ -6,6 +6,7 @@
 
 // Forward Declarations
 class TextureManager;
+class Planet;
 
 typedef uint64_t Uint64;
 
@@ -225,10 +226,23 @@ class Player {
          */
         void ConsumeResource(int resourceId, int quantity);
         
+        /**
+         * Get the planet the player is currently on
+         */
+        Planet* GetPlanet() const { return currentPlanet; }
+        
+        /**
+         * Set the planet the player is currently on
+         */
+        void SetPlanet(Planet* planet) { currentPlanet = planet; }
+        
     private:
         // Position
         float posX;
         float posY;
+        
+        // Planet reference (which planet the player is currently on)
+        Planet* currentPlanet = nullptr;
 
         // Player Animation
         PlayerAnimations currentAnimation;

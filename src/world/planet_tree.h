@@ -2,6 +2,7 @@
 #define PLANET_TREE_H
 
 #include "world/planet.h"
+#include <vector>
 
 struct PlanetNode {
     int planetId;
@@ -33,6 +34,22 @@ class PlanetTree {
     
     // Get right child planet ID (returns -1 if no right child)
     int GetRightChildId(int planetId);
+    
+    /**
+     * Collect all planets in the tree into a vector
+     * @param planets Output vector to fill with all planets
+     */
+    void GetAllPlanets(std::vector<Planet*>& planets) const;
+    
+    /**
+     * Convert planet ID to depth and index in binary tree layout
+     * Binary tree layout: root ID 0, left child = 2*parent+1, right child = 2*parent+2
+     * Depth d has IDs from (2^d - 1) to (2^(d+1) - 2), with indices 0 to (2^d - 1)
+     * @param planetId The planet ID to convert
+     * @param outDepth Output parameter for the depth (0 = root)
+     * @param outIndex Output parameter for the index within that depth
+     */
+    static void PlanetIdToDepthIndex(int planetId, int& outDepth, int& outIndex);
 
     ~PlanetTree();
 
@@ -45,6 +62,9 @@ class PlanetTree {
     
     // Helper to find parent recursively
     PlanetNode* FindParentRecursive(PlanetNode* current, int targetPlanetId);
+    
+    // Helper to collect all planets recursively
+    void CollectPlanetsRecursive(PlanetNode* node, std::vector<Planet*>& planets) const;
 };
 
 #endif // PLANET_TREE_H

@@ -31,175 +31,145 @@ MortalState::~MortalState() {
 }
 
 void MortalState::input() {
-    SDL_Event event;
-
-    //Event Handling loop
-    while (SDL_PollEvent(&event)) {
-        if(event.type == SDL_EVENT_QUIT){
-            context -> Quit();
-        }
-        else if(event.type == SDL_EVENT_KEY_DOWN) {
-            inputManager->ProcessKeyDown(event.key.key);
-
-            switch (event.key.key) {
-                case SDLK_ESCAPE: context -> Quit(); break;
-                case SDLK_UP: {
-                    // Navigate to parent planet
-                    PlanetTree* tree = context->getPlanetTree();
-                    if (tree) {
-                        int currentPlanetId = context->getCurrentPlanetId();
-                        PlanetNode* parent = tree->GetParent(currentPlanetId);
-                        if (parent && context->setCurrentPlanetById(parent->planetId)) {
-                            // Set to TOP face so portal is visible
-                            context->setCurrentPlanetFace(4); // TOP
-                            // Respawn player at center of new planet
-                            int radius = GetPlanetRadius(PlanetSize::TINY);
-                            float centerX = (radius * TILE_RENDER_SIZE) / 2.0f;
-                            float centerY = (radius * TILE_RENDER_SIZE) / 2.0f;
-                            player->setX(centerX);
-                            player->setY(centerY);
-                            Camera* camera = context->getCamera();
-                            if (camera) camera->SnapToTarget(centerX, centerY);
-                        }
-                    }
-                    break;
-                }
-                case SDLK_DOWN: {
-                    // Cycle through all resolutions
-                    int currentIndex = context->getCurrentResolutionIndex();
-                    int nextIndex = (currentIndex + 1) % RESOLUTION_PRESET_COUNT;
-                    context->ChangeResolution(nextIndex);
-                    break;
-                }
-                case SDLK_LEFT: {
-                    // Navigate to left child planet
-                    PlanetTree* tree = context->getPlanetTree();
-                    if (tree) {
-                        int currentPlanetId = context->getCurrentPlanetId();
-                        int leftChildId = tree->GetLeftChildId(currentPlanetId);
-                        if (leftChildId >= 0 && context->setCurrentPlanetById(leftChildId)) {
-                            // Set to TOP face so portal is visible
-                            context->setCurrentPlanetFace(4); // TOP
-                            // Respawn player at center of new planet
-                            int radius = GetPlanetRadius(PlanetSize::TINY);
-                            float centerX = (radius * TILE_RENDER_SIZE) / 2.0f;
-                            float centerY = (radius * TILE_RENDER_SIZE) / 2.0f;
-                            player->setX(centerX);
-                            player->setY(centerY);
-                            Camera* camera = context->getCamera();
-                            if (camera) camera->SnapToTarget(centerX, centerY);
-                        }
-                    }
-                    break;
-                }
-                case SDLK_RIGHT: {
-                    // Navigate to right child planet
-                    PlanetTree* tree = context->getPlanetTree();
-                    if (tree) {
-                        int currentPlanetId = context->getCurrentPlanetId();
-                        int rightChildId = tree->GetRightChildId(currentPlanetId);
-                        if (rightChildId >= 0 && context->setCurrentPlanetById(rightChildId)) {
-                            // Set to TOP face so portal is visible
-                            context->setCurrentPlanetFace(4); // TOP
-                            // Respawn player at center of new planet
-                            int radius = GetPlanetRadius(PlanetSize::TINY);
-                            float centerX = (radius * TILE_RENDER_SIZE) / 2.0f;
-                            float centerY = (radius * TILE_RENDER_SIZE) / 2.0f;
-                            player->setX(centerX);
-                            player->setY(centerY);
-                            Camera* camera = context->getCamera();
-                            if (camera) camera->SnapToTarget(centerX, centerY);
-                        }
-                    }
-                    break;
-                }
-                case SDLK_E: {
-                    Player* player = context->getPlayer();
-                    Planet* currentPlanet = context->getCurrentPlanet();
-                    ResourceManager* resourceManager = context -> getResourceManager();
-
-                    if (!player || !currentPlanet || !resourceManager) {
-                        return;
-                    }
-
-                    // Only feed resources for ONE child per E press
-                    // Check if planet can accept more energy (has capacity and not already full)
-                    if (!currentPlanet->HasChildCapacity()) {
-                        SDL_Log("Planet has already generated maximum children");
-                        break;
-                    }
-                    
-                    if (currentPlanet->CanGenerateChild()) {
-                        // Already has enough energy - generate the child
-                        context->GeneratePlanetInTree(context->getCurrentPlanetId());
-                        SDL_Log("Generated child planet!");
-                        break;
-                    }
-                    
-                    std::unordered_map<int, int>* inventory = player->getInventory();
-                    std::vector<std::pair<int, int>> entries(inventory->begin(), inventory->end());
-                    
-                    float energyCost = currentPlanet->GetEnergyCost();
-                    float missing = energyCost - currentPlanet->GetCurrentEnergy();
-                    
-                    // Process each resource type; only accept what is needed to reach ONE child
-                    for (const auto& entry : entries) {
-                        if (missing <= 0.0f) break; // Already have enough for this child
-                        
-                        int resourceId = entry.first;
-                        int remainingQty = entry.second;
-                        
-                        float energyPerUnit = resourceManager->GetResourceValue(resourceId);
-                        
-                        // Skip non-energy resources
-                        if (energyPerUnit <= 0.0f) {
-                            continue;
-                        }
-                        
-                        // Calculate exact units needed to fill the gap (not more)
-                        int unitsNeeded = (int)ceilf(missing / energyPerUnit);
-                        if (unitsNeeded < 1) unitsNeeded = 1;
-                        int consumeNow = (remainingQty < unitsNeeded) ? remainingQty : unitsNeeded;
-                        
-                        // Only add the exact energy needed, not more
-                        float addEnergy = energyPerUnit * (float)consumeNow;
-                        if (addEnergy > missing) {
-                            addEnergy = missing;
-                        }
-                        
-                        currentPlanet->AddEnergy(addEnergy);
-                        player->ConsumeResource(resourceId, consumeNow);
-                        missing -= addEnergy;
-                    }
-                    
-                    char energyMsg[128];
-                    snprintf(energyMsg, sizeof(energyMsg), "Your planet now has %.1f/%.1f energy", 
-                            currentPlanet->GetCurrentEnergy(), currentPlanet->GetEnergyCost());
-                    SDL_Log("%s", energyMsg);
-                    
-                    // Check if we now have enough to generate
-                    if (currentPlanet->CanGenerateChild()) {
-                        SDL_Log("Energy requirement met! Press E again to generate child planet.");
-                    }
-
-                }
+    // Check for key presses using input manager (events are already processed in main.cpp)
+    if (inputManager->IsKeyPressed(SDLK_UP)) {
+        // Navigate to parent planet
+        PlanetTree* tree = context->getPlanetTree();
+        if (tree) {
+            int currentPlanetId = context->getCurrentPlanetId();
+            PlanetNode* parent = tree->GetParent(currentPlanetId);
+            if (parent && context->setCurrentPlanetById(parent->planetId)) {
+                // Set to TOP face so portal is visible
+                context->setCurrentPlanetFace(4); // TOP
+                // Respawn player at center of new planet
+                int radius = GetPlanetRadius(PlanetSize::TINY);
+                float centerX = radius * TILE_RENDER_SIZE;
+                float centerY = radius * TILE_RENDER_SIZE;
+                player->setX(centerX);
+                player->setY(centerY);
+                Camera* camera = context->getCamera();
+                if (camera) camera->SnapToTarget(centerX, centerY);
             }
         }
-        else if(event.type == SDL_EVENT_KEY_UP) {
-            inputManager->ProcessKeyUp(event.key.key);
+    }
+    
+    if (inputManager->IsKeyPressed(SDLK_DOWN)) {
+        // Cycle through all resolutions
+        int currentIndex = context->getCurrentResolutionIndex();
+        int nextIndex = (currentIndex + 1) % RESOLUTION_PRESET_COUNT;
+        context->ChangeResolution(nextIndex);
+    }
+    
+    if (inputManager->IsKeyPressed(SDLK_LEFT)) {
+        // Navigate to left child planet
+        PlanetTree* tree = context->getPlanetTree();
+        if (tree) {
+            int currentPlanetId = context->getCurrentPlanetId();
+            int leftChildId = tree->GetLeftChildId(currentPlanetId);
+            if (leftChildId >= 0 && context->setCurrentPlanetById(leftChildId)) {
+                // Set to TOP face so portal is visible
+                context->setCurrentPlanetFace(4); // TOP
+                // Respawn player at center of new planet
+                int radius = GetPlanetRadius(PlanetSize::TINY);
+                float centerX = radius * TILE_RENDER_SIZE;
+                float centerY = radius * TILE_RENDER_SIZE;
+                player->setX(centerX);
+                player->setY(centerY);
+                Camera* camera = context->getCamera();
+                if (camera) camera->SnapToTarget(centerX, centerY);
+            }
         }
-        else if(event.type == SDL_EVENT_MOUSE_MOTION) {
-            inputManager->ProcessMouseMotion(event.motion.x, event.motion.y, 
-                                        event.motion.xrel, event.motion.yrel);
+    }
+    
+    if (inputManager->IsKeyPressed(SDLK_RIGHT)) {
+        // Navigate to right child planet
+        PlanetTree* tree = context->getPlanetTree();
+        if (tree) {
+            int currentPlanetId = context->getCurrentPlanetId();
+            int rightChildId = tree->GetRightChildId(currentPlanetId);
+            if (rightChildId >= 0 && context->setCurrentPlanetById(rightChildId)) {
+                // Set to TOP face so portal is visible
+                context->setCurrentPlanetFace(4); // TOP
+                // Respawn player at center of new planet
+                int radius = GetPlanetRadius(PlanetSize::TINY);
+                float centerX = radius * TILE_RENDER_SIZE;
+                float centerY = radius * TILE_RENDER_SIZE;
+                player->setX(centerX);
+                player->setY(centerY);
+                Camera* camera = context->getCamera();
+                if (camera) camera->SnapToTarget(centerX, centerY);
+            }
         }
-        else if(event.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
-            inputManager->ProcessMouseButtonDown(event.button.button);
+    }
+    
+    if (inputManager->IsKeyPressed(SDLK_E)) {
+        Player* player = context->getPlayer();
+        Planet* currentPlanet = context->getCurrentPlanet();
+        ResourceManager* resourceManager = context->getResourceManager();
+
+        if (!player || !currentPlanet || !resourceManager) {
+            return;
         }
-        else if(event.type == SDL_EVENT_MOUSE_BUTTON_UP) {
-            inputManager->ProcessMouseButtonUp(event.button.button);
+
+        // Only feed resources for ONE child per E press
+        // Check if planet can accept more energy (has capacity and not already full)
+        if (!currentPlanet->HasChildCapacity()) {
+            SDL_Log("Planet has already generated maximum children");
+            return;
         }
-        else if(event.type == SDL_EVENT_MOUSE_WHEEL) {
-            inputManager->ProcessMouseWheel(event.wheel.y);
+        
+        if (currentPlanet->CanGenerateChild()) {
+            // Already has enough energy - generate the child
+            context->GeneratePlanetInTree(context->getCurrentPlanetId());
+            
+            SDL_Log("Generated child planet!");
+            return;
+        }
+        
+        std::unordered_map<int, int>* inventory = player->getInventory();
+        std::vector<std::pair<int, int>> entries(inventory->begin(), inventory->end());
+        
+        float energyCost = currentPlanet->GetEnergyCost();
+        float missing = energyCost - currentPlanet->GetCurrentEnergy();
+        
+        // Process each resource type; only accept what is needed to reach ONE child
+        for (const auto& entry : entries) {
+            if (missing <= 0.0f) break; // Already have enough for this child
+            
+            int resourceId = entry.first;
+            int remainingQty = entry.second;
+            
+            float energyPerUnit = resourceManager->GetResourceValue(resourceId);
+            
+            // Skip non-energy resources
+            if (energyPerUnit <= 0.0f) {
+                continue;
+            }
+            
+            // Calculate exact units needed to fill the gap (not more)
+            int unitsNeeded = (int)ceilf(missing / energyPerUnit);
+            if (unitsNeeded < 1) unitsNeeded = 1;
+            int consumeNow = (remainingQty < unitsNeeded) ? remainingQty : unitsNeeded;
+            
+            // Only add the exact energy needed, not more
+            float addEnergy = energyPerUnit * (float)consumeNow;
+            if (addEnergy > missing) {
+                addEnergy = missing;
+            }
+            
+            currentPlanet->AddEnergy(addEnergy);
+            player->ConsumeResource(resourceId, consumeNow);
+            missing -= addEnergy;
+        }
+        
+        char energyMsg[128];
+        snprintf(energyMsg, sizeof(energyMsg), "Your planet now has %.1f/%.1f energy", 
+                currentPlanet->GetCurrentEnergy(), currentPlanet->GetEnergyCost());
+        SDL_Log("%s", energyMsg);
+        
+        // Check if we now have enough to generate
+        if (currentPlanet->CanGenerateChild()) {
+            SDL_Log("Energy requirement met! Press E again to generate child planet.");
         }
     }
 }
@@ -217,7 +187,7 @@ void MortalState::update() {
     const float moveSpeed = 1.5f;
     
     // Handle mouse wheel zoom (zooms toward screen center)
-        float mouseWheelY = inputManager->GetMouseWheelY();
+    float mouseWheelY = inputManager->GetMouseWheelY();
     if (mouseWheelY != 0.0f) {
         float zoomSpeed = 0.1f;
         if (mouseWheelY > 0.0f) {
@@ -227,8 +197,8 @@ void MortalState::update() {
         }
     }
 
-        float mouseScreenX = inputManager->GetMouseX();
-        float mouseScreenY = inputManager->GetMouseY();
+    float mouseScreenX = inputManager->GetMouseX();
+    float mouseScreenY = inputManager->GetMouseY();
     float mouseRenderX, mouseRenderY;
     SDL_RenderCoordinatesFromWindow(renderer, mouseScreenX, mouseScreenY, &mouseRenderX, &mouseRenderY);
     
@@ -239,7 +209,7 @@ void MortalState::update() {
 
     ObjectInfo* objInfo = objectManager->GetObjectAt(context->getObjectMap(), gridX, gridY);
 
-            if (inputManager->IsMouseButtonHeld(1)) {
+    if (inputManager->IsMouseButtonHeld(1)) {
         if (objectManager->PlayerCanInteract(context->getObjectMap(), gridX, gridY, context->getPlayer())) {
             // Get object info before damaging (to check for drops)
             ObjectInfo* objBeforeDamage = objectManager->GetObjectAt(context->getObjectMap(), gridX, gridY);
@@ -292,7 +262,7 @@ void MortalState::update() {
             player->setCurrentPlayerAnimation(PlayerAnimations::WalkingBackLeftFoot);
             player->setPlayerDirection(Direction::BACK);
         }
-        else if (inputManager->IsKeyHeld(SDLK_S)) {
+        if (inputManager->IsKeyHeld(SDLK_S)) {
             moveY += 1.0f;
             player->setCurrentPlayerAnimation(PlayerAnimations::WalkingForwardRightFoot);
             player->setPlayerDirection(Direction::FORWARD);
@@ -304,7 +274,7 @@ void MortalState::update() {
             player->setCurrentPlayerAnimation(PlayerAnimations::WalkingLeftLeftFoot);
             player->setPlayerDirection(Direction::LEFT);
         }
-        else if (inputManager->IsKeyHeld(SDLK_D)) {
+        if (inputManager->IsKeyHeld(SDLK_D)) {
             moveX += 1.0f;
             player->setCurrentPlayerAnimation(PlayerAnimations::WalkingRightRightFoot);
             player->setPlayerDirection(Direction::RIGHT);
@@ -322,6 +292,12 @@ void MortalState::update() {
             
             player->move(moveX, moveY);
             player->setPlayerState(WALKING);
+            
+            // Mark current planet as dirty when player moves
+            Planet* currentPlanet = context->getCurrentPlanet();
+            if (currentPlanet) {
+                currentPlanet->MarkDirty();
+            }
             
             // Check for face transitions when player walks off edge
             context->checkAndHandleFaceTransition(player);
@@ -397,7 +373,7 @@ void MortalState::update() {
         }
     }
     
-    if (player) {
+    if (player && camera) {
         camera->SnapToTarget(player->getX(), player->getY());
     }
 }
@@ -593,7 +569,26 @@ void MortalState::render() {
 }
 
 void MortalState::onEnter() {
-
+    if (player) {
+        Camera* camera = context->getCamera();
+        if (camera) {
+            // Preserve player's current position, just snap camera to it
+            float playerX = player->getX();
+            float playerY = player->getY();
+            
+            // Only reset to center if player is at invalid position (0,0)
+            if (playerX == 0.0f && playerY == 0.0f) {
+                int radius = GetPlanetRadius(PlanetSize::TINY);
+                playerX = radius * TILE_RENDER_SIZE;
+                playerY = radius * TILE_RENDER_SIZE;
+                player->setX(playerX);
+                player->setY(playerY);
+            }
+            
+            camera->SnapToTarget(playerX, playerY);
+            camera->SetZoomBounds(0.8f, 10.0f);
+        }
+    }
 }
 
 void MortalState:: onExit() {

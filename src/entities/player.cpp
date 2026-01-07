@@ -1,8 +1,10 @@
 #include "entities/player.h"
+#include "world/planet.h"
 
 Player::Player() {
-    this->posX = 800.0f;
-    this->posY = 800.0f;
+    this->posX = 0.0f;
+    this->posY = 0.0f;
+    this->currentPlanet = nullptr;
     this->currentAnimation = PlayerAnimations:: StandingStillForward;
     this->playerWalkingStage = WalkingStages:: NOT_WALKING;
     this->playerWalkingStage = WalkingStages:: NOT_WALKING;
@@ -13,6 +15,7 @@ Player::Player() {
 Player::Player(int posX, int posY) {
     this->posX = (float)posX;
     this->posY = (float)posY;
+    this->currentPlanet = nullptr;
 }
 
 void Player::setX(float X) {

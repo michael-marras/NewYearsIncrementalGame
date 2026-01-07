@@ -19,6 +19,7 @@
 #include "core/Animations.h"
 #include "states/BaseState.h"
 #include "states/MortalState.h"
+#include "states/GodState.h"
 #include <vector>
 
 enum class StateType : uint8_t {
@@ -37,6 +38,7 @@ struct SDLApplication {
 
     // State management
     std::unique_ptr<MortalState> mortalState;
+    std::unique_ptr<GodState> godState;
     
     BaseState* currentState = nullptr;
 
@@ -86,11 +88,6 @@ struct SDLApplication {
         player = context->getPlayer();
         Camera* camera = context->getCamera();
         
-        // Allow zoom out to 0.01 (100x zoomed out)
-        if (camera) {
-            camera->SetZoomBounds(0.8f, 10.0f);
-        }
-        
         SetupTiles(tileManager, textureManager);
         SetupResources(resourceManager, textureManager);
         SetupObjects(objectManager, textureManager, resourceManager);
@@ -101,20 +98,12 @@ struct SDLApplication {
         context->setCurrentPlanetById(0);
         context->setCurrentPlanetFace(0);
         
-        // Spawn player in the center of the starting face
-        if (player) {
-            int radius = GetPlanetRadius(PlanetSize::TINY);
-            float centerX = (radius * TILE_RENDER_SIZE) / 2.0f;
-            float centerY = (radius * TILE_RENDER_SIZE) / 2.0f;
-            player->setX(centerX);
-            player->setY(centerY);
-            camera->SnapToTarget(centerX, centerY);
-        }
-        
         // Initialize states
         mortalState = std::make_unique<MortalState>();
         mortalState->setDependencies(context.get(), renderer, &input, player, hud);
-        // TODO: Initialize GodState when implemented
+
+        godState = std::make_unique<GodState>();
+        godState->setDependencies(context.get(), renderer, &input, player);
         
         // Set initial state
         ChangeState(StateType::MORTAL_STATE);
@@ -123,7 +112,6 @@ struct SDLApplication {
     }
     
     void ChangeState(StateType newStateType) {
-        // Exit current state
         if (currentState) {
             currentState->onExit();
         }
@@ -134,10 +122,8 @@ struct SDLApplication {
                 currentState = mortalState.get();
                 break;
             case StateType::GOD_STATE:
-                // TODO: Set to godState when implemented
-                // currentState = godState.get();
-                SDL_Log("GodState not yet implemented");
-                return;
+                currentState = godState.get();
+                break;
         }
         
         // Enter new state
@@ -155,6 +141,44 @@ struct SDLApplication {
     }
     
     void Input() {
+        SDL_Event event;
+        while (SDL_PollEvent(&event)) {
+            if(event.type == SDL_EVENT_QUIT){
+                context -> Quit();
+            }
+            else if(event.type == SDL_EVENT_KEY_DOWN) {
+                input.ProcessKeyDown(event.key.key);
+    
+                switch (event.key.key) {
+                    case SDLK_ESCAPE: context -> Quit(); break;
+                    case SDLK_G: 
+                        // Toggle between states
+                        if (currentState == mortalState.get()) {
+                            ChangeState(StateType::GOD_STATE);
+                        } else if (currentState == godState.get()) {
+                            ChangeState(StateType::MORTAL_STATE);
+                        }
+                        break;
+                }
+            }
+            else if(event.type == SDL_EVENT_KEY_UP) {
+                input.ProcessKeyUp(event.key.key);
+            }
+            else if(event.type == SDL_EVENT_MOUSE_MOTION) {
+                input.ProcessMouseMotion(event.motion.x, event.motion.y, 
+                                            event.motion.xrel, event.motion.yrel);
+            }
+            else if(event.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
+                input.ProcessMouseButtonDown(event.button.button);
+            }
+            else if(event.type == SDL_EVENT_MOUSE_BUTTON_UP) {
+                input.ProcessMouseButtonUp(event.button.button);
+            }
+            else if(event.type == SDL_EVENT_MOUSE_WHEEL) {
+                input.ProcessMouseWheel(event.wheel.y);
+            }
+        }
+        
         if (currentState) {
             currentState->input();
         }

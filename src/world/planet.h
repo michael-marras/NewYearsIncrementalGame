@@ -4,6 +4,15 @@
 #include <unordered_map>
 #include "world/BigBangEngine.h"
 
+// Forward declarations
+struct SDL_Renderer;
+struct SDL_Texture;
+class TileManager;
+class TextureManager;
+class ObjectManager;
+class ResourceManager;
+class Player;
+
 // Enum for the 6 faces of a cube planet
 enum class PlanetFace {
     FRONT,
@@ -24,8 +33,8 @@ enum class PlanetSize {
     GIANT
 };
 
-// Get the radius (width/height in tiles) for a planet size
-// Each face of the cube planet will be radius x radius tiles
+// Get the radius (in tiles) for a planet size
+// Each face of the cube planet will be (radius * 2) x (radius * 2) tiles
 int GetPlanetRadius(PlanetSize size);
 
 // Data structure for each face of a planet
@@ -130,13 +139,88 @@ public:
      */
     void SetTier(int tierValue);
 
+    /**
+     * Get universe X position (where this planet is in the universe)
+     */
+    float GetUniverseX() const;
+    
+    /**
+     * Get universe Y position (where this planet is in the universe)
+     */
+    float GetUniverseY() const;
+    
+    /**
+     * Set universe position (where this planet is in the universe)
+     */
+    void SetUniversePosition(float universeX, float universeY);
+    
+    /**
+     * Convert local coordinates (on this planet) to universe coordinates
+     */
+    void LocalToUniverse(float localX, float localY, float& universeX, float& universeY) const;
+    
+    /**
+     * Convert universe coordinates to local coordinates (on this planet)
+     */
+    void UniverseToLocal(float universeX, float universeY, float& localX, float& localY) const;
+
+    void setRadius(int rad);
+
+    int getRadius() const;
+
+    void RenderToTexture(SDL_Renderer* renderer, 
+                         TileManager* tileManager, 
+                         TextureManager* textureManager,
+                         ObjectManager* objectManager = nullptr,
+                         ResourceManager* resourceManager = nullptr,
+                         Player* player = nullptr);
+    
+    /**
+     * Get the cached texture for rendering in GodState
+     * Returns nullptr if texture hasn't been rendered yet
+     */
+    SDL_Texture* GetCachedTexture() const { return cachedTexture; }
+    
+    /**
+     * Mark planet as dirty
+     */
+    void MarkDirty() { isDirty = true; }
+    
+    /**
+     * Check if planet is dirty
+     */
+    bool IsDirty() const { return isDirty; }
+    
+    /**
+     * Calculate the universe position for a child planet based on depth/index binary tree layout
+     * @param parentDepth Depth of parent planet in tree (0 = root)
+     * @param parentIndex Index of parent planet within its depth (0 to 2^depth - 1)
+     * @param isLeftChild Whether this is the left child (true) or right child (false)
+     * @param ringSpacing Distance between rings in universe units
+     * @param outChildX Output parameter for child universe X position
+     * @param outChildY Output parameter for child universe Y position
+     */
+    static void CalculateChildUniversePosition(int parentDepth, int parentIndex, bool isLeftChild, float ringSpacing, float& outChildX, float& outChildY);
+
 private:
     std::unordered_map<PlanetFace, PlanetFaceData> faces;
     int tier = 0;
+    int radius = 0;
     float currentEnergy = 0.0f;
     float energyCost = 0.0f;
     int childrenGenerated = 0;
     BigBangEngine portalEngine;
+
+    // Texture used for god state view
+    SDL_Texture* cachedTexture = nullptr;
+    int cachedTextureWidth = 0;
+    int cachedTextureHeight = 0;
+    bool isDirty = false;  // Set to true when planet needs to be re-rendered to texture
+    
+    // Universe position (where this planet exists in the universe)
+    float universeX = 0.0f;
+    float universeY = 0.0f;
+    
 public:
     BigBangEngine* GetPortalEngine() { return &portalEngine; }
 };

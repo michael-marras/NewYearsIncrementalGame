@@ -11,6 +11,8 @@ struct SDL_Renderer;
 
 class BaseState {
     public:
+        virtual ~BaseState() = default;
+
         /**
          * Set the state's dependencies
          */

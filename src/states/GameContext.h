@@ -264,5 +264,15 @@ class GameContext {
          * @param parentId ID of the parent planet in the tree
          */
         void GeneratePlanetInTree(int parentId);
+        
+        /**
+         * Get player's universe X position (local position + planet's universe position)
+         */
+        float GetPlayerUniverseX() const;
+        
+        /**
+         * Get player's universe Y position (local position + planet's universe position)
+         */
+        float GetPlayerUniverseY() const;
 };
 #endif // GAMECONTEXT_H

@@ -97,8 +97,9 @@ Planet* GeneratePlanetFromSeed(unsigned int seed,
                                 PlanetSize size) {
     Planet* planet = new Planet();
     
-    // Get the radius (width/height) for this planet size
-    int radius = GetPlanetRadius(size);
+    // Get the radius for this planet size (width/height will be radius * 2)
+    planet->setRadius(GetPlanetRadius(size));
+    int width = planet->getRadius() * 2;
     
     // Array of all 6 faces
     PlanetFace faces[] = {
@@ -114,7 +115,7 @@ Planet* GeneratePlanetFromSeed(unsigned int seed,
     // This ensures each face is unique but reproducible
     for (int i = 0; i < 6; i++) {
         unsigned int faceSeed = seed + i;
-        GeneratedMap faceMap = GenerateMapFromSeed(faceSeed, tileManager, objectManager, resourceManager, radius, radius);
+        GeneratedMap faceMap = GenerateMapFromSeed(faceSeed, tileManager, objectManager, resourceManager, width, width);
         planet->SetFaceData(faces[i], faceMap.tileGridId, faceMap.objectGridId, faceMap.resourceArrayId);
     }
     

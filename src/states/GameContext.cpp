@@ -105,9 +105,25 @@ void GameContext::GeneratePlanetTree() {
     Planet* planet0 = GeneratePlanetFromSeed(seed0, tileManager, objectManager, resourceManager, PlanetSize::TINY);
     planet0->SetTier(0);  // Root planet is tier 0
     planet0->SetEnergyCost();  // Calculate energy cost based on tier
+    planet0->SetUniversePosition(0.0f, 0.0f);  // Root planet at universe origin
     
     // Create tree with root planet
     planetTree = new PlanetTree(planet0);
+    
+    // Initialize player position and planet reference
+    if (player) {
+        int radius = planet0->getRadius();
+        float centerX = radius * TILE_RENDER_SIZE;
+        float centerY = radius * TILE_RENDER_SIZE;
+        player->setX(centerX);
+        player->setY(centerY);
+        player->SetPlanet(planet0);
+    }
+    
+    // Render planet to texture after player is positioned
+    if (renderer && planet0) {
+        planet0->RenderToTexture(renderer, tileManager, textureManager, objectManager, resourceManager, player);
+    }
     
     // Not being used, can be used to generate extra planets off the start, just increase 0 in i < 0
     for (int i = 1; i < 0; i++) {
@@ -144,6 +160,20 @@ void GameContext::GeneratePlanetTree() {
         if (childId == -1) {
             SDL_Log("Warning: Failed to add planet %d to tree", i);
             delete newPlanet;
+        } else {
+            // Position child planet to create ring structure using depth/index layout
+            int leftChildId = planetTree->GetLeftChildId(parentId);
+            bool isLeftChild = (childId == leftChildId);
+            
+            // Convert parent ID to depth and index
+            int parentDepth, parentIndex;
+            PlanetTree::PlanetIdToDepthIndex(parentId, parentDepth, parentIndex);
+            
+            const float ringSpacing = 2000.0f;
+            float childUniverseX, childUniverseY;
+            Planet::CalculateChildUniversePosition(parentDepth, parentIndex, isLeftChild, ringSpacing, childUniverseX, childUniverseY);
+            
+            newPlanet->SetUniversePosition(childUniverseX, childUniverseY);
         }
     }
 }
@@ -185,9 +215,23 @@ void GameContext::GeneratePlanetInTree(int parentId) {
             SDL_Log("Warning: Failed to add planet to tree");
             delete child;
         } else {
+            // Position child planet to create ring structure using depth/index layout
+            int leftChildId = planetTree->GetLeftChildId(parentId);
+            bool isLeftChild = (childId == leftChildId);
+            
+            // Convert parent ID to depth and index
+            int parentDepth, parentIndex;
+            PlanetTree::PlanetIdToDepthIndex(parentId, parentDepth, parentIndex);
+            
+            const float ringSpacing = 2000.0f;
+            float childUniverseX, childUniverseY;
+            Planet::CalculateChildUniversePosition(parentDepth, parentIndex, isLeftChild, ringSpacing, childUniverseX, childUniverseY);
+            
+            child->SetUniversePosition(childUniverseX, childUniverseY);
+            
             parent->planet->ConsumeEnergyForChild();
-            SDL_Log("Successfully generated child planet %d (tier %d) from parent %d (tier %d)", 
-                    childId, child->GetTier(), parentId, parentTier);
+            SDL_Log("Successfully generated child planet %d (tier %d) from parent %d (tier %d) at universe (%.1f, %.1f)", 
+                    childId, child->GetTier(), parentId, parentTier, childUniverseX, childUniverseY);
         }
     } else {
         SDL_Log("Parent planet %d cannot generate child (insufficient energy or max children reached)", parentId);
@@ -211,6 +255,11 @@ bool GameContext::setCurrentPlanetById(int planetId) {
     if (node && node->planet) {
         currentPlanetId = planetId;
         currentPlanet = node->planet;
+        
+        // Update player's planet reference
+        if (player) {
+            player->SetPlanet(node->planet);
+        }
         updateMapsFromPlanet();
         return true;
     }
@@ -527,5 +576,23 @@ void GameContext::updateFaceTransitionCooldown() {
 
 bool GameContext::isFaceTransitionCooldownActive() const {
     return faceTransitionCooldown > 0;
+}
+
+float GameContext::GetPlayerUniverseX() const {
+    if (!player || !currentPlanet) {
+        return 0.0f;
+    }
+    float universeX, universeY;
+    currentPlanet->LocalToUniverse(player->getX(), player->getY(), universeX, universeY);
+    return universeX;
+}
+
+float GameContext::GetPlayerUniverseY() const {
+    if (!player || !currentPlanet) {
+        return 0.0f;
+    }
+    float universeX, universeY;
+    currentPlanet->LocalToUniverse(player->getX(), player->getY(), universeX, universeY);
+    return universeY;
 }
 

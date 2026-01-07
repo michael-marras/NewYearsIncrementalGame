@@ -98,7 +98,7 @@ $(BUILD_DIR)/GameContext.o: states/GameContext.cpp states/GameContext.h
 $(BUILD_DIR)/MortalState.o: states/MortalState.cpp states/MortalState.h states/BaseState.h
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c states/MortalState.cpp -o $(BUILD_DIR)/MortalState.o
 
-$(BUILD_DIR)/GodState.o: states/GodState.cpp states/BaseState.h
+$(BUILD_DIR)/GodState.o: states/GodState.cpp states/GodState.h states/BaseState.h
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c states/GodState.cpp -o $(BUILD_DIR)/GodState.o
 
 $(BUILD_DIR)/hud.o: ui/hud.cpp ui/hud.h

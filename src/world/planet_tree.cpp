@@ -121,3 +121,44 @@ int PlanetTree::GetRightChildId(int planetId) {
     }
     return -1;
 }
+
+void PlanetTree::GetAllPlanets(std::vector<Planet*>& planets) const {
+    planets.clear();
+    CollectPlanetsRecursive(root, planets);
+}
+
+void PlanetTree::CollectPlanetsRecursive(PlanetNode* node, std::vector<Planet*>& planets) const {
+    if (!node || !node->planet) return;
+    
+    planets.push_back(node->planet);
+    
+    if (node->left) {
+        CollectPlanetsRecursive(node->left, planets);
+    }
+    if (node->right) {
+        CollectPlanetsRecursive(node->right, planets);
+    }
+}
+
+void PlanetTree::PlanetIdToDepthIndex(int planetId, int& outDepth, int& outIndex) {
+    if (planetId == 0) {
+        outDepth = 0;
+        outIndex = 0;
+        return;
+    }
+    
+    // Calculate depth: find which depth this ID belongs to
+    // Depth d: IDs from (2^d - 1) to (2^(d+1) - 2)
+    int depth = 0;
+    int minId = 0;
+    int maxId = 0;
+    
+    while (planetId > maxId) {
+        depth++;
+        minId = maxId + 1;
+        maxId = (1 << (depth + 1)) - 2;
+    }
+    
+    outDepth = depth;
+    outIndex = planetId - minId;
+}
