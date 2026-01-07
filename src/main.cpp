@@ -140,6 +140,34 @@ struct SDLApplication {
                         context->setCurrentPlanetById(newPlanetId);
                         break;
                     }
+                    case SDLK_E: {
+                        Player* player = context->getPlayer();
+                        Planet* currentPlanet = context->getCurrentPlanet();
+                        ResourceManager* resourceManager = context -> getResourceManager();
+
+                        if (!player || !currentPlanet || !resourceManager) {
+                            return;
+                        }
+
+                        std::unordered_map<int, int>* inventory = player -> getInventory();
+
+                        for (const auto& pair : *inventory) {
+                            int resourceId = pair.first;
+                            int quantity = pair.second;
+
+                            float energy = resourceManager->GetResourceValue(resourceId, quantity);
+
+                            currentPlanet->AddEnergy(energy);
+
+                            player->RemoveResource(resourceId);
+
+                            char energyMsg[128];
+                            snprintf(energyMsg, sizeof(energyMsg), "Your planet now has %.1f/%.1f energy", 
+                                    currentPlanet->GetCurrentEnergy(), currentPlanet->GetEnergyCost());
+                            SDL_Log("%s", energyMsg);
+                        }
+
+                    }
                 }
             }
             else if(event.type == SDL_EVENT_KEY_UP) {

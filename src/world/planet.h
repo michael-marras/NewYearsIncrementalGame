@@ -77,8 +77,59 @@ public:
      */
     int GetResourceArrayId(PlanetFace face) const;
 
+    /**
+     * Get planet's current energy
+     */
+    float GetCurrentEnergy() const;
+
+    /**
+     * Get cost of generating one child planet
+     */
+    float GetEnergyCost() const;
+    
+    /**
+     * Set cost of generating one child planet
+     */
+    void SetEnergyCost();
+
+    /**
+     * Add energy when feeding resources
+     */
+    void AddEnergy(float amount);
+
+    /**
+     * Check if generated children is less than 2
+     */
+    bool CanGenerateChild() const;
+
+    /**
+     * Spend energy generating child planet
+     */
+    void ConsumeEnergyForChild();
+
+    /**
+     * Make child planet (consumes energy, increments counter)
+     * Returns true if child was generated, false otherwise
+     * Note: Actual planet creation happens in caller (needs tree/managers)
+     */
+    bool GenerateChild();
+
+    /**
+     * Get tier in the planet tree (0 = root)
+     */
+    int GetTier() const;
+    
+    /**
+     * Set tier in the planet tree
+     */
+    void SetTier(int tierValue);
+
 private:
     std::unordered_map<PlanetFace, PlanetFaceData> faces;
+    int tier = 0;
+    float currentEnergy = 0.0f;
+    float energyCost = 0.0f;
+    int childrenGenerated = 0;
 };
 
 #endif // PLANET_H

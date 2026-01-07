@@ -125,4 +125,15 @@ void Player::incrementAnimationTime(Uint64 deltaTime) {
     this->animationTime += deltaTime;
 }
 
+std::unordered_map<int, int>* Player::getInventory() {
+    return &this->inventory;
+}
+
+void Player::ClearInventory() {
+    this->inventory.clear();
+}
+
+void Player::RemoveResource(int resourceId) {
+    this->inventory.erase(resourceId);
+}
 

@@ -10,6 +10,7 @@
 #include "world/planet_tree.h"
 #include "world/map_generation.h"
 #include <ctime>
+#include <cmath>
 
 GameContext:: GameContext() {
     window = nullptr;
@@ -102,12 +103,14 @@ void GameContext::GeneratePlanetTree() {
     // Generate root planet (Planet 0)
     unsigned int seed0 = static_cast<unsigned int>(time(nullptr));
     Planet* planet0 = GeneratePlanetFromSeed(seed0, tileManager, objectManager, resourceManager, PlanetSize::TINY);
+    planet0->SetTier(0);  // Root planet is tier 0
+    planet0->SetEnergyCost();  // Calculate energy cost based on tier
     
     // Create tree with root planet
     planetTree = new PlanetTree(planet0);
     
-    // Generate remaining 49 planets
-    for (int i = 1; i < 50; i++) {
+    // Not being used, can be used to generate extra planets off the start, just increase 0 in i < 0
+    for (int i = 1; i < 0; i++) {
         // Find a parent that has an available slot
         int parentId = -1;
         for (int j = 0; j < i; j++) {
@@ -127,15 +130,68 @@ void GameContext::GeneratePlanetTree() {
         unsigned int seed = static_cast<unsigned int>(time(nullptr) + i);
         Planet* newPlanet = GeneratePlanetFromSeed(seed, tileManager, objectManager, resourceManager, PlanetSize::TINY);
         
+        // Calculate tier: parent's tier + 1
+        PlanetNode* parentNode = planetTree->FindPlanet(parentId);
+        if (parentNode && parentNode->planet) {
+            int parentTier = parentNode->planet->GetTier();
+            int childTier = parentTier + 1;
+            newPlanet->SetTier(childTier);
+            newPlanet->SetEnergyCost();
+        }
+        
         // Add to tree
         int childId = planetTree->AddChild(parentId, newPlanet);
         if (childId == -1) {
             SDL_Log("Warning: Failed to add planet %d to tree", i);
-            delete newPlanet;  // Clean up if add failed
+            delete newPlanet;
         }
     }
+}
+
+void GameContext::GeneratePlanetInTree(int parentId) {
+    if (!tileManager || !objectManager || !resourceManager) {
+        SDL_Log("Error: Managers not initialized. Cannot generate planet.");
+        return;
+    }
+
+    if (!planetTree) {
+        SDL_Log("Error: Planet tree not initialized.");
+        return;
+    }
+
+    PlanetNode* parent = planetTree->FindPlanet(parentId);
+    if (!parent) {
+        SDL_Log("Error: Couldn't find parent planet.");
+        return;
+    }
     
-    SDL_Log("Generated 50 planets in planet tree");
+    if (!parent->planet) {
+        SDL_Log("Error: Parent planet is null.");
+        return;
+    }
+    
+    if (parent->planet->CanGenerateChild()) {
+        unsigned int seed = static_cast<unsigned int>(time(nullptr));
+        Planet* child = GeneratePlanetFromSeed(seed, tileManager, objectManager, resourceManager, PlanetSize::SMALL);
+        
+        // Calculate tier: parent's tier + 1
+        int parentTier = parent->planet->GetTier();
+        int childTier = parentTier + 1;
+        child->SetTier(childTier);
+        child->SetEnergyCost();
+        
+        int childId = planetTree->AddChild(parentId, child);
+        if (childId == -1) {
+            SDL_Log("Warning: Failed to add planet to tree");
+            delete child;
+        } else {
+            parent->planet->ConsumeEnergyForChild();
+            SDL_Log("Successfully generated child planet %d (tier %d) from parent %d (tier %d)", 
+                    childId, child->GetTier(), parentId, parentTier);
+        }
+    } else {
+        SDL_Log("Parent planet %d cannot generate child (insufficient energy or max children reached)", parentId);
+    }
 }
 
 PlanetTree* GameContext::getPlanetTree() const {

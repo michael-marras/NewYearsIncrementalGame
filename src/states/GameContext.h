@@ -255,5 +255,13 @@ class GameContext {
          * Set current planet by ID (finds planet in tree and sets it)
          */
         bool setCurrentPlanetById(int planetId);
+        
+        /**
+         * Generate a new planet as a child of the specified parent planet
+         * Consumes energy from parent planet if successful
+         * 
+         * @param parentId ID of the parent planet in the tree
+         */
+        void GeneratePlanetInTree(int parentId);
 };
 #endif // GAMECONTEXT_H

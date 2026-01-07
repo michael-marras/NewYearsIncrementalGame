@@ -1,4 +1,5 @@
 #include "world/planet.h"
+#include <cmath>
 
 int GetPlanetRadius(PlanetSize size) {
     switch (size) {
@@ -68,3 +69,48 @@ int Planet::GetResourceArrayId(PlanetFace face) const {
     return data ? data->resourceArrayId : -1;
 }
 
+float Planet::GetCurrentEnergy() const {
+    return currentEnergy;
+}
+
+float Planet::GetEnergyCost() const {
+    return energyCost;
+}
+
+void Planet::SetEnergyCost() {
+    energyCost = 800.0f * powf(1.55f, static_cast<float>(tier)) * powf(static_cast<float>(tier + 1), 1.3f) + 400.0f;
+}
+
+void Planet::AddEnergy(float amount) {
+    currentEnergy += amount;
+}
+
+bool Planet::CanGenerateChild() const {
+    return childrenGenerated < 2 && currentEnergy >= energyCost;
+}
+
+void Planet::ConsumeEnergyForChild() {
+    if (currentEnergy >= energyCost) {
+        currentEnergy -= energyCost;
+        childrenGenerated++;
+    }
+}
+
+bool Planet::GenerateChild() {
+    if (!CanGenerateChild()) {
+        return false;
+    }
+    
+    ConsumeEnergyForChild();
+    
+    return true;
+}
+
+int Planet::GetTier() const {
+    return tier;
+}
+
+void Planet::SetTier(int tierValue) {
+    tier = tierValue;
+}
+ 

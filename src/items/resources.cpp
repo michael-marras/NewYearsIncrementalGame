@@ -14,7 +14,7 @@ ResourceManager::~ResourceManager() {
 }
 
 void ResourceManager::RegisterResource(int id, const char* sheetName, int sheetX, int sheetY,
-                                       int width, int height, bool pickupable, const char* name) {
+                                       int width, int height, bool pickupable, const char* name, float value) {
     std::string resourceName;
 
     // Use provided name, or generate default name if not provided
@@ -36,6 +36,7 @@ void ResourceManager::RegisterResource(int id, const char* sheetName, int sheetX
     resource.width = width;
     resource.height = height;
     resource.pickupable = pickupable;
+    resource.value = value;
 
     resourceTypes[id] = resource;
     nameToId[resourceName] = id;
@@ -55,6 +56,24 @@ ResourceInfo* ResourceManager::GetResourceByName(const char* name) {
         return GetResource(it->second);
     }
     return nullptr;
+}
+
+float ResourceManager::GetResourceValue(int resourceId) const {
+    auto it = resourceTypes.find(resourceId);
+    if (it == resourceTypes.end()) {
+        return 0.0f;
+    }
+    return it->second.value;
+}
+
+float ResourceManager::GetResourceValue(int resourceId, int quantity) const {
+    if (quantity <= 0) return 0.0f;
+    
+    auto it = resourceTypes.find(resourceId);
+    if (it == resourceTypes.end()) {
+        return 0.0f;
+    }
+    return it->second.value * static_cast<float>(quantity);
 }
 
 bool ResourceManager::HasResource(int id) {
@@ -169,44 +188,26 @@ void ResourceManager::Update(int arrayId, float playerX, float playerY, float de
         return;
     }
     
-    // Constants for resource behavior
-    const float VELOCITY_DECAY = 0.92f;
-    const float VELOCITY_THRESHOLD = 5.0f;
-    const float MAGNETIC_RANGE = 20.0f;
-    const float PICKUP_RANGE = 8.0f;
-    const float MAGNETIC_FORCE = 150.0f;
+    const float SHOOT_OUT_DURATION = 15.0f;
+    const float IDLE_DURATION = 10.0f;
+    const float MAGNETIC_RANGE = 30.0f;
+    const float PICKUP_RANGE = 10.0f;
+    const float MAGNETIC_ACCELERATION = 12000.0f;
+    const float MAX_MAGNETIC_SPEED = 500.0f;
     const float DELTA_TIME_SEC = deltaTimeMs / 1000.0f;
     
-    // Iterate through resources (use indices so we can remove while iterating)
     for (size_t i = resourceArray->resources.size(); i > 0; i--) {
-        size_t idx = i - 1;  // Iterate backwards to safely remove
+        size_t idx = i - 1;
         ResourceInstance& resource = resourceArray->resources[idx];
         
-        // 1. Apply velocity and decay it
-        resource.x += resource.vx * DELTA_TIME_SEC;
-        resource.y += resource.vy * DELTA_TIME_SEC;
-        
-        // Decay velocity
-        resource.vx *= VELOCITY_DECAY;
-        resource.vy *= VELOCITY_DECAY;
-        
-        // Check if resource has stopped moving
-        float speed = sqrtf(resource.vx * resource.vx + resource.vy * resource.vy);
-        bool isStopped = speed < VELOCITY_THRESHOLD;
-        
-        // 2. Check distance to player for magnetic pickup (only if stopped)
         float dx = playerX - resource.x;
         float dy = playerY - resource.y;
         float distance = sqrtf(dx * dx + dy * dy);
         
-        // Check for pickup first (even if very close)
-        if (distance < PICKUP_RANGE && isStopped) {
-            // Auto-pickup when very close (only after resource has stopped)
+        if (distance < PICKUP_RANGE) {
             if (player) {
-                // Add to player inventory
                 player->AddResource(resource.resourceId, resource.quantity);
                 
-                // Get resource info for logging
                 ResourceInfo* resourceInfo = GetResource(resource.resourceId);
                 if (resourceInfo) {
                     SDL_Log("Picked up %d x %s (Resource ID: %d)", 
@@ -219,17 +220,56 @@ void ResourceManager::Update(int arrayId, float playerX, float playerY, float de
             }
             
             resourceArray->resources.erase(resourceArray->resources.begin() + idx);
-            continue;  // Skip to next resource
-        } else if (distance < MAGNETIC_RANGE && isStopped && distance > 0.001f) {
-            // Apply magnetic pull (only after resource has stopped)
-            // Set velocity instead of directly modifying position to work with velocity system
-            float pullStrength = 1.0f - (distance / MAGNETIC_RANGE);  // Stronger when closer
-            float normalizedX = dx / distance;
-            float normalizedY = dy / distance;
+            continue;
+        }
+        
+        switch (resource.state) {
+            case ResourceState::SHOOT_OUT: {
+                resource.shootOutTimer += deltaTimeMs;
+                
+                resource.x += resource.vx * DELTA_TIME_SEC;
+                resource.y += resource.vy * DELTA_TIME_SEC;
+
+                if (resource.shootOutTimer >= SHOOT_OUT_DURATION) {
+                    resource.state = ResourceState::IDLE;
+                    resource.vx = 0.0f;
+                    resource.vy = 0.0f;
+                    resource.idleTimer = 0.0f;
+                }
+                break;
+            }
             
-            // Set velocity for magnetic pull (will be applied next frame)
-            resource.vx = normalizedX * MAGNETIC_FORCE * pullStrength;
-            resource.vy = normalizedY * MAGNETIC_FORCE * pullStrength;
+            case ResourceState::IDLE: {
+                resource.idleTimer += deltaTimeMs;
+                
+                if (resource.idleTimer >= IDLE_DURATION && distance < MAGNETIC_RANGE) {
+                    resource.state = ResourceState::MAGNETIC;
+                    resource.vx = 0.0f;
+                    resource.vy = 0.0f;
+                }
+                break;
+            }
+            
+            case ResourceState::MAGNETIC: {
+                if (distance > 0.001f) {
+                    float normalizedX = dx / distance;
+                    float normalizedY = dy / distance;
+                    
+                    resource.vx += normalizedX * MAGNETIC_ACCELERATION * DELTA_TIME_SEC;
+                    resource.vy += normalizedY * MAGNETIC_ACCELERATION * DELTA_TIME_SEC;
+                    
+                    float speed = sqrtf(resource.vx * resource.vx + resource.vy * resource.vy);
+                    if (speed > MAX_MAGNETIC_SPEED) {
+                        float scale = MAX_MAGNETIC_SPEED / speed;
+                        resource.vx *= scale;
+                        resource.vy *= scale;
+                    }
+                    
+                    resource.x += resource.vx * DELTA_TIME_SEC;
+                    resource.y += resource.vy * DELTA_TIME_SEC;
+                }
+                break;
+            }
         }
     }
 }

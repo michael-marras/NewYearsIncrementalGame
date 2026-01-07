@@ -15,6 +15,14 @@ struct ResourceInfo {
     int width;
     int height;
     bool pickupable;
+    float value;
+};
+
+// Resource pickup stages
+enum class ResourceState {
+    SHOOT_OUT,
+    IDLE,
+    MAGNETIC
 };
 
 struct ResourceInstance {
@@ -22,8 +30,11 @@ struct ResourceInstance {
     float y;
     int resourceId;
     int quantity;
-    float vx;  // Horizontal velocity
-    float vy;  // Vertical velocity
+    float vx;
+    float vy;
+    ResourceState state = ResourceState::SHOOT_OUT;
+    float shootOutTimer = 0.0f;
+    float idleTimer = 0.0f;
 };
 
 // Resource array for resources on the map
@@ -40,7 +51,7 @@ public:
 
     // Register a resource type (like RegisterObject)
     void RegisterResource(int id, const char* sheetName, int sheetX, int sheetY,
-                         int width, int height, bool pickupable = true, const char* name = nullptr);
+                         int width, int height, bool pickupable = true, const char* name = nullptr, float value = 0.0f);
 
     // Get resource info by ID
     ResourceInfo* GetResource(int id);
@@ -53,6 +64,12 @@ public:
 
     // Get total number of registered resource types
     int GetResourceCount() const { return (int)resourceTypes.size(); }
+
+    // Get value of a resource
+    float GetResourceValue(int resourceId) const;
+
+    // Get value of a quantity of a resource
+    float GetResourceValue(int resourceId, int quantity) const;
 
     // Create a resource array for a map
     int CreateResourceArray();

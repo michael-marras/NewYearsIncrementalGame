@@ -181,6 +181,24 @@ class Player {
          * Increment animationTime
          */
         void incrementAnimationTime(Uint64 deltaTime);
+
+        /**
+         * Get pointer to player's inventory (resourceId -> quantity)
+         * Can be used to access or clear inventory
+         */
+        std::unordered_map<int, int>* getInventory();
+        
+        /**
+         * Clear all resources from player's inventory
+         */
+        void ClearInventory();
+        
+        /**
+         * Remove all of a specific resource type from inventory
+         * 
+         * @param resourceId The resource ID to remove
+         */
+        void RemoveResource(int resourceId);
         
     private:
         // Position
