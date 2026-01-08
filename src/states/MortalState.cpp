@@ -334,30 +334,52 @@ void MortalState::update() {
     if (!context->isFaceTransitionCooldownActive()) {
         float moveX = 0.0f;
         float moveY = 0.0f;
+        Direction lastDirection = player->getPlayerDirection();
         
         // Check vertical movement (W/S)
         if (inputManager->IsKeyHeld(SDLK_W)) {
             moveY -= 1.0f;
-            player->setCurrentPlayerAnimation(PlayerAnimations::WalkingBackLeftFoot);
+
+            // Walking Back Animation
             player->setPlayerDirection(Direction::BACK);
+            player->setAnimationTime(0.0f);
         }
         if (inputManager->IsKeyHeld(SDLK_S)) {
             moveY += 1.0f;
-            player->setCurrentPlayerAnimation(PlayerAnimations::WalkingForwardRightFoot);
+
+            // Walking Forward Animation
             player->setPlayerDirection(Direction::FORWARD);
         }
         
         // Check horizontal movement (A/D) - independent of vertical
         if (inputManager->IsKeyHeld(SDLK_A)) {
             moveX -= 1.0f;
-            player->setCurrentPlayerAnimation(PlayerAnimations::WalkingLeftLeftFoot);
+
+            // Walking Left Animation
             player->setPlayerDirection(Direction::LEFT);
         }
         if (inputManager->IsKeyHeld(SDLK_D)) {
             moveX += 1.0f;
-            player->setCurrentPlayerAnimation(PlayerAnimations::WalkingRightRightFoot);
+
+            // Walking Right Animation
             player->setPlayerDirection(Direction::RIGHT);
         }
+
+        if (player->getPlayerDirection() != lastDirection) {
+            animation->setFirstTime(true);
+            player->setAnimationTime(0);
+            lastDirection = player->getPlayerDirection();
+        }
+        else {
+            player->incrementAnimationTime(context->getDeltaTime());
+            animation->setFirstTime(false);
+        }
+
+        // Check Animation Time Reqs for Walking
+        if (inputManager->IsKeyHeld(SDLK_W) || inputManager->IsKeyHeld(SDLK_S) ||
+            inputManager->IsKeyHeld(SDLK_A) || inputManager->IsKeyHeld(SDLK_D)) {
+        }
+        
 
         if (moveX != 0.0f || moveY != 0.0f) {
             float length = sqrtf(moveX * moveX + moveY * moveY);
@@ -370,7 +392,10 @@ void MortalState::update() {
             moveY *= moveSpeed;
             
             player->move(moveX, moveY);
-            player->setPlayerState(WALKING);
+
+            // animate player walking
+            SDL_Log("Animation Time: %llu", animation->getAnimationTime());
+            animation->AnimatePlayer(player, WALKING);
             
             // Mark current planet as dirty when player moves
             Planet* currentPlanet = context->getCurrentPlanet();
@@ -407,17 +432,14 @@ void MortalState::update() {
             }
             // Idle punching animation
             if (inputManager->IsMouseButtonHeld(1)) {
-                bool firstPunch = false;
 
                 // Check Animation Time Requirements
                 if (player->getPlayerState() == PUNCHING) {
                     player->incrementAnimationTime(context->getDeltaTime());
-                    firstPunch = false;
                     animation->setFirstTime(false);
                 } 
-                else if (player->getPlayerState()){
+                else if (player->getPlayerState() != PUNCHING){
                     player->setAnimationTime(0);
-                    firstPunch = true;
                 }
                 player->setPlayerState(PUNCHING);
 

@@ -38,6 +38,14 @@ enum class PlayerAnimations: uint8_t {
     StandingStillLeftRightHandUp,
     StandingStillRightLeftHandUp,
     StandingStillBackRightHandUp,
+    SwingingForwardToolUp,
+    SwingingForwardToolDown,
+    SwingingBackToolup,
+    SwingingBackToolDown,
+    SwingingRightToolUp,
+    SwingingRightToolDown,
+    SwingingLeftToolUp,
+    SwingingLeftToolDown,
 
     //Count of Player Animations
     PlayerAnimationsCount

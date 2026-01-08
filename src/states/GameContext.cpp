@@ -63,6 +63,7 @@ GameContext:: ~GameContext() {
     if (planetTree) {
         delete planetTree;
         planetTree = nullptr;
+        currentPlanet = nullptr;
     }
     currentPlanet = nullptr;
 }

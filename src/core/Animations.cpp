@@ -61,6 +61,67 @@ void Animations::AnimatePlayer(Player* player, PlayerStates playerState) {
             this->firstTime = false;
         }
     }
+    else if (playerState == WALKING) {
+
+        /*
+        These could even prob be defined somewhere else
+        */
+        std::array<PlayerAnimations, 3> frames;
+        switch (player->getPlayerDirection()) {
+            case Direction::BACK:
+                frames = {
+                    PlayerAnimations:: WalkingBackRightFoot,
+                    PlayerAnimations:: WalkingBackIntermediary,
+                    PlayerAnimations:: WalkingBackLeftFoot,
+                };
+                break;
+            case Direction::FORWARD:
+                frames = {
+                    PlayerAnimations:: WalkingForwardLeftFoot,
+                    PlayerAnimations:: WalkingForwardIntermediary,
+                    PlayerAnimations:: WalkingForwardRightFoot
+                };
+                break;
+            case Direction::LEFT:
+                frames = {
+                    PlayerAnimations:: WalkingLeftLeftFoot,
+                    PlayerAnimations:: WalkingLeftIntermediary,
+                    PlayerAnimations:: WalkingLeftRightFoot
+                };
+                break;
+            case Direction::RIGHT:
+                frames = {
+                    PlayerAnimations:: WalkingRightRightFoot,
+                    PlayerAnimations:: WalkingRightIntermediary,
+                    PlayerAnimations:: WalkingRightLeftFoot
+                };
+                break;
+        }
+        
+        {
+            if (this->firstTime) {
+                player->setCurrentPlayerAnimation(frames[0]);
+            }
+            else if (player->getCurrentPlayerAnimation() == frames[0] && player->getAnimationTime() >= 100) {
+                player->setCurrentPlayerAnimation(frames[1]);
+                player->setAnimationTime(0);
+            }
+            else if (player->getCurrentPlayerAnimation() == frames[1] && player->getAnimationTime() >= 100) {
+                player->setCurrentPlayerAnimation(frames[2]);
+                player->setAnimationTime(0);
+            }
+            else if (player->getCurrentPlayerAnimation() == frames[2] && player->getAnimationTime() >= 100) {
+                player->setCurrentPlayerAnimation(frames[0]);
+                player->setAnimationTime(0);
+            }
+            
+            this->firstTime = false;
+        }
+    }
+}
+
+bool Animations::getFirstTime() {
+    return this->firstTime;
 }
 
 void Animations::setFirstTime(bool firstTime) {

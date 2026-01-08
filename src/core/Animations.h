@@ -2,6 +2,7 @@
 #define ANIMATIONS_H
 #include "../entities/player.h"
 #include "../states/GameContext.h"
+#include "../states/GameContext.h"
 
 typedef uint64_t Uint64;
 
@@ -16,6 +17,11 @@ class Animations {
          * Animate Player given an animation 
          */
         void AnimatePlayer(Player* player, PlayerStates playerState);
+
+        /**
+         * Get firstTime
+         */
+        bool getFirstTime();
 
         /**
          * Set firstTime
