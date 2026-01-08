@@ -60,13 +60,10 @@ GameContext:: ~GameContext() {
         delete toolManager;
         toolManager = nullptr;
     }
-    if (currentPlanet) {
-        delete currentPlanet;
-        currentPlanet = nullptr;
-    }
     if (planetTree) {
         delete planetTree;
         planetTree = nullptr;
+        currentPlanet = nullptr;
     }
 }
 
