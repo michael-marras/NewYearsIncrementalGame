@@ -42,6 +42,7 @@ class GameContext {
         int currentPlanetFace = 0;
         Uint64 faceTransitionCooldown = 0;
         PlanetTree* planetTree;
+        unsigned int rootPlanetSeed = 0;  // Seed used for root planet generation
         // Entities
             // TODO
         // UI
@@ -274,5 +275,10 @@ class GameContext {
          * Get player's universe Y position (local position + planet's universe position)
          */
         float GetPlayerUniverseY() const;
+        
+        /**
+         * Get the seed used for root planet generation (for starfield generation)
+         */
+        unsigned int GetRootPlanetSeed() const { return rootPlanetSeed; }
 };
 #endif // GAMECONTEXT_H

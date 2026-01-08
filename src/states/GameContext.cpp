@@ -101,8 +101,8 @@ void GameContext::GeneratePlanetTree() {
     }
     
     // Generate root planet (Planet 0)
-    unsigned int seed0 = static_cast<unsigned int>(time(nullptr));
-    Planet* planet0 = GeneratePlanetFromSeed(seed0, tileManager, objectManager, resourceManager, PlanetSize::TINY);
+    rootPlanetSeed = static_cast<unsigned int>(time(nullptr));
+    Planet* planet0 = GeneratePlanetFromSeed(rootPlanetSeed, tileManager, objectManager, resourceManager, PlanetSize::TINY);
     planet0->SetTier(0);  // Root planet is tier 0
     planet0->SetEnergyCost();  // Calculate energy cost based on tier
     planet0->SetUniversePosition(0.0f, 0.0f);  // Root planet at universe origin
@@ -121,8 +121,10 @@ void GameContext::GeneratePlanetTree() {
     }
     
     // Render planet to texture after player is positioned
+    // Player starts on TOP face (face 4) by default, so pass that
     if (renderer && planet0) {
-        planet0->RenderToTexture(renderer, tileManager, textureManager, objectManager, resourceManager, player);
+        int playerFace = 4; // TOP face
+        planet0->RenderToTexture(renderer, tileManager, textureManager, objectManager, resourceManager, player, 0.0f, playerFace);
     }
     
     // Not being used, can be used to generate extra planets off the start, just increase 0 in i < 0

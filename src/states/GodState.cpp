@@ -7,6 +7,7 @@
 #include <unordered_map>
 #include <vector>
 #include <memory>
+#include <random>
 #include "utils/constants.h"
 #include "states/GameContext.h"
 #include "entities/player.h"
@@ -21,7 +22,7 @@
 #include "world/BigBangEngine.h"
 #include "core/input_manager.h"
 
-GodState::GodState() {
+GodState::GodState() : starsGenerated(false) {
 
 }
 
@@ -97,9 +98,33 @@ void GodState::update() {
         
 }
 
+void GodState::GenerateStarfield(unsigned int seed, int numStars) {
+    stars.clear();
+    stars.reserve(numStars);
+    
+    // Use seed to initialize random number generator
+    std::mt19937 rng(seed);
+    std::uniform_real_distribution<float> xDist(-50000.0f, 50000.0f);  // Large universe range
+    std::uniform_real_distribution<float> yDist(-50000.0f, 50000.0f);
+    
+    for (int i = 0; i < numStars; i++) {
+        float starX = xDist(rng);
+        float starY = yDist(rng);
+        stars.push_back(std::make_pair(starX, starY));
+    }
+    
+    starsGenerated = true;
+}
+
 void GodState::render() {
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
     SDL_RenderClear(renderer);
+
+    // Generate starfield on first render if not already generated
+    if (!starsGenerated) {
+        unsigned int seed = context->GetRootPlanetSeed();
+        GenerateStarfield(seed, 2000);  // Generate 2000 stars
+    }
 
     TextureManager* textureManager = context->getTextureManager();
     TileManager* tileManager = context->getTileManager();
@@ -121,6 +146,34 @@ void GodState::render() {
     float minUniverseY = cameraY - effectiveHeight / 2.0f;
     float maxUniverseY = cameraY + effectiveHeight / 2.0f;
     
+    // Render starfield background
+    SDL_SetRenderDrawColor(renderer, 255, 255, 255, SDL_ALPHA_OPAQUE);
+    
+    // Scale stars with zoom (base size of 1 pixel, scaled by zoom)
+    // Clamp to minimum size of 0.5 pixels so stars are always visible
+    float starSize = std::max(0.5f, 1.0f * zoom);
+    
+    for (const auto& star : stars) {
+        float starX = star.first;
+        float starY = star.second;
+        
+        // Cull stars outside camera view
+        if (starX >= minUniverseX && starX <= maxUniverseX &&
+            starY >= minUniverseY && starY <= maxUniverseY) {
+            
+            float renderX, renderY;
+            camera->WorldToRender(starX, starY, renderX, renderY, VIRTUAL_WIDTH, VIRTUAL_HEIGHT);
+            
+            // Draw white dot scaled by zoom (centered on position)
+            SDL_FRect starRect;
+            starRect.x = renderX - starSize / 2.0f;
+            starRect.y = renderY - starSize / 2.0f;
+            starRect.w = starSize;
+            starRect.h = starSize;
+            SDL_RenderFillRect(renderer, &starRect);
+        }
+    }
+    
     // Render all planets in universe space
     PlanetTree* planetTree = context->getPlanetTree();
     if (planetTree) {
@@ -137,19 +190,15 @@ void GodState::render() {
         for (Planet* planet : allPlanets) {
             if (!planet) continue;
             
-            float planetUniverseX = planet->GetUniverseX();
-            float planetUniverseY = planet->GetUniverseY();
+            // Planet's universe position is already its center
+            float planetCenterUniverseX = planet->GetUniverseX();
+            float planetCenterUniverseY = planet->GetUniverseY();
             
             int planetRadius = planet->getRadius();
             int planetWidth = planetRadius * 2;
             float planetSize = planetWidth * TILE_RENDER_SIZE;
             
-            float planetCenterLocalX = planetRadius * TILE_RENDER_SIZE;
-            float planetCenterLocalY = planetRadius * TILE_RENDER_SIZE;
-            
-            float planetCenterUniverseX, planetCenterUniverseY;
-            planet->LocalToUniverse(planetCenterLocalX, planetCenterLocalY, planetCenterUniverseX, planetCenterUniverseY);
-            
+            // Cull planets outside camera view
             if (planetCenterUniverseX + planetSize / 2.0f >= minUniverseX && 
                 planetCenterUniverseX - planetSize / 2.0f <= maxUniverseX &&
                 planetCenterUniverseY + planetSize / 2.0f >= minUniverseY && 
@@ -167,8 +216,11 @@ void GodState::render() {
                 }
                 
                 if (planet->IsDirty() || !planet->GetCachedTexture()) {
+                    float deltaTime = (float)context->getDeltaTime();
+                    // Only include player in texture if they're on this planet and on TOP face
+                    int playerFace = (currentPlanet == planet && player) ? context->getCurrentPlanetFace() : -1;
                     planet->RenderToTexture(renderer, tileManager, textureManager, 
-                                           objectManager, resourceManager, playerForRendering);
+                                           objectManager, resourceManager, playerForRendering, deltaTime, playerFace);
                 }
                 
                 // Try to render using cached texture
@@ -197,42 +249,6 @@ void GodState::render() {
             }
         }
     }
-    
-    // Render BigBangEngine if viewing TOP face
-    if (context->getCurrentPlanet() && context->getCurrentPlanetFace() == 4 /* TOP */) {
-        Planet* planet = context->getCurrentPlanet();
-        BigBangEngine* engine = planet->GetPortalEngine();
-        if (engine) {
-            // Ensure the portal texture is loaded
-            engine->EnsureTextureLoaded(textureManager);
-            
-            // Set target scale based on current energy ratio
-            float currentEnergy = planet->GetCurrentEnergy();
-            float energyCost = planet->GetEnergyCost();
-            float energyRatio = (energyCost > 0.0f) ? (currentEnergy / energyCost) : 0.0f;
-            if (energyRatio > 1.0f) energyRatio = 1.0f;
-            engine->SetTargetEnergyRatio(energyRatio);
-            
-            // Update animation and growth interpolation
-            engine->Update((float)context->getDeltaTime());
-            
-            // Compute center of current grid (TOP face) - match player spawn calculation
-            int mapId = context->getMap();
-            TileGrid* topGrid = tileManager->GetTileGrid(mapId);
-            if (topGrid) {
-                // Use same calculation as player spawn: (width * TILE_RENDER_SIZE) / 2.0f
-                float centerX = (topGrid->width * TILE_RENDER_SIZE) / 2.0f;
-                float centerY = (topGrid->height * TILE_RENDER_SIZE) / 2.0f;
-                
-                float portalRenderX, portalRenderY;
-                camera->WorldToRender(centerX, centerY, portalRenderX, portalRenderY, VIRTUAL_WIDTH, VIRTUAL_HEIGHT);
-                
-                // Use smoothly interpolated display scale
-                float portalScale = engine->GetDisplayScale();
-                engine->Render(textureManager, portalRenderX, portalRenderY, zoom * 0.5f * portalScale);
-            }
-        }
-    }
 
     // Convert mouse window coordinates to render/logical coordinates
     float mouseScreenX = inputManager->GetMouseX();
@@ -255,17 +271,18 @@ void GodState::render() {
 }
 
 void GodState::onEnter() {
-    if (player) {
-        Camera* camera = context->getCamera();
-        if (camera) {
-            // In GodState, camera works in universe coordinates
-            // Position camera at player's universe position (preserve player's world position)
-            float playerUniverseX = context->GetPlayerUniverseX();
-            float playerUniverseY = context->GetPlayerUniverseY();
-            camera->SnapToTarget(playerUniverseX, playerUniverseY);
-            camera->SetZoomBounds(0.005f, 0.15f);
-            camera->SetZoom(0.15f);
+    Camera* camera = context->getCamera();
+    if (camera) {
+        Planet* currentPlanet = context->getCurrentPlanet();
+        if (currentPlanet) {
+            float planetUniverseX = currentPlanet->GetUniverseX();
+            float planetUniverseY = currentPlanet->GetUniverseY();
+            camera->SnapToTarget(planetUniverseX, planetUniverseY);
+        } else {
+            camera->SnapToTarget(0.0f, 0.0f);
         }
+        camera->SetZoomBounds(0.005f, 0.15f);
+        camera->SetZoom(0.15f);
     }
 }
 

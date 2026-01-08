@@ -1,4 +1,5 @@
 #include "world/planet.h"
+#include "world/BigBangEngine.h"
 #include <cmath>
 #include "utils/constants.h"
 #include "world/tiles.h"
@@ -190,7 +191,9 @@ void Planet::RenderToTexture(SDL_Renderer* renderer,
     TextureManager* textureManager,
     ObjectManager* objectManager,
     ResourceManager* resourceManager,
-    Player* player) {
+    Player* player,
+    float deltaTime,
+    int playerCurrentFace) {
     if (!renderer || !tileManager || !textureManager) return;
 
     int planetWidth = (radius * 2) * TILE_RENDER_SIZE;
@@ -242,6 +245,31 @@ void Planet::RenderToTexture(SDL_Renderer* renderer,
         }
     }
 
+    BigBangEngine* engine = GetPortalEngine();
+    if (engine && textureManager) {
+        // Ensure the portal texture is loaded
+        engine->EnsureTextureLoaded(textureManager);
+        
+        // Set target scale based on current energy ratio
+        float energyRatio = (energyCost > 0.0f) ? (currentEnergy / energyCost) : 0.0f;
+        if (energyRatio > 1.0f) energyRatio = 1.0f;
+        engine->SetTargetEnergyRatio(energyRatio);
+        
+        // Update animation and growth interpolation
+        if (deltaTime > 0.0f) {
+            engine->Update(deltaTime);
+        }
+        
+        // Calculate center of planet (same as player spawn)
+        float centerX = radius * TILE_RENDER_SIZE;
+        float centerY = radius * TILE_RENDER_SIZE;
+        
+        // Use smoothly interpolated display scale with fixed scale factor
+        float portalScale = engine->GetDisplayScale();
+        engine->Render(textureManager, centerX, centerY, 0.5f * portalScale);
+    }
+
+
     // Render objects from TOP face
     if (objectManager) {
         int objectGridId = GetObjectGridId(PlanetFace::TOP);
@@ -277,16 +305,14 @@ void Planet::RenderToTexture(SDL_Renderer* renderer,
         }
     }
 
-    // Render player if they're on this planet (optional)
-    if (player) {
+    if (player && playerCurrentFace == 4 /* TOP */) {
         float playerX = player->getX();
         float playerY = player->getY();
-        // Check if player is within planet bounds
+        // Check if player is within planet bounds (TOP face bounds)
         if (playerX >= 0 && playerX < planetWidth && playerY >= 0 && playerY < planetHeight) {
             textureManager->RenderPlayer(player, playerX, playerY, player->getCurrentPlayerAnimation(), 1.0f);
         }
     }
-
     SDL_SetRenderTarget(renderer, nullptr);
     
     // Clear dirty flag after rendering

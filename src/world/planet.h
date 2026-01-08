@@ -173,7 +173,9 @@ public:
                          TextureManager* textureManager,
                          ObjectManager* objectManager = nullptr,
                          ResourceManager* resourceManager = nullptr,
-                         Player* player = nullptr);
+                         Player* player = nullptr,
+                         float deltaTime = 0.0f,
+                         int playerCurrentFace = -1);
     
     /**
      * Get the cached texture for rendering in GodState

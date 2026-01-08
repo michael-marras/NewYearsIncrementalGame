@@ -2,6 +2,8 @@
 #define GODSTATE_H
 
 #include "BaseState.h"
+#include <vector>
+#include <utility>
 
 class GodState : public BaseState {
     public:
@@ -41,6 +43,16 @@ class GodState : public BaseState {
           * Handle exiting the state
           */
         void onExit();
+        
+    private:
+        // Starfield data
+        std::vector<std::pair<float, float>> stars;
+        bool starsGenerated = false;
+        
+        /**
+         * Generate starfield using root planet seed
+         */
+        void GenerateStarfield(unsigned int seed, int numStars = 1000);
 };
 
 
