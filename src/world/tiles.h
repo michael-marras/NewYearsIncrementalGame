@@ -4,6 +4,7 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include "world/planet.h"
 
 // Tile information structure
 struct TileInfo {
@@ -72,8 +73,7 @@ public:
     int GetTileCount() const { return (int)tiles.size(); }
     
     int CreateTileGrid(int width, int height);
-    int CreateTileGridwGroupings(int width, int height);
-    int CreateTileGridwGroupingsSeeded(int width, int height, unsigned int seed);
+    int CreateTileGridwGroupingsSeeded(int width, int height, unsigned int seed, PlanetBiome planetBiome);
     TileGrid* GetTileGrid(int gridId);
     void DestroyTileGrid(int gridId);
     void DestroyAllGrids();

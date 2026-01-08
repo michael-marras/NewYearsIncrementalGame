@@ -29,6 +29,7 @@ struct ObjectDefinitionData {
 void SetupObjects(ObjectManager* objectManager, TextureManager* textureManager, ResourceManager* resourceManager) {
     // Load object sprite sheets
     textureManager->LoadImageFromRes("winter_objects", "winter_objects.png");
+    textureManager->LoadImageFromRes("summer_objects", "summer_objects.png");
 
     // Define all objects in a data structure
     std::vector<ObjectDefinitionData> objectDefinitions = {
@@ -50,7 +51,27 @@ void SetupObjects(ObjectManager* objectManager, TextureManager* textureManager, 
         // Trees and Plants (require axe)
         {10, "winter_objects", 0, 72, 16, 24, true, "winter_tree", 100, "", "axe", {{"log", 3}}},
         {11, "winter_objects", 96, 80, 16, 16, true, "winter_bush", 50, "", "axe", {{"leaf", 4}}},
-        {12, "winter_objects", 1, 20, 15, 28, true, "winter_well", 200, "", "", {}}
+        {12, "winter_objects", 1, 20, 15, 28, true, "winter_well", 200, "", "", {}},
+
+        // Regular Rocks (require pickaxe)
+        {13, "summer_objects", 16, 25, 16, 23, true, "summer_big_rock", 100, "summer_medium_rock", "pickaxe", {{"stone", 5}}},
+        {14, "summer_objects", 32, 32, 16, 16, true, "summer_medium_rock", 50, "summer_small_rock", "pickaxe", {{"stone", 3}}},
+        {15, "summer_objects", 48, 32, 16, 16, true, "summer_small_rock", 25, "", "pickaxe", {{"stone", 1}}},
+        
+        // Iron Rocks (require pickaxe)
+        {16, "summer_objects", 0, 128, 16, 23, true, "summer_big_iron_rock", 150, "summer_medium_iron_rock", "pickaxe", {{"raw_iron", 3}}},
+        {17, "summer_objects", 32, 128, 16, 16, true, "summer_medium_iron_rock", 75, "summer_small_iron_rock", "pickaxe", {{"raw_iron", 2}}},
+        {18, "summer_objects", 64, 128, 16, 16, true, "summer_small_iron_rock", 37, "", "pickaxe", {{"raw_iron", 1}}},
+        
+        // Gold Rocks (require pickaxe)
+        {19, "summer_objects", 16, 128, 16, 23, true, "summer_big_gold_rock", 200, "summer_medium_gold_rock", "pickaxe", {{"raw_gold", 100}}},
+        {20, "summer_objects", 48, 128, 16, 16, true, "summer_medium_gold_rock", 100, "summer_small_gold_rock", "pickaxe", {{"raw_gold", 2}}},
+        {21, "summer_objects", 80, 128, 16, 16, true, "summer_small_gold_rock", 50, "", "pickaxe", {{"raw_gold", 1}}},
+        
+        // Trees and Plants (require axe)
+        {22, "summer_objects", 0, 72, 16, 24, true, "summer_tree", 100, "", "axe", {{"log", 3}}},
+        {23, "summer_objects", 96, 80, 16, 16, true, "summer_bush", 50, "", "axe", {{"leaf", 4}}},
+        {24, "summer_objects", 1, 20, 15, 28, true, "summer_well", 200, "", "", {}},
     };
 
     // Automatically register all objects

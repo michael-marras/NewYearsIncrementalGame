@@ -33,6 +33,20 @@ enum class PlanetSize {
     GIANT
 };
 
+// Enum for planet biomes (visual/seasonal theme)
+enum class PlanetBiome {
+    WINTER,
+    SUMMER
+};
+
+// Enum for planet types (resource/object spawn characteristics)
+enum class PlanetType {
+    TREE_PLANET,
+    IRON_PLANET,
+    GOLD_PLANET,
+    ROCK_PLANET
+};
+
 // Get the radius (in tiles) for a planet size
 // Each face of the cube planet will be (radius * 2) x (radius * 2) tiles
 int GetPlanetRadius(PlanetSize size);
@@ -140,6 +154,26 @@ public:
     void SetTier(int tierValue);
 
     /**
+     * Get planet biome (WINTER or SUMMER)
+     */
+    PlanetBiome GetPlanetBiome() const;
+    
+    /**
+     * Set planet biome (WINTER or SUMMER)
+     */
+    void SetPlanetBiome(PlanetBiome biome);
+    
+    /**
+     * Get planet type (TREE_PLANET, IRON_PLANET, or GOLD_PLANET)
+     */
+    PlanetType GetPlanetType() const;
+    
+    /**
+     * Set planet type (TREE_PLANET, IRON_PLANET, or GOLD_PLANET)
+     */
+    void SetPlanetType(PlanetType type);
+
+    /**
      * Get universe X position (where this planet is in the universe)
      */
     float GetUniverseX() const;
@@ -206,6 +240,8 @@ public:
 
 private:
     std::unordered_map<PlanetFace, PlanetFaceData> faces;
+    PlanetBiome planetBiome = PlanetBiome::WINTER;
+    PlanetType planetType = PlanetType::TREE_PLANET;
     int tier = 0;
     int radius = 0;
     float currentEnergy = 0.0f;

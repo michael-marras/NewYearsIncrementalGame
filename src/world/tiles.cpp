@@ -95,17 +95,22 @@ int TileManager::CreateTileGrid(int width, int height) {
     return gridId;
 }
 
-int TileManager::CreateTileGridwGroupings(int width, int height){
-    return CreateTileGridwGroupingsSeeded(width, height, (unsigned int)std::time(nullptr));
-}
-
-int TileManager::CreateTileGridwGroupingsSeeded(int width, int height, unsigned int seed){
-    std::srand(seed);  // Seed RNG for reproducible generation
+int TileManager::CreateTileGridwGroupingsSeeded(int width, int height, unsigned int seed, PlanetBiome planetBiome){
+    std::srand(seed);
     TileGrid* grid = new TileGrid(width, height);
 
-    const int high[] = {6, 13, 20};
-    const int med[] = {5, 12, 19};
-    const int low[] = {4, 11, 18};
+    int offset;
+    if (planetBiome == PlanetBiome::SUMMER) {
+        offset = 35;
+    } else if (planetBiome == PlanetBiome::WINTER) {
+        offset = 0;
+    } else {
+        offset = 0;
+    }
+
+    const int high[] = {6 + offset, 13 + offset, 20 + offset};
+    const int med[] = {5 + offset, 12 + offset, 19 + offset};
+    const int low[] = {4 + offset, 11 + offset, 18 + offset};
     const int numHigh = sizeof(high) / sizeof(high[0]);
     const int numMed = sizeof(med) / sizeof(med[0]);
     const int numLow = sizeof(low) / sizeof(low[0]);
@@ -167,7 +172,7 @@ int TileManager::CreateTileGridwGroupingsSeeded(int width, int height, unsigned 
                 }
             }
 
-            int tileId = 4;
+            int tileId = 4 + offset;
             if (bestPatchIndex >= 0) {
                 const Patch& patch = patches[bestPatchIndex];
                 if (bestDistance <= patch.highRadius) {

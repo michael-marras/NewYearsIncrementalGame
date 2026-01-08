@@ -1,6 +1,7 @@
 #include "world/planet.h"
 #include "world/BigBangEngine.h"
 #include <cmath>
+#include <cstdlib>
 #include "utils/constants.h"
 #include "world/tiles.h"
 #include "core/textures.h"
@@ -131,6 +132,22 @@ void Planet::SetTier(int tierValue) {
     tier = tierValue;
 }
 
+PlanetBiome Planet::GetPlanetBiome() const {
+    return planetBiome;
+}
+
+void Planet::SetPlanetBiome(PlanetBiome biome) {
+    planetBiome = biome;
+}
+
+PlanetType Planet::GetPlanetType() const {
+    return planetType;
+}
+
+void Planet::SetPlanetType(PlanetType type) {
+    planetType = type;
+}
+
 int Planet::getRadius() const {
     return radius;
 }
@@ -199,6 +216,12 @@ void Planet::RenderToTexture(SDL_Renderer* renderer,
     int planetWidth = (radius * 2) * TILE_RENDER_SIZE;
     int planetHeight = planetWidth;
 
+    // Debug: check planet size
+    if (planetWidth <= 0 || planetHeight <= 0) {
+        SDL_Log("Error: Planet has invalid size: radius=%d, width=%d, height=%d", radius, planetWidth, planetHeight);
+        return;
+    }
+
     // Only re-render if texture doesn't exist, size changed, or planet is dirty
     if (!cachedTexture || cachedTextureWidth != planetWidth) {
         if (cachedTexture) {
@@ -210,13 +233,14 @@ void Planet::RenderToTexture(SDL_Renderer* renderer,
                         SDL_TEXTUREACCESS_TARGET,
                         planetWidth, planetHeight);
         if (!cachedTexture) {
-            SDL_Log("Failed to create planet cached texture: %s", SDL_GetError());
-            SDL_SetRenderTarget(renderer, nullptr);  // Reset render target on error
+            SDL_Log("Error: Failed to create planet cached texture (size: %dx%d): %s", planetWidth, planetHeight, SDL_GetError());
+            SDL_SetRenderTarget(renderer, nullptr);
             return;
         }
         cachedTextureWidth = planetWidth;
         cachedTextureHeight = planetHeight;
         isDirty = true;
+        SDL_Log("Created planet cached texture: %dx%d (radius=%d)", planetWidth, planetHeight, radius);
     }
 
     // Only re-render if planet is dirty
@@ -231,18 +255,36 @@ void Planet::RenderToTexture(SDL_Renderer* renderer,
 
     // Render tiles from TOP face
     int tileGridId = GetTileGridId(PlanetFace::TOP);
+    SDL_Log("Debug: Planet tile grid ID for TOP face: %d (radius=%d, size=%dx%d)", tileGridId, radius, planetWidth, planetHeight);
     if (tileGridId >= 0) {
         TileGrid* grid = tileManager->GetTileGrid(tileGridId);
         if (grid) {
+            int tilesRendered = 0;
+            int tilesFailed = 0;
             for (int y = 0; y < grid->height; y++) {
                 for (int x = 0; x < grid->width; x++) {
                     int tileId = grid->GetTile(x, y);
                     float tileX = x * TILE_RENDER_SIZE;
                     float tileY = y * TILE_RENDER_SIZE;
-                    textureManager->RenderTile(tileManager, tileId, tileX, tileY, 1.0f);
+                    bool rendered = textureManager->RenderTile(tileManager, tileId, tileX, tileY, 1.0f);
+                    if (rendered) {
+                        tilesRendered++;
+                    } else {
+                        tilesFailed++;
+                    }
                 }
             }
+            if (tilesFailed > 0) {
+                SDL_Log("Warning: Failed to render %d tiles (rendered %d) for planet with grid ID %d", tilesFailed, tilesRendered, tileGridId);
+            }
+            if (tilesRendered == 0 && tilesFailed > 0) {
+                SDL_Log("Error: No tiles rendered! Grid ID: %d, Size: %dx%d, Total tiles: %d", tileGridId, grid->width, grid->height, grid->width * grid->height);
+            }
+        } else {
+            SDL_Log("Error: Planet tile grid %d not found in TileManager", tileGridId);
         }
+    } else {
+        SDL_Log("Error: Planet has invalid tile grid ID: %d", tileGridId);
     }
 
     BigBangEngine* engine = GetPortalEngine();
@@ -268,7 +310,6 @@ void Planet::RenderToTexture(SDL_Renderer* renderer,
         float portalScale = engine->GetDisplayScale();
         engine->Render(textureManager, centerX, centerY, 0.5f * portalScale);
     }
-
 
     // Render objects from TOP face
     if (objectManager) {

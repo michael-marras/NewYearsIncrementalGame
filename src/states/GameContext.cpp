@@ -60,14 +60,11 @@ GameContext:: ~GameContext() {
         delete toolManager;
         toolManager = nullptr;
     }
-    if (currentPlanet) {
-        delete currentPlanet;
-        currentPlanet = nullptr;
-    }
     if (planetTree) {
         delete planetTree;
         planetTree = nullptr;
     }
+    currentPlanet = nullptr;
 }
 
 void GameContext:: InitializeManagers(SDL_Window* window, SDL_Renderer* renderer) {
@@ -111,8 +108,7 @@ void GameContext::GeneratePlanetTree() {
     
     // Generate root planet (Planet 0)
     rootPlanetSeed = static_cast<unsigned int>(time(nullptr));
-    Planet* planet0 = GeneratePlanetFromSeed(rootPlanetSeed, tileManager, objectManager, resourceManager, PlanetSize::TINY);
-    planet0->SetTier(0);  // Root planet is tier 0
+    Planet* planet0 = GeneratePlanetFromSeed(rootPlanetSeed, tileManager, objectManager, resourceManager, 0);
     planet0->SetEnergyCost();  // Calculate energy cost based on tier
     planet0->SetUniversePosition(0.0f, 0.0f);  // Root planet at universe origin
     
@@ -155,16 +151,17 @@ void GameContext::GeneratePlanetTree() {
         
         // Generate new planet with unique seed
         unsigned int seed = static_cast<unsigned int>(time(nullptr) + i);
-        Planet* newPlanet = GeneratePlanetFromSeed(seed, tileManager, objectManager, resourceManager, PlanetSize::TINY);
         
         // Calculate tier: parent's tier + 1
         PlanetNode* parentNode = planetTree->FindPlanet(parentId);
+        int childTier = 1;
         if (parentNode && parentNode->planet) {
             int parentTier = parentNode->planet->GetTier();
-            int childTier = parentTier + 1;
-            newPlanet->SetTier(childTier);
-            newPlanet->SetEnergyCost();
+            childTier = parentTier + 1;
         }
+        
+        Planet* newPlanet = GeneratePlanetFromSeed(seed, tileManager, objectManager, resourceManager, childTier);
+        newPlanet->SetEnergyCost();
         
         // Add to tree
         int childId = planetTree->AddChild(parentId, newPlanet);
@@ -213,12 +210,11 @@ void GameContext::GeneratePlanetInTree(int parentId) {
     
     if (parent->planet->CanGenerateChild()) {
         unsigned int seed = static_cast<unsigned int>(time(nullptr));
-        Planet* child = GeneratePlanetFromSeed(seed, tileManager, objectManager, resourceManager, PlanetSize::SMALL);
         
-        // Calculate tier: parent's tier + 1
         int parentTier = parent->planet->GetTier();
         int childTier = parentTier + 1;
-        child->SetTier(childTier);
+        
+        Planet* child = GeneratePlanetFromSeed(seed, tileManager, objectManager, resourceManager, childTier);
         child->SetEnergyCost();
         
         int childId = planetTree->AddChild(parentId, child);

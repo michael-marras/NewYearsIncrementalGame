@@ -21,16 +21,16 @@ GeneratedMap GenerateMapFromSeed(unsigned int seed,
                                  TileManager* tileManager, 
                                  ObjectManager* objectManager,
                                  ResourceManager* resourceManager,
-                                 int width, int height);
+                                 int width, int height, PlanetBiome planetBiome, PlanetType planetType);
 
 // Generate a cube planet with 6 faces from a seed
 // Returns a Planet with all 6 faces initialized
-// Uses the planet size to determine the radius (width/height) of each face
+// Uses the tier to determine the planet size (radius)
 Planet* GeneratePlanetFromSeed(unsigned int seed,
                                 TileManager* tileManager,
                                 ObjectManager* objectManager,
                                 ResourceManager* resourceManager,
-                                PlanetSize size);
+                                int tier);
 
 #endif // MAP_GENERATION_H
 
