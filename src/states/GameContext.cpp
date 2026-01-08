@@ -6,6 +6,7 @@
 #include "core/camera.h"
 #include "entities/player.h"
 #include "items/resources.h"
+#include "items/tools.h"
 #include "world/planet.h"
 #include "world/planet_tree.h"
 #include "world/map_generation.h"
@@ -19,6 +20,7 @@ GameContext:: GameContext() {
     tileManager = nullptr;
     objectManager = nullptr;
     resourceManager = nullptr;
+    toolManager = nullptr;
     player = nullptr;
     camera = nullptr;
     map = -1;
@@ -54,6 +56,10 @@ GameContext:: ~GameContext() {
         delete resourceManager;
         resourceManager = nullptr;
     }
+    if (toolManager) {
+        delete toolManager;
+        toolManager = nullptr;
+    }
     if (currentPlanet) {
         delete currentPlanet;
         currentPlanet = nullptr;
@@ -85,6 +91,9 @@ void GameContext:: InitializeManagers(SDL_Window* window, SDL_Renderer* renderer
     }
     if (!resourceManager) {
         resourceManager = new ResourceManager();
+    }
+    if (!toolManager) {
+        toolManager = new ToolManager();
     }
     if (!player) {
         player = new Player();
@@ -345,6 +354,10 @@ ResourceManager* GameContext:: getResourceManager() {
     return this -> resourceManager;
 }
 
+ToolManager* GameContext:: getToolManager() {
+    return this -> toolManager;
+}
+
 Camera* GameContext:: getCamera() {
     return this -> camera;
 }
@@ -363,6 +376,10 @@ void GameContext:: setObjectManager(ObjectManager* manager) {
 
 void GameContext:: setResourceManager(ResourceManager* manager) {
     this -> resourceManager = manager;
+}
+
+void GameContext:: setToolManager(ToolManager* manager) {
+    this -> toolManager = manager;
 }
 
 void GameContext:: setCamera(Camera* camera) {

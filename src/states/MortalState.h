@@ -2,8 +2,14 @@
 #define MORTALSTATE_H
 
 #include "BaseState.h"
+#include <cstdint>
+
+typedef uint64_t Uint64;
 
 class MortalState : public BaseState {
+    private:
+        Uint64 lastMiningTime = 0;
+        
     public:
 
         MortalState();

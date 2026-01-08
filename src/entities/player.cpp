@@ -9,13 +9,15 @@ Player::Player() {
     this->playerWalkingStage = WalkingStages:: NOT_WALKING;
     this->playerWalkingStage = WalkingStages:: NOT_WALKING;
     this->animationTime = 0;
-    this->playerState=IDLE; 
+    this->playerState=IDLE;
+    this->equippedToolId = -1;
 }
 
 Player::Player(int posX, int posY) {
     this->posX = (float)posX;
     this->posY = (float)posY;
     this->currentPlanet = nullptr;
+    this->equippedToolId = -1;
 }
 
 void Player::setX(float X) {
@@ -153,5 +155,36 @@ void Player::ConsumeResource(int resourceId, int quantity) {
     } else {
         it->second -= quantity;
     }
+}
+
+bool Player::EquipTool(int toolId) {
+    // Check if player has the tool
+    if (!HasTool(toolId)) {
+        return false;
+    }
+    equippedToolId = toolId;
+    return true;
+}
+
+void Player::UnequipTool() {
+    equippedToolId = -1;
+}
+
+void Player::AddTool(int toolId, int quantity) {
+    toolInventory[toolId] += quantity;
+}
+
+bool Player::HasTool(int toolId) const {
+    auto it = toolInventory.find(toolId);
+    return it != toolInventory.end() && it->second > 0;
+}
+
+int Player::GetToolQuantity(int toolId) const {
+    auto it = toolInventory.find(toolId);
+    return (it != toolInventory.end()) ? it->second : 0;
+}
+
+std::unordered_map<int, int>* Player::getToolInventory() {
+    return &this->toolInventory;
 }
 

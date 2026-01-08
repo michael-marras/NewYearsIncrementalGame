@@ -8,12 +8,14 @@
 #include "definitions/frame_definitions.h"
 #include "definitions/object_definitions.h"
 #include "definitions/resource_definitions.h"
+#include "definitions/tool_definitions.h"
 #include "utils/constants.h"
 #include "core/camera.h"
 #include "states/GameContext.h"
 #include "core/input_manager.h"
 #include "entities/player.h"
 #include "items/resources.h"
+#include "items/tools.h"
 #include "ui/hud.h"
 #include "world/planet.h"
 #include "core/Animations.h"
@@ -85,13 +87,21 @@ struct SDLApplication {
         TileManager* tileManager = context->getTileManager();
         ObjectManager* objectManager = context->getObjectManager();
         ResourceManager* resourceManager = context->getResourceManager();
+        ToolManager* toolManager = context->getToolManager();
         player = context->getPlayer();
         Camera* camera = context->getCamera();
         
         SetupTiles(tileManager, textureManager);
         SetupResources(resourceManager, textureManager);
         SetupObjects(objectManager, textureManager, resourceManager);
+        SetupTools(toolManager, textureManager);
         SetupAnimations(player, textureManager);
+        
+        if (player) {
+            player->AddTool(1, 1);
+            player->AddTool(2, 1);
+            player->EquipTool(1);
+        }
         
         context->GeneratePlanetTree();
         

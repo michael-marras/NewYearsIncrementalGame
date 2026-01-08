@@ -15,7 +15,8 @@ ObjectManager::~ObjectManager() {
 
 void ObjectManager::RegisterObject(int id, const char* sheetName, int sheetX, int sheetY, 
                                   int width, int height, bool interactable, const char* name,
-                                  int maxHealth, const char* replacement, const std::vector<DropInstance>& drops) {
+                                  int maxHealth, const char* replacement, const char* requiredToolType,
+                                  const std::vector<DropInstance>& drops) {
     std::string objectName;
     
     // Use provided name, or generate default name if not provided
@@ -38,8 +39,9 @@ void ObjectManager::RegisterObject(int id, const char* sheetName, int sheetX, in
     obj.height = height;
     obj.interactable = interactable;
     obj.maxHealth = maxHealth;
-    obj.death_replacement = replacement;
-    obj.drops = drops;  // Store the drops vector
+    obj.death_replacement = replacement ? replacement : "";
+    obj.requiredToolType = requiredToolType ? requiredToolType : "";
+    obj.drops = drops;
     
     objects[id] = obj;
     nameToId[objectName] = id;
@@ -54,7 +56,7 @@ void ObjectManager::RegisterObjectsFromSheet(const char* sheetName, const int* o
         int y = objectData[i * 5 + 2];
         int w = objectData[i * 5 + 3];
         int h = objectData[i * 5 + 4];
-        RegisterObject(id, sheetName, x, y, w, h, interactable, nullptr, -1);
+        RegisterObject(id, sheetName, x, y, w, h, interactable, nullptr, -1, "", "");
     }
 }
 
@@ -66,7 +68,7 @@ int ObjectManager::RegisterObjectsFromGrid(const char* sheetName, int cols, int 
         for (int col = 0; col < cols; col++) {
             int x = startX + (col * objWidth);
             int y = startY + (row * objHeight);
-            RegisterObject(objectId, sheetName, x, y, objWidth, objHeight, interactable, nullptr);
+            RegisterObject(objectId, sheetName, x, y, objWidth, objHeight, interactable, nullptr, -1, "", "");
             objectId++;
         }
     }
@@ -227,15 +229,36 @@ bool ObjectManager::DamageInstance(int gridId, int x, int y, int damage) {
         return false;
     }
     
+    // Get object info for logging
+    ObjectGrid* grid = GetObjectGrid(gridId);
+    if (!grid) {
+        return false;
+    }
+    
+    int currentObjectId = grid->GetObject(x, y);
+    ObjectInfo* objInfo = GetObject(currentObjectId);
+    
+    int healthBefore = instance->currentHealth;
     instance->currentHealth -= damage;
+    int healthAfter = instance->currentHealth;
+    
+    // Log damage dealt
+    if (objInfo) {
+        SDL_Log("Dealt %d damage to %s (Health: %d -> %d)", 
+                damage, 
+                objInfo->name.c_str(), 
+                healthBefore, 
+                healthAfter);
+    } else {
+        SDL_Log("Dealt %d damage to object ID %d (Health: %d -> %d)", 
+                damage, 
+                currentObjectId, 
+                healthBefore, 
+                healthAfter);
+    }
+    
     if (instance->currentHealth <= 0) {
         // Object destroyed - check for replacement
-        ObjectGrid* grid = GetObjectGrid(gridId);
-        if (!grid) return true;
-        
-        // Get current object ID before removing
-        int currentObjectId = grid->GetObject(x, y);
-        ObjectInfo* objInfo = GetObject(currentObjectId);
         
         RemoveInstance(gridId, x, y);
         

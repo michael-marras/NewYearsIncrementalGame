@@ -2,7 +2,6 @@
 
 # Compiler settings
 CXX = clang++
-CXX = clang++
 CXXFLAGS = -std=c++17 -Wall -Wextra
 
 # Directories
@@ -33,14 +32,13 @@ LDFLAGS = -L$(SDL_LIB_DIR) -Wl,-rpath,$(SDL_LIB_DIR) $(FREETYPE_LDFLAGS)
 LIBS = -lSDL3 $(FREETYPE_LIBS)
 
 # Source and output files
-SRC = main.cpp core/textures.cpp world/tiles.cpp world/objects.cpp items/resources.cpp definitions/tile_definitions.cpp definitions/object_definitions.cpp definitions/resource_definitions.cpp world/map_generation.cpp world/planet.cpp world/planet_tree.cpp core/camera.cpp core/input_manager.cpp entities/player.cpp definitions/frame_definitions.cpp states/GameContext.cpp states/MortalState.cpp states/GodState.cpp ui/hud.cpp ui/text_renderer.cpp core/Animations.cpp world/BigBangEngine.cpp
-OBJ = $(BUILD_DIR)/main.o $(BUILD_DIR)/textures.o $(BUILD_DIR)/tiles.o $(BUILD_DIR)/objects.o $(BUILD_DIR)/resources.o $(BUILD_DIR)/tile_definitions.o $(BUILD_DIR)/object_definitions.o $(BUILD_DIR)/resource_definitions.o $(BUILD_DIR)/map_generation.o $(BUILD_DIR)/planet.o $(BUILD_DIR)/planet_tree.o $(BUILD_DIR)/camera.o $(BUILD_DIR)/input_manager.o $(BUILD_DIR)/player.o $(BUILD_DIR)/frame_definitions.o $(BUILD_DIR)/GameContext.o $(BUILD_DIR)/MortalState.o $(BUILD_DIR)/GodState.o $(BUILD_DIR)/hud.o $(BUILD_DIR)/text_renderer.o $(BUILD_DIR)/Animations.o $(BUILD_DIR)/BigBangEngine.o
+SRC = main.cpp core/textures.cpp world/tiles.cpp world/objects.cpp items/resources.cpp items/tools.cpp definitions/tile_definitions.cpp definitions/object_definitions.cpp definitions/resource_definitions.cpp definitions/tool_definitions.cpp world/map_generation.cpp world/planet.cpp world/planet_tree.cpp core/camera.cpp core/input_manager.cpp entities/player.cpp definitions/frame_definitions.cpp states/GameContext.cpp states/MortalState.cpp states/GodState.cpp ui/hud.cpp ui/text_renderer.cpp core/Animations.cpp world/BigBangEngine.cpp
+OBJ = $(BUILD_DIR)/main.o $(BUILD_DIR)/textures.o $(BUILD_DIR)/tiles.o $(BUILD_DIR)/objects.o $(BUILD_DIR)/resources.o $(BUILD_DIR)/tools.o $(BUILD_DIR)/tile_definitions.o $(BUILD_DIR)/object_definitions.o $(BUILD_DIR)/resource_definitions.o $(BUILD_DIR)/tool_definitions.o $(BUILD_DIR)/map_generation.o $(BUILD_DIR)/planet.o $(BUILD_DIR)/planet_tree.o $(BUILD_DIR)/camera.o $(BUILD_DIR)/input_manager.o $(BUILD_DIR)/player.o $(BUILD_DIR)/frame_definitions.o $(BUILD_DIR)/GameContext.o $(BUILD_DIR)/MortalState.o $(BUILD_DIR)/GodState.o $(BUILD_DIR)/hud.o $(BUILD_DIR)/text_renderer.o $(BUILD_DIR)/Animations.o $(BUILD_DIR)/BigBangEngine.o
 TARGET = $(BUILD_DIR)/game
 
 # Default target
 all: $(TARGET)
 
-# Link the object files into the final executable
 # Link the object files into the final executable
 $(TARGET): $(OBJ)
 	$(CXX) $(OBJ) $(LDFLAGS) $(LIBS) -o $(TARGET)
@@ -62,6 +60,9 @@ $(BUILD_DIR)/objects.o: world/objects.cpp world/objects.h
 $(BUILD_DIR)/resources.o: items/resources.cpp items/resources.h
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c items/resources.cpp -o $(BUILD_DIR)/resources.o
 
+$(BUILD_DIR)/tools.o: items/tools.cpp items/tools.h
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -c items/tools.cpp -o $(BUILD_DIR)/tools.o
+
 $(BUILD_DIR)/tile_definitions.o: definitions/tile_definitions.cpp definitions/tile_definitions.h
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c definitions/tile_definitions.cpp -o $(BUILD_DIR)/tile_definitions.o
 
@@ -70,6 +71,9 @@ $(BUILD_DIR)/object_definitions.o: definitions/object_definitions.cpp definition
 
 $(BUILD_DIR)/resource_definitions.o: definitions/resource_definitions.cpp definitions/resource_definitions.h
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c definitions/resource_definitions.cpp -o $(BUILD_DIR)/resource_definitions.o
+
+$(BUILD_DIR)/tool_definitions.o: definitions/tool_definitions.cpp definitions/tool_definitions.h
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -c definitions/tool_definitions.cpp -o $(BUILD_DIR)/tool_definitions.o
 
 $(BUILD_DIR)/map_generation.o: world/map_generation.cpp world/map_generation.h
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c world/map_generation.cpp -o $(BUILD_DIR)/map_generation.o
@@ -120,9 +124,11 @@ clean:
 	rm -f $(BUILD_DIR)/tiles.o
 	rm -f $(BUILD_DIR)/objects.o
 	rm -f $(BUILD_DIR)/resources.o
+	rm -f $(BUILD_DIR)/tools.o
 	rm -f $(BUILD_DIR)/tile_definitions.o
 	rm -f $(BUILD_DIR)/object_definitions.o
 	rm -f $(BUILD_DIR)/resource_definitions.o
+	rm -f $(BUILD_DIR)/tool_definitions.o
 	rm -f $(BUILD_DIR)/map_generation.o
 	rm -f $(BUILD_DIR)/planet.o
 	rm -f $(BUILD_DIR)/planet_tree.o

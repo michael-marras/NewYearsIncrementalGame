@@ -22,6 +22,7 @@ struct ObjectDefinitionData {
     const char* name;
     int maxHealth;
     const char* deathReplacement;
+    const char* requiredToolType;
     std::vector<DropDefinition> drops;
 };
 
@@ -31,25 +32,25 @@ void SetupObjects(ObjectManager* objectManager, TextureManager* textureManager, 
 
     // Define all objects in a data structure
     std::vector<ObjectDefinitionData> objectDefinitions = {
-        // Regular Rocks
-        {1, "winter_objects", 16, 25, 16, 23, true, "winter_big_rock", 100, "winter_medium_rock", {{"stone", 5}}},
-        {2, "winter_objects", 32, 32, 16, 16, true, "winter_medium_rock", 50, "winter_small_rock", {{"stone", 3}}},
-        {3, "winter_objects", 48, 32, 16, 16, true, "winter_small_rock", 25, "", {{"stone", 1}}},
+        // Regular Rocks (require pickaxe)
+        {1, "winter_objects", 16, 25, 16, 23, true, "winter_big_rock", 100, "winter_medium_rock", "pickaxe", {{"stone", 5}}},
+        {2, "winter_objects", 32, 32, 16, 16, true, "winter_medium_rock", 50, "winter_small_rock", "pickaxe", {{"stone", 3}}},
+        {3, "winter_objects", 48, 32, 16, 16, true, "winter_small_rock", 25, "", "pickaxe", {{"stone", 1}}},
         
-        // Iron Rocks
-        {4, "winter_objects", 0, 128, 16, 23, true, "winter_big_iron_rock", 150, "winter_medium_iron_rock", {{"raw_iron", 3}}},
-        {5, "winter_objects", 32, 128, 16, 16, true, "winter_medium_iron_rock", 75, "winter_small_iron_rock", {{"raw_iron", 2}}},
-        {6, "winter_objects", 64, 128, 16, 16, true, "winter_small_iron_rock", 37, "", {{"raw_iron", 1}}},
+        // Iron Rocks (require pickaxe)
+        {4, "winter_objects", 0, 128, 16, 23, true, "winter_big_iron_rock", 150, "winter_medium_iron_rock", "pickaxe", {{"raw_iron", 3}}},
+        {5, "winter_objects", 32, 128, 16, 16, true, "winter_medium_iron_rock", 75, "winter_small_iron_rock", "pickaxe", {{"raw_iron", 2}}},
+        {6, "winter_objects", 64, 128, 16, 16, true, "winter_small_iron_rock", 37, "", "pickaxe", {{"raw_iron", 1}}},
         
-        // Gold Rocks
-        {7, "winter_objects", 16, 128, 16, 23, true, "winter_big_gold_rock", 200, "winter_medium_gold_rock", {{"raw_gold", 100}}},
-        {8, "winter_objects", 48, 128, 16, 16, true, "winter_medium_gold_rock", 100, "winter_small_gold_rock", {{"raw_gold", 2}}},
-        {9, "winter_objects", 80, 128, 16, 16, true, "winter_small_gold_rock", 50, "", {{"raw_gold", 1}}},
+        // Gold Rocks (require pickaxe)
+        {7, "winter_objects", 16, 128, 16, 23, true, "winter_big_gold_rock", 200, "winter_medium_gold_rock", "pickaxe", {{"raw_gold", 100}}},
+        {8, "winter_objects", 48, 128, 16, 16, true, "winter_medium_gold_rock", 100, "winter_small_gold_rock", "pickaxe", {{"raw_gold", 2}}},
+        {9, "winter_objects", 80, 128, 16, 16, true, "winter_small_gold_rock", 50, "", "pickaxe", {{"raw_gold", 1}}},
         
-        // Trees and Plants
-        {10, "winter_objects", 0, 72, 16, 24, true, "winter_tree", 100, "", {{"log", 3}}},
-        {11, "winter_objects", 96, 80, 16, 16, true, "winter_bush", 50, "", {{"leaf", 4}}},
-        {12, "winter_objects", 1, 20, 15, 28, true, "winter_well", 200, "", {}}
+        // Trees and Plants (require axe)
+        {10, "winter_objects", 0, 72, 16, 24, true, "winter_tree", 100, "", "axe", {{"log", 3}}},
+        {11, "winter_objects", 96, 80, 16, 16, true, "winter_bush", 50, "", "axe", {{"leaf", 4}}},
+        {12, "winter_objects", 1, 20, 15, 28, true, "winter_well", 200, "", "", {}}
     };
 
     // Automatically register all objects
@@ -73,6 +74,7 @@ void SetupObjects(ObjectManager* objectManager, TextureManager* textureManager, 
             objDef.name,
             objDef.maxHealth,
             objDef.deathReplacement,
+            objDef.requiredToolType,
             dropInstances
         );
     }

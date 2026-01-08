@@ -236,6 +236,49 @@ class Player {
          */
         void SetPlanet(Planet* planet) { currentPlanet = planet; }
         
+        /**
+         * Equip a tool by ID (tool must be in inventory)
+         * @param toolId The tool ID to equip
+         * @return true if tool was equipped, false if tool not in inventory
+         */
+        bool EquipTool(int toolId);
+        
+        /**
+         * Unequip the currently equipped tool
+         */
+        void UnequipTool();
+        
+        /**
+         * Get the ID of the currently equipped tool (-1 if none)
+         */
+        int GetEquippedToolId() const { return equippedToolId; }
+        
+        /**
+         * Add a tool to inventory
+         * @param toolId The tool ID to add
+         * @param quantity The quantity to add (usually 1 for tools)
+         */
+        void AddTool(int toolId, int quantity = 1);
+        
+        /**
+         * Check if player has a tool in inventory
+         * @param toolId The tool ID to check
+         * @return true if player has the tool
+         */
+        bool HasTool(int toolId) const;
+        
+        /**
+         * Get tool quantity in inventory
+         * @param toolId The tool ID to check
+         * @return Quantity of tool in inventory
+         */
+        int GetToolQuantity(int toolId) const;
+        
+        /**
+         * Get pointer to player's tool inventory (toolId -> quantity)
+         */
+        std::unordered_map<int, int>* getToolInventory();
+        
     private:
         // Position
         float posX;
@@ -256,6 +299,12 @@ class Player {
 
         // Inventory (resourceId -> quantity)
         std::unordered_map<int, int> inventory;
+        
+        // Tool inventory (toolId -> quantity)
+        std::unordered_map<int, int> toolInventory;
+        
+        // Currently equipped tool ID (-1 if none)
+        int equippedToolId = -1;
 
 };
 #endif

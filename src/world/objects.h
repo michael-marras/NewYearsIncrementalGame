@@ -24,6 +24,7 @@ struct ObjectInfo {
     bool interactable;
     int maxHealth = -1;
     std::string death_replacement = "";
+    std::string requiredToolType = "";
     std::vector<DropInstance> drops;
 };
 
@@ -95,7 +96,7 @@ public:
     // Register an object with an optional custom name
     void RegisterObject(int id, const char* sheetName, int sheetX, int sheetY, 
                        int width, int height, bool interactable = false, const char* name = nullptr,
-                       int maxHealth = -1, const char* replacement = "",
+                       int maxHealth = -1, const char* replacement = "", const char* requiredToolType = "",
                        const std::vector<DropInstance>& drops = {});
     
     // Register multiple objects from a sprite sheet at once

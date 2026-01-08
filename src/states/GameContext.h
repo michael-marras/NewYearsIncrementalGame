@@ -10,6 +10,7 @@ class TextureManager;
 class TileManager;
 class ObjectManager;
 class ResourceManager;
+class ToolManager;
 class Camera;
 class Player;
 class Planet;
@@ -25,6 +26,7 @@ class GameContext {
         TileManager* tileManager;
         ObjectManager* objectManager;
         ResourceManager* resourceManager;
+        ToolManager* toolManager;
         Camera* camera;
         // Display/Rendering
         int currentResolutionIndex = 3;
@@ -132,6 +134,11 @@ class GameContext {
          ResourceManager* getResourceManager();
         
         /**
+         * Get Tool Manager
+         */
+        ToolManager* getToolManager();
+        
+        /**
          * Get Camera
          */
         Camera* getCamera();
@@ -155,6 +162,11 @@ class GameContext {
          * Set Resource Manager
          */
          void setResourceManager(ResourceManager* manager);
+        
+        /**
+         * Set Tool Manager
+         */
+        void setToolManager(ToolManager* manager);
         
         /**
          * Set Camera

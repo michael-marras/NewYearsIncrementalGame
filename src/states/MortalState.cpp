@@ -16,6 +16,7 @@
 #include "world/tiles.h"
 #include "world/objects.h"
 #include "items/resources.h"
+#include "items/tools.h"
 #include "core/camera.h"
 #include "core/Animations.h"
 #include "world/BigBangEngine.h"
@@ -211,36 +212,114 @@ void MortalState::update() {
 
     if (inputManager->IsMouseButtonHeld(1)) {
         if (objectManager->PlayerCanInteract(context->getObjectMap(), gridX, gridY, context->getPlayer())) {
-            // Get object info before damaging (to check for drops)
-            ObjectInfo* objBeforeDamage = objectManager->GetObjectAt(context->getObjectMap(), gridX, gridY);
+            // Get object info to check tool requirement
+            ObjectInfo* objectInfo = objectManager->GetObjectAt(context->getObjectMap(), gridX, gridY);
             
-            // Damage the object
-            bool wasDestroyed = objectManager->DamageInstance(context->getObjectMap(), gridX, gridY, 1);
+            if (objectInfo) {
+                SDL_Log("Attempting to mine: %s at (%d, %d), required tool: %s", 
+                        objectInfo->name.c_str(), gridX, gridY, 
+                        objectInfo->requiredToolType.empty() ? "none" : objectInfo->requiredToolType.c_str());
+            } else {
+                SDL_Log("No object found at grid position (%d, %d)", gridX, gridY);
+            }
             
-            // If object was destroyed, drop resources
-            if (wasDestroyed && objBeforeDamage) {
-                ResourceManager* resourceManager = context->getResourceManager();
-                int resourceArrayId = context->getResourceArray();
+            // Get tool info if tool is equipped
+            ToolManager* toolManager = context->getToolManager();
+            Player* player = context->getPlayer();
+            int equippedToolId = player ? player->GetEquippedToolId() : -1;
+            ToolInfo* toolInfo = (toolManager && equippedToolId >= 0) ? toolManager->GetTool(equippedToolId) : nullptr;
+            
+            // Check if object requires a specific tool type and auto-swap if needed
+            bool toolRequirementMet = true;
+            if (objectInfo && !objectInfo->requiredToolType.empty()) {
+                // Check if equipped tool matches required type
+                if (!toolInfo || toolInfo->type != objectInfo->requiredToolType) {
+                    // Try to find and equip a tool of the required type from inventory
+                    bool foundTool = false;
+                    if (toolManager && player) {
+                        std::unordered_map<int, int>* toolInventory = player->getToolInventory();
+                        if (toolInventory) {
+                            // Search through tool inventory for a tool of the required type
+                            for (const auto& toolEntry : *toolInventory) {
+                                if (toolEntry.second > 0) {
+                                    ToolInfo* candidateTool = toolManager->GetTool(toolEntry.first);
+                                    if (candidateTool && candidateTool->type == objectInfo->requiredToolType) {
+                                        player->EquipTool(toolEntry.first);
+                                        toolInfo = candidateTool;
+                                        equippedToolId = toolEntry.first;
+                                        foundTool = true;
+                                        SDL_Log("Auto-equipped %s for mining", candidateTool->name.c_str());
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    
+                    if (!foundTool) {
+                        toolRequirementMet = false;
+                        SDL_Log("Cannot mine %s - requires %s tool (none found in inventory)", 
+                                objectInfo->name.c_str(), objectInfo->requiredToolType.c_str());
+                    }
+                }
+            }
+            
+            // Only mine if tool requirement is met
+            if (toolRequirementMet) {
                 
-                if (resourceManager && resourceArrayId >= 0) {
-                    // Calculate world position (center of tile)
-                    float baseX = gridX * TILE_RENDER_SIZE + TILE_RENDER_SIZE / 2.0f;
-                    float baseY = gridY * TILE_RENDER_SIZE + TILE_RENDER_SIZE / 2.0f;
+                // Get current time
+                Uint64 currentTime = SDL_GetTicks();
+                
+                // Calculate damage and speed from tool, or use defaults
+                int damage = 1;
+                int miningSpeed = 100;
+                
+                if (toolInfo) {
+                    damage = toolInfo->damage;
+                    miningSpeed = toolInfo->speed;
+                }
+                
+                // Check if cooldown has elapsed
+                bool canMine = (currentTime - lastMiningTime) >= miningSpeed;
+                
+                if (canMine) {
+                    SDL_Log("Mining attempt: damage=%d, speed=%dms, cooldown=%llu", 
+                            damage, miningSpeed, (unsigned long long)(currentTime - lastMiningTime));
+                    // Get object info before damaging (to check for drops)
+                    ObjectInfo* objBeforeDamage = objectManager->GetObjectAt(context->getObjectMap(), gridX, gridY);
                     
-                    // Drop all resources with initial velocity
-                    const float INITIAL_SPEED = 50.0f;  // Initial velocity (pixels per second)
+                    // Damage the object with tool damage
+                    bool wasDestroyed = objectManager->DamageInstance(context->getObjectMap(), gridX, gridY, damage);
                     
-                    for (const DropInstance& drop : objBeforeDamage->drops) {
-                        // Drop each resource with random direction
-                        for (int i = 0; i < drop.quantity; i++) {
-                            // Random angle for direction
-                            float angle = (float)(std::rand() % 360) * M_PI / 180.0f;
+                    // Update last mining time
+                    lastMiningTime = currentTime;
+                    
+                    // If object was destroyed, drop resources
+                    if (wasDestroyed && objBeforeDamage) {
+                        ResourceManager* resourceManager = context->getResourceManager();
+                        int resourceArrayId = context->getResourceArray();
+                        
+                        if (resourceManager && resourceArrayId >= 0) {
+                            // Calculate world position (center of tile)
+                            float baseX = gridX * TILE_RENDER_SIZE + TILE_RENDER_SIZE / 2.0f;
+                            float baseY = gridY * TILE_RENDER_SIZE + TILE_RENDER_SIZE / 2.0f;
                             
-                            // Calculate initial velocity components
-                            float vx = cosf(angle) * INITIAL_SPEED;
-                            float vy = sinf(angle) * INITIAL_SPEED;
+                            // Drop all resources with initial velocity
+                            const float INITIAL_SPEED = 50.0f;  // Initial velocity (pixels per second)
                             
-                            resourceManager->AddResource(resourceArrayId, baseX, baseY, drop.resourceId, 1, vx, vy);
+                            for (const DropInstance& drop : objBeforeDamage->drops) {
+                                // Drop each resource with random direction
+                                for (int i = 0; i < drop.quantity; i++) {
+                                    // Random angle for direction
+                                    float angle = (float)(std::rand() % 360) * M_PI / 180.0f;
+                                    
+                                    // Calculate initial velocity components
+                                    float vx = cosf(angle) * INITIAL_SPEED;
+                                    float vy = sinf(angle) * INITIAL_SPEED;
+                                    
+                                    resourceManager->AddResource(resourceArrayId, baseX, baseY, drop.resourceId, 1, vx, vy);
+                                }
+                            }
                         }
                     }
                 }
