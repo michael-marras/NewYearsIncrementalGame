@@ -69,6 +69,8 @@ void Animations::AnimatePlayer(Player* player, PlayerStates playerState) {
         std::array<PlayerAnimations, 3> frames;
         switch (player->getPlayerDirection()) {
             case Direction::BACK:
+            case Direction::BACK_LEFT:
+            case Direction::BACK_RIGHT:
                 frames = {
                     PlayerAnimations:: WalkingBackRightFoot,
                     PlayerAnimations:: WalkingBackIntermediary,
@@ -76,6 +78,8 @@ void Animations::AnimatePlayer(Player* player, PlayerStates playerState) {
                 };
                 break;
             case Direction::FORWARD:
+            case Direction::FORWARD_LEFT:
+            case Direction::FORWARD_RIGHT:
                 frames = {
                     PlayerAnimations:: WalkingForwardLeftFoot,
                     PlayerAnimations:: WalkingForwardIntermediary,

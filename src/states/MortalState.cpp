@@ -332,48 +332,76 @@ void MortalState::update() {
     PlayerAnimations currentAnimation = player->getCurrentPlayerAnimation();
 
     if (!context->isFaceTransitionCooldownActive()) {
+        static float lastMoveX = 0.0f;
+        static float lastMoveY = 0.0f;
+        
         float moveX = 0.0f;
         float moveY = 0.0f;
-        Direction lastDirection = player->getPlayerDirection();
         
         // Check vertical movement (W/S)
         if (inputManager->IsKeyHeld(SDLK_W)) {
             moveY -= 1.0f;
-
-            // Walking Back Animation
-            player->setPlayerDirection(Direction::BACK);
-            player->setAnimationTime(0.0f);
         }
         if (inputManager->IsKeyHeld(SDLK_S)) {
             moveY += 1.0f;
-
-            // Walking Forward Animation
-            player->setPlayerDirection(Direction::FORWARD);
         }
         
-        // Check horizontal movement (A/D) - independent of vertical
+        // Check horizontal movement (A/D)
         if (inputManager->IsKeyHeld(SDLK_A)) {
             moveX -= 1.0f;
-
-            // Walking Left Animation
-            player->setPlayerDirection(Direction::LEFT);
         }
         if (inputManager->IsKeyHeld(SDLK_D)) {
             moveX += 1.0f;
-
-            // Walking Right Animation
-            player->setPlayerDirection(Direction::RIGHT);
+        }
+        
+        if (moveX != 0.0f || moveY != 0.0f) {
+            Direction newDirection;
+            
+            if (moveY > 0.0f) {
+                if (moveX < 0.0f) {
+                    newDirection = Direction::FORWARD_LEFT;
+                } else if (moveX > 0.0f) {
+                    newDirection = Direction::FORWARD_RIGHT;
+                } else {
+                    newDirection = Direction::FORWARD;
+                }
+            } else if (moveY < 0.0f) { 
+                if (moveX < 0.0f) {
+                    newDirection = Direction::BACK_LEFT;
+                } else if (moveX > 0.0f) {
+                    newDirection = Direction::BACK_RIGHT;
+                } else {
+                    newDirection = Direction::BACK;
+                }
+            } else {
+                if (moveX < 0.0f) {
+                    newDirection = Direction::LEFT;
+                } else {
+                    newDirection = Direction::RIGHT;
+                }
+            }
+            
+            // Normalize diagonal movement (make it same speed as cardinal directions)
+            if (moveX != 0.0f && moveY != 0.0f) {
+                float length = std::sqrt(moveX * moveX + moveY * moveY);
+                moveX = (moveX / length) * 1.0f;
+                moveY = (moveY / length) * 1.0f;
+            }
+            
+            player->setPlayerDirection(newDirection);
         }
 
-        if (player->getPlayerDirection() != lastDirection) {
+        if (moveX != lastMoveX || moveY != lastMoveY) {
             animation->setFirstTime(true);
             player->setAnimationTime(0);
-            lastDirection = player->getPlayerDirection();
         }
-        else {
+        else if (moveX != 0.0f || moveY != 0.0f) {
             player->incrementAnimationTime(context->getDeltaTime());
             animation->setFirstTime(false);
         }
+        
+        lastMoveX = moveX;
+        lastMoveY = moveY;
 
         // Check Animation Time Reqs for Walking
         if (inputManager->IsKeyHeld(SDLK_W) || inputManager->IsKeyHeld(SDLK_S) ||
@@ -394,7 +422,6 @@ void MortalState::update() {
             player->move(moveX, moveY);
 
             // animate player walking
-            SDL_Log("Animation Time: %llu", animation->getAnimationTime());
             animation->AnimatePlayer(player, WALKING);
             
             // Mark current planet as dirty when player moves

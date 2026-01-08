@@ -67,7 +67,16 @@ and it gives you the 3 frames for it instead of having to type out all 3 frame e
 
 */
 
-enum class Direction: uint8_t {LEFT, RIGHT, FORWARD, BACK};
+enum class Direction: uint8_t {
+    FORWARD,
+    BACK,
+    LEFT,
+    RIGHT,
+    FORWARD_LEFT,
+    FORWARD_RIGHT,
+    BACK_LEFT,
+    BACK_RIGHT
+};
 
 enum class WalkingStages : uint8_t {NOT_WALKING, LEFT_FOOT, RIGHT_FOOT, INTERMEDIARY};
 
