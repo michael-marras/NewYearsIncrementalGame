@@ -176,3 +176,10 @@ bool TextureManager::RenderResource(ResourceManager* resourceManager, int resour
                         resource->width, resource->height,
                         topLeftX, topLeftY, scale);
 }
+
+bool TextureManager::RenderInventory(float scale) {
+    float topLeftX = 48;
+    float topLeftY = 27;
+
+    return RenderSprite("inventory", 0, 0, 224, 126, topLeftX, topLeftY, scale);
+}

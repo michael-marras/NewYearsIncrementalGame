@@ -6,9 +6,12 @@
 
 typedef uint64_t Uint64;
 
+class Inventory;
+
 class MortalState : public BaseState {
     private:
         Uint64 lastMiningTime = 0;
+        Inventory* inventory = nullptr;
         
     public:
 
@@ -16,12 +19,13 @@ class MortalState : public BaseState {
 
         ~MortalState();
 
-        void setDependencies(GameContext* ctx, SDL_Renderer* rend, InputManager* inp, Player* plyr, HUD* h) {
+        void setDependencies(GameContext* ctx, SDL_Renderer* rend, InputManager* inp, Player* plyr, HUD* h, Inventory* inv) {
             context = ctx;
             renderer = rend;
             inputManager = inp;
             player = plyr;
             hud = h;
+            inventory = inv;
         }
 
         /**

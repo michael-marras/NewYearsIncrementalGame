@@ -32,8 +32,8 @@ LDFLAGS = -L$(SDL_LIB_DIR) -Wl,-rpath,$(SDL_LIB_DIR) $(FREETYPE_LDFLAGS)
 LIBS = -lSDL3 $(FREETYPE_LIBS)
 
 # Source and output files
-SRC = main.cpp core/textures.cpp world/tiles.cpp world/objects.cpp items/resources.cpp items/tools.cpp definitions/tile_definitions.cpp definitions/object_definitions.cpp definitions/resource_definitions.cpp definitions/tool_definitions.cpp world/map_generation.cpp world/planet.cpp world/planet_tree.cpp core/camera.cpp core/input_manager.cpp entities/player.cpp definitions/frame_definitions.cpp states/GameContext.cpp states/MortalState.cpp states/GodState.cpp ui/hud.cpp ui/text_renderer.cpp core/Animations.cpp world/BigBangEngine.cpp
-OBJ = $(BUILD_DIR)/main.o $(BUILD_DIR)/textures.o $(BUILD_DIR)/tiles.o $(BUILD_DIR)/objects.o $(BUILD_DIR)/resources.o $(BUILD_DIR)/tools.o $(BUILD_DIR)/tile_definitions.o $(BUILD_DIR)/object_definitions.o $(BUILD_DIR)/resource_definitions.o $(BUILD_DIR)/tool_definitions.o $(BUILD_DIR)/map_generation.o $(BUILD_DIR)/planet.o $(BUILD_DIR)/planet_tree.o $(BUILD_DIR)/camera.o $(BUILD_DIR)/input_manager.o $(BUILD_DIR)/player.o $(BUILD_DIR)/frame_definitions.o $(BUILD_DIR)/GameContext.o $(BUILD_DIR)/MortalState.o $(BUILD_DIR)/GodState.o $(BUILD_DIR)/hud.o $(BUILD_DIR)/text_renderer.o $(BUILD_DIR)/Animations.o $(BUILD_DIR)/BigBangEngine.o
+SRC = main.cpp core/textures.cpp world/tiles.cpp world/objects.cpp items/resources.cpp items/tools.cpp definitions/tile_definitions.cpp definitions/object_definitions.cpp definitions/resource_definitions.cpp definitions/tool_definitions.cpp world/map_generation.cpp world/planet.cpp world/planet_tree.cpp core/camera.cpp core/input_manager.cpp entities/player.cpp definitions/frame_definitions.cpp states/GameContext.cpp states/MortalState.cpp states/GodState.cpp ui/hud.cpp ui/inventory.cpp ui/text_renderer.cpp core/Animations.cpp world/BigBangEngine.cpp
+OBJ = $(BUILD_DIR)/main.o $(BUILD_DIR)/textures.o $(BUILD_DIR)/tiles.o $(BUILD_DIR)/objects.o $(BUILD_DIR)/resources.o $(BUILD_DIR)/tools.o $(BUILD_DIR)/tile_definitions.o $(BUILD_DIR)/object_definitions.o $(BUILD_DIR)/resource_definitions.o $(BUILD_DIR)/tool_definitions.o $(BUILD_DIR)/map_generation.o $(BUILD_DIR)/planet.o $(BUILD_DIR)/planet_tree.o $(BUILD_DIR)/camera.o $(BUILD_DIR)/input_manager.o $(BUILD_DIR)/player.o $(BUILD_DIR)/frame_definitions.o $(BUILD_DIR)/GameContext.o $(BUILD_DIR)/MortalState.o $(BUILD_DIR)/GodState.o $(BUILD_DIR)/hud.o $(BUILD_DIR)/inventory.o $(BUILD_DIR)/text_renderer.o $(BUILD_DIR)/Animations.o $(BUILD_DIR)/BigBangEngine.o
 TARGET = $(BUILD_DIR)/game
 
 # Default target
@@ -108,6 +108,9 @@ $(BUILD_DIR)/GodState.o: states/GodState.cpp states/GodState.h states/BaseState.
 $(BUILD_DIR)/hud.o: ui/hud.cpp ui/hud.h
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c ui/hud.cpp -o $(BUILD_DIR)/hud.o
 
+$(BUILD_DIR)/inventory.o: ui/inventory.cpp ui/inventory.h
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -c ui/inventory.cpp -o $(BUILD_DIR)/inventory.o
+
 $(BUILD_DIR)/text_renderer.o: ui/text_renderer.cpp ui/text_renderer.h
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c ui/text_renderer.cpp -o $(BUILD_DIR)/text_renderer.o
 
@@ -140,6 +143,7 @@ clean:
 	rm -f $(BUILD_DIR)/MortalState.o
 	rm -f $(BUILD_DIR)/GodState.o
 	rm -f $(BUILD_DIR)/hud.o
+	rm -f $(BUILD_DIR)/inventory.o
 	rm -f $(BUILD_DIR)/text_renderer.o
 	rm -f $(BUILD_DIR)/Animations.o
 	rm -f $(BUILD_DIR)/BigBangEngine.o

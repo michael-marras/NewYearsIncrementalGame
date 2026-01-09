@@ -21,6 +21,7 @@
 #include "core/Animations.h"
 #include "world/BigBangEngine.h"
 #include "ui/hud.h"
+#include "ui/inventory.h"
 #include "core/input_manager.h"
 
 MortalState::MortalState() {
@@ -32,9 +33,13 @@ MortalState::~MortalState() {
 }
 
 void MortalState::input() {
-    // Check for key presses using input manager (events are already processed in main.cpp)
+    if (inputManager->IsKeyPressed(SDLK_E)) {
+        if (inventory) {
+            inventory->Toggle();
+        }
+    }
+
     if (inputManager->IsKeyPressed(SDLK_UP)) {
-        // Navigate to parent planet
         PlanetTree* tree = context->getPlanetTree();
         if (tree) {
             int currentPlanetId = context->getCurrentPlanetId();
@@ -103,7 +108,7 @@ void MortalState::input() {
         }
     }
     
-    if (inputManager->IsKeyPressed(SDLK_E)) {
+    if (inputManager->IsKeyPressed(SDLK_TAB)) {
         Player* player = context->getPlayer();
         Planet* currentPlanet = context->getCurrentPlanet();
         ResourceManager* resourceManager = context->getResourceManager();
@@ -188,8 +193,14 @@ void MortalState::update() {
     const float moveSpeed = 1.5f;
     
     // Handle mouse wheel zoom (zooms toward screen center)
+    // Only zoom if inventory is closed, otherwise let inventory handle scrolling
     float mouseWheelY = inputManager->GetMouseWheelY();
-    if (mouseWheelY != 0.0f) {
+    if (inventory && inventory->IsOpen()) {
+        // Inventory is open - let it handle scrolling
+        ResourceManager* resourceManager = context->getResourceManager();
+        inventory->Update(inputManager, player, resourceManager);
+    } else if (mouseWheelY != 0.0f) {
+        // Inventory is closed - handle camera zoom
         float zoomSpeed = 0.1f;
         if (mouseWheelY > 0.0f) {
             camera->ZoomIn(mouseWheelY * zoomSpeed);
@@ -691,6 +702,10 @@ void MortalState::render() {
     // resourceManager is already defined above, reuse it
     if (hud && player && resourceManager && textureManager) {
         hud->Render(player, resourceManager, textureManager);
+    }
+
+    if (inventory && renderer && player && resourceManager && textureManager) {
+        inventory->Render(renderer, player, resourceManager, textureManager);
     }
     
     SDL_RenderPresent(renderer);

@@ -16,6 +16,7 @@ struct ResourceInfo {
     int height;
     bool pickupable;
     float value;
+    std::string displayName;
 };
 
 // Resource pickup stages
@@ -51,7 +52,7 @@ public:
 
     // Register a resource type (like RegisterObject)
     void RegisterResource(int id, const char* sheetName, int sheetX, int sheetY,
-                         int width, int height, bool pickupable = true, const char* name = nullptr, float value = 0.0f);
+                         int width, int height, bool pickupable = true, const char* name = nullptr, float value = 0.0f, const char* displayName = nullptr);
 
     // Get resource info by ID
     ResourceInfo* GetResource(int id);

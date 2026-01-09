@@ -1,6 +1,7 @@
 #include <SDL3/SDL.h>
 #include <string>
 #include <memory>
+#include <cstdlib>
 #include "core/textures.h"
 #include "world/tiles.h"
 #include "world/objects.h"
@@ -17,6 +18,7 @@
 #include "items/resources.h"
 #include "items/tools.h"
 #include "ui/hud.h"
+#include "ui/inventory.h"
 #include "world/planet.h"
 #include "core/Animations.h"
 #include "states/BaseState.h"
@@ -37,6 +39,7 @@ struct SDLApplication {
     std::unique_ptr<GameContext> context = std::make_unique<GameContext>();
     Player* player = context -> getPlayer();
     HUD* hud = nullptr;
+    Inventory* inventory = nullptr;
 
     // State management
     std::unique_ptr<MortalState> mortalState;
@@ -62,6 +65,9 @@ struct SDLApplication {
         
         // Initialize HUD
         hud = new HUD(renderer);
+        
+        // Initialize Inventory
+        inventory = new Inventory(renderer);
     }
 
     //destructor
@@ -70,6 +76,12 @@ struct SDLApplication {
         if (hud) {
             delete hud;
             hud = nullptr;
+        }
+        
+        // Clean up Inventory
+        if (inventory) {
+            delete inventory;
+            inventory = nullptr;
         }
         
         // Managers are cleaned up by GameContext destructor
@@ -101,6 +113,23 @@ struct SDLApplication {
             player->AddTool(1, 1);
             player->AddTool(2, 1);
             player->EquipTool(1);
+            
+            // TEMP: Add random resources for testing inventory
+            // Add 1-10000 of each registered resource (IDs 1-13 based on resource_definitions.cpp)
+            if (resourceManager) {
+                std::srand(static_cast<unsigned int>(SDL_GetTicks())); // Seed random number generator
+                for (int resourceId = 1; resourceId <= 13; resourceId++) {
+                    if (resourceManager->HasResource(resourceId)) {
+                        int randomQuantity = (std::rand() % 10000) + 1; // Random between 1 and 10000
+                        player->AddResource(resourceId, randomQuantity);
+                        ResourceInfo* info = resourceManager->GetResource(resourceId);
+                        if (info) {
+                            SDL_Log("TEMP: Added %d x %s to player inventory", randomQuantity, info->name.c_str());
+                        }
+                    }
+                }
+                SDL_Log("TEMP: Finished adding random resources to player inventory");
+            }
         }
         
         context->GeneratePlanetTree();
@@ -110,7 +139,7 @@ struct SDLApplication {
         
         // Initialize states
         mortalState = std::make_unique<MortalState>();
-        mortalState->setDependencies(context.get(), renderer, &input, player, hud);
+        mortalState->setDependencies(context.get(), renderer, &input, player, hud, inventory);
 
         godState = std::make_unique<GodState>();
         godState->setDependencies(context.get(), renderer, &input, player);

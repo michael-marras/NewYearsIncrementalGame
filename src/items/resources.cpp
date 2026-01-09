@@ -14,7 +14,8 @@ ResourceManager::~ResourceManager() {
 }
 
 void ResourceManager::RegisterResource(int id, const char* sheetName, int sheetX, int sheetY,
-                                       int width, int height, bool pickupable, const char* name, float value) {
+                                       int width, int height, bool pickupable, const char* name, 
+                                       float value, const char* displayName) {
     std::string resourceName;
 
     // Use provided name, or generate default name if not provided
@@ -37,6 +38,7 @@ void ResourceManager::RegisterResource(int id, const char* sheetName, int sheetX
     resource.height = height;
     resource.pickupable = pickupable;
     resource.value = value;
+    resource.displayName = displayName;
 
     resourceTypes[id] = resource;
     nameToId[resourceName] = id;
