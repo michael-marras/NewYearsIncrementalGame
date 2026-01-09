@@ -32,8 +32,8 @@ LDFLAGS = -L$(SDL_LIB_DIR) -Wl,-rpath,$(SDL_LIB_DIR) $(FREETYPE_LDFLAGS)
 LIBS = -lSDL3 $(FREETYPE_LIBS)
 
 # Source and output files
-SRC = main.cpp core/textures.cpp world/tiles.cpp world/objects.cpp items/resources.cpp items/tools.cpp definitions/tile_definitions.cpp definitions/object_definitions.cpp definitions/resource_definitions.cpp definitions/tool_definitions.cpp world/map_generation.cpp world/planet.cpp world/planet_tree.cpp core/camera.cpp core/input_manager.cpp entities/player.cpp definitions/frame_definitions.cpp states/GameContext.cpp states/MortalState.cpp states/GodState.cpp ui/hud.cpp ui/inventory.cpp ui/text_renderer.cpp ui/damage_popup.cpp core/Animations.cpp world/BigBangEngine.cpp
-OBJ = $(BUILD_DIR)/main.o $(BUILD_DIR)/textures.o $(BUILD_DIR)/tiles.o $(BUILD_DIR)/objects.o $(BUILD_DIR)/resources.o $(BUILD_DIR)/tools.o $(BUILD_DIR)/tile_definitions.o $(BUILD_DIR)/object_definitions.o $(BUILD_DIR)/resource_definitions.o $(BUILD_DIR)/tool_definitions.o $(BUILD_DIR)/map_generation.o $(BUILD_DIR)/planet.o $(BUILD_DIR)/planet_tree.o $(BUILD_DIR)/camera.o $(BUILD_DIR)/input_manager.o $(BUILD_DIR)/player.o $(BUILD_DIR)/frame_definitions.o $(BUILD_DIR)/GameContext.o $(BUILD_DIR)/MortalState.o $(BUILD_DIR)/GodState.o $(BUILD_DIR)/hud.o $(BUILD_DIR)/inventory.o $(BUILD_DIR)/text_renderer.o $(BUILD_DIR)/damage_popup.o $(BUILD_DIR)/Animations.o $(BUILD_DIR)/BigBangEngine.o
+SRC = main.cpp core/textures.cpp world/tiles.cpp world/objects.cpp items/resources.cpp items/tools.cpp definitions/tile_definitions.cpp definitions/object_definitions.cpp definitions/resource_definitions.cpp definitions/tool_definitions.cpp world/map_generation.cpp world/planet.cpp world/planet_tree.cpp core/camera.cpp core/input_manager.cpp entities/player.cpp definitions/frame_definitions.cpp states/GameContext.cpp states/MortalState.cpp states/GodState.cpp ui/hud.cpp ui/inventory.cpp ui/text_renderer.cpp ui/damage_popup.cpp ui/engine_compass.cpp core/Animations.cpp world/BigBangEngine.cpp
+OBJ = $(BUILD_DIR)/main.o $(BUILD_DIR)/textures.o $(BUILD_DIR)/tiles.o $(BUILD_DIR)/objects.o $(BUILD_DIR)/resources.o $(BUILD_DIR)/tools.o $(BUILD_DIR)/tile_definitions.o $(BUILD_DIR)/object_definitions.o $(BUILD_DIR)/resource_definitions.o $(BUILD_DIR)/tool_definitions.o $(BUILD_DIR)/map_generation.o $(BUILD_DIR)/planet.o $(BUILD_DIR)/planet_tree.o $(BUILD_DIR)/camera.o $(BUILD_DIR)/input_manager.o $(BUILD_DIR)/player.o $(BUILD_DIR)/frame_definitions.o $(BUILD_DIR)/GameContext.o $(BUILD_DIR)/MortalState.o $(BUILD_DIR)/GodState.o $(BUILD_DIR)/hud.o $(BUILD_DIR)/inventory.o $(BUILD_DIR)/text_renderer.o $(BUILD_DIR)/damage_popup.o $(BUILD_DIR)/engine_compass.o $(BUILD_DIR)/Animations.o $(BUILD_DIR)/BigBangEngine.o
 TARGET = $(BUILD_DIR)/game
 
 # Default target
@@ -117,6 +117,9 @@ $(BUILD_DIR)/text_renderer.o: ui/text_renderer.cpp ui/text_renderer.h
 $(BUILD_DIR)/damage_popup.o: ui/damage_popup.cpp ui/damage_popup.h
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c ui/damage_popup.cpp -o $(BUILD_DIR)/damage_popup.o
 
+$(BUILD_DIR)/engine_compass.o: ui/engine_compass.cpp ui/engine_compass.h
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -c ui/engine_compass.cpp -o $(BUILD_DIR)/engine_compass.o
+
 $(BUILD_DIR)/Animations.o: core/Animations.cpp core/Animations.h
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c core/Animations.cpp -o $(BUILD_DIR)/Animations.o
 
@@ -148,6 +151,8 @@ clean:
 	rm -f $(BUILD_DIR)/hud.o
 	rm -f $(BUILD_DIR)/inventory.o
 	rm -f $(BUILD_DIR)/text_renderer.o
+	rm -f $(BUILD_DIR)/damage_popup.o
+	rm -f $(BUILD_DIR)/engine_compass.o
 	rm -f $(BUILD_DIR)/Animations.o
 	rm -f $(BUILD_DIR)/BigBangEngine.o
 	rm -f $(TARGET)

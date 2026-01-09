@@ -24,16 +24,24 @@
 #include "ui/inventory.h"
 #include "ui/damage_popup.h"
 #include "ui/text_renderer.h"
+#include "ui/engine_compass.h"
 #include "core/input_manager.h"
 
 MortalState::MortalState() {
     damagePopups = new DamagePopupManager();
+    engineCompass = new EngineCompass();
+    // Set compass position (top-right corner of screen)
+    engineCompass->SetPosition(VIRTUAL_WIDTH - 20.0f, 20.0f);
 }
 
 MortalState::~MortalState() {
     if (damagePopups) {
         delete damagePopups;
         damagePopups = nullptr;
+    }
+    if (engineCompass) {
+        delete engineCompass;
+        engineCompass = nullptr;
     }
 }
 
@@ -129,6 +137,15 @@ void MortalState::update() {
     if (hud) {
         float deltaTimeSeconds = (float)context->getDeltaTime() / 1000.0f;
         hud->Update(deltaTimeSeconds);
+    }
+    
+    // Update engine compass
+    if (engineCompass && player) {
+        Planet* currentPlanet = context->getCurrentPlanet();
+        if (currentPlanet) {
+            int currentFace = context->getCurrentPlanetFace();
+            engineCompass->Update(player, currentPlanet, currentFace);
+        }
     }
         
     TextureManager* textureManager = context->getTextureManager();
@@ -758,6 +775,11 @@ void MortalState::render() {
 
     if (inventory && renderer && player && resourceManager && textureManager) {
         inventory->Render(renderer, player, resourceManager, textureManager);
+    }
+    
+    // Render engine compass
+    if (engineCompass && renderer && textureManager) {
+        engineCompass->Render(renderer, textureManager);
     }
     
     // Render damage popups

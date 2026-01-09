@@ -53,6 +53,9 @@ public:
     // Render inventory UI
     bool RenderInventory(float scale = 1.0f);
     
+    // Render compass arrow with rotation
+    bool RenderCompass(float dstX, float dstY, float direction, float scale = 1.0f);
+    
     // Clean up all textures (called automatically in destructor)
     void Cleanup();
 
