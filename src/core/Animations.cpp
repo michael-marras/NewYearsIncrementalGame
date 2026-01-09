@@ -69,8 +69,6 @@ void Animations::AnimatePlayer(Player* player, PlayerStates playerState) {
         std::array<PlayerAnimations, 3> frames;
         switch (player->getPlayerDirection()) {
             case Direction::BACK:
-            case Direction::BACK_LEFT:
-            case Direction::BACK_RIGHT:
                 frames = {
                     PlayerAnimations:: WalkingBackRightFoot,
                     PlayerAnimations:: WalkingBackIntermediary,
@@ -78,8 +76,6 @@ void Animations::AnimatePlayer(Player* player, PlayerStates playerState) {
                 };
                 break;
             case Direction::FORWARD:
-            case Direction::FORWARD_LEFT:
-            case Direction::FORWARD_RIGHT:
                 frames = {
                     PlayerAnimations:: WalkingForwardLeftFoot,
                     PlayerAnimations:: WalkingForwardIntermediary,
@@ -87,6 +83,8 @@ void Animations::AnimatePlayer(Player* player, PlayerStates playerState) {
                 };
                 break;
             case Direction::LEFT:
+            case Direction::BACK_LEFT:
+            case Direction::FORWARD_LEFT:
                 frames = {
                     PlayerAnimations:: WalkingLeftLeftFoot,
                     PlayerAnimations:: WalkingLeftIntermediary,
@@ -94,6 +92,8 @@ void Animations::AnimatePlayer(Player* player, PlayerStates playerState) {
                 };
                 break;
             case Direction::RIGHT:
+            case Direction::BACK_RIGHT:
+            case Direction::FORWARD_RIGHT:
                 frames = {
                     PlayerAnimations:: WalkingRightRightFoot,
                     PlayerAnimations:: WalkingRightIntermediary,
@@ -115,6 +115,55 @@ void Animations::AnimatePlayer(Player* player, PlayerStates playerState) {
                 player->setAnimationTime(0);
             }
             else if (player->getCurrentPlayerAnimation() == frames[2] && player->getAnimationTime() >= 100) {
+                player->setCurrentPlayerAnimation(frames[0]);
+                player->setAnimationTime(0);
+            }
+            
+            this->firstTime = false;
+        }
+    }
+    else if (playerState == SWINGING) {
+        /*
+        These could even prob be defined somewhere else
+        */
+        std::array<PlayerAnimations, 2> frames;
+        switch (player->getPlayerDirection()) {
+            case Direction::BACK:
+                frames = {
+                    PlayerAnimations::SwingingBackToolup,
+                    PlayerAnimations::SwingingBackToolDown
+                };
+                break;
+            case Direction::FORWARD:
+                frames = {
+                    PlayerAnimations::SwingingForwardToolUp,
+                    PlayerAnimations::SwingingForwardToolDown
+                };
+                break;
+            case Direction::LEFT:
+                frames = {
+                    PlayerAnimations::SwingingLeftToolUp,
+                    PlayerAnimations::SwingingLeftToolDown
+                };
+                break;
+            case Direction::RIGHT:
+                frames = {
+                    PlayerAnimations::SwingingRightToolUp,
+                    PlayerAnimations::SwingingRightToolDown
+                };
+                break;
+        }
+        
+        {
+            if (this->firstTime) {
+                player->setCurrentPlayerAnimation(frames[1]);
+                return;
+            }
+            else if (player->getCurrentPlayerAnimation() == frames[0] && player->getAnimationTime() >= 100) {
+                player->setCurrentPlayerAnimation(frames[1]);
+                player->setAnimationTime(0);
+            }
+            else if (player->getCurrentPlayerAnimation() == frames[1] && player->getAnimationTime() >= 100) {
                 player->setCurrentPlayerAnimation(frames[0]);
                 player->setAnimationTime(0);
             }

@@ -13,7 +13,8 @@ typedef uint64_t Uint64;
 enum PlayerStates: uint8_t {
     IDLE,
     WALKING,
-    PUNCHING
+    PUNCHING,
+    SWINGING
 };
 
 // animations
@@ -97,6 +98,11 @@ class Player {
          * Default Constructor
          */
         Player();
+
+        /**
+         * Constructor
+         */
+        Player(bool isPlayer);
 
         /**
          * Constructor
@@ -322,6 +328,9 @@ class Player {
         
         // Currently equipped tool ID (-1 if none)
         int equippedToolId = -1;
+        
+        // distinguish between playable and non playable characters
+        bool isPlayer;
 
 };
 #endif

@@ -439,7 +439,7 @@ void MortalState::update() {
                 currentAnimation != PlayerAnimations:: StandingStillForward ||
                 currentAnimation != PlayerAnimations:: StandingStillLeft    ||
                 currentAnimation != PlayerAnimations:: StandingStillRight)  &&
-                player->getPlayerState() != PUNCHING) 
+                player->getPlayerState() != PUNCHING && player->getPlayerState() != SWINGING) 
             {
                 if (player->getPlayerDirection() == Direction::BACK) {
                     player->setCurrentPlayerAnimation(PlayerAnimations:: StandingStillBack);
@@ -459,18 +459,32 @@ void MortalState::update() {
             }
             // Idle punching animation
             if (inputManager->IsMouseButtonHeld(1)) {
-
+                if (player->GetEquippedToolId() == -1) {
                 // Check Animation Time Requirements
-                if (player->getPlayerState() == PUNCHING) {
-                    player->incrementAnimationTime(context->getDeltaTime());
-                    animation->setFirstTime(false);
-                } 
-                else if (player->getPlayerState() != PUNCHING){
-                    player->setAnimationTime(0);
+                    if (player->getPlayerState() == PUNCHING) {
+                        player->incrementAnimationTime(context->getDeltaTime());
+                        animation->setFirstTime(false);
+                    } 
+                    else if (player->getPlayerState() != PUNCHING){
+                        player->setAnimationTime(0);
+                    }
+                    player->setPlayerState(PUNCHING);
+                    SDL_Log("%d", player->getAnimationTime());
+                    animation->AnimatePlayer(player, PUNCHING);
                 }
-                player->setPlayerState(PUNCHING);
+                else if (player->GetEquippedToolId() != -1) {
+                    if (player->getPlayerState() == SWINGING) {
+                        player->incrementAnimationTime(context->getDeltaTime());
+                        animation->setFirstTime(false);
+                    } 
+                    else if (player->getPlayerState() != SWINGING){
+                        player->setAnimationTime(0);
+                    }
+                    player->setPlayerState(SWINGING);
 
-                animation->AnimatePlayer(player, PUNCHING);
+                    SDL_Log("%d", player->getAnimationTime());
+                    animation->AnimatePlayer(player, SWINGING);
+                }
             }
             else if (!inputManager->IsMouseButtonHeld(1)) {
                 player->setAnimationTime(0);

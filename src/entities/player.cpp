@@ -11,6 +11,20 @@ Player::Player() {
     this->animationTime = 0;
     this->playerState=IDLE;
     this->equippedToolId = -1;
+    this->isPlayer = false;
+}
+
+Player::Player(bool isPlayer) {
+    this->posX = 0.0f;
+    this->posY = 0.0f;
+    this->currentPlanet = nullptr;
+    this->currentAnimation = PlayerAnimations:: StandingStillForward;
+    this->playerWalkingStage = WalkingStages:: NOT_WALKING;
+    this->playerWalkingStage = WalkingStages:: NOT_WALKING;
+    this->animationTime = 0;
+    this->playerState=IDLE;
+    this->equippedToolId = -1;
+    this->isPlayer = isPlayer;
 }
 
 Player::Player(int posX, int posY) {

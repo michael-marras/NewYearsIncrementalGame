@@ -94,7 +94,7 @@ void GameContext:: InitializeManagers(SDL_Window* window, SDL_Renderer* renderer
         toolManager = new ToolManager();
     }
     if (!player) {
-        player = new Player();
+        player = new Player(true);
     }
     if (!camera) {
         camera = new Camera(0.0f, 0.0f);
