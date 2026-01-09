@@ -20,7 +20,7 @@ void InputManager::ProcessMouseMotion(float x, float y, float deltaX, float delt
 }
 
 void InputManager::ProcessMouseButtonDown(int button) {
-    if (button >= 0 && button < 3) {
+    if (button >= 0 && button < 4) {
         if (!mouseButtons[button]) {
             mouseButtonsPressed[button] = true;
         }
@@ -29,7 +29,7 @@ void InputManager::ProcessMouseButtonDown(int button) {
 }
 
 void InputManager::ProcessMouseButtonUp(int button) {
-    if (button >= 0 && button < 3) {
+    if (button >= 0 && button < 4) {
         mouseButtons[button] = false;
         mouseButtonsReleased[button] = true;
     }
@@ -44,7 +44,7 @@ void InputManager::EndFrame() {
     keysPressedThisFrame.clear();
     keysReleasedThisFrame.clear();
     
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < 4; i++) {
         mouseButtonsPressed[i] = false;
         mouseButtonsReleased[i] = false;
     }
@@ -70,21 +70,21 @@ bool InputManager::IsKeyReleased(SDL_Keycode key) const {
 }
 
 bool InputManager::IsMouseButtonHeld(int button) const {
-    if (button >= 0 && button < 3) {
+    if (button >= 0 && button < 4) {
         return mouseButtons[button];
     }
     return false;
 }
 
 bool InputManager::IsMouseButtonPressed(int button) const {
-    if (button >= 0 && button < 3) {
+    if (button >= 0 && button < 4) {
         return mouseButtonsPressed[button];
     }
     return false;
 }
 
 bool InputManager::IsMouseButtonReleased(int button) const {
-    if (button >= 0 && button < 3) {
+    if (button >= 0 && button < 4) {
         return mouseButtonsReleased[button];
     }
     return false;

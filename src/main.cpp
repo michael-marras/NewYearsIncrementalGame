@@ -109,6 +109,9 @@ struct SDLApplication {
         SetupTools(toolManager, textureManager);
         SetupAnimations(player, textureManager);
         
+        // Load crosshairs sprite sheet
+        textureManager->LoadImageFromRes("crosshairs", "crosshairs.png");
+        
         if (player) {
             player->AddTool(1, 1);
             player->AddTool(2, 1);

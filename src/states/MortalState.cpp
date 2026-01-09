@@ -22,19 +22,25 @@
 #include "world/BigBangEngine.h"
 #include "ui/hud.h"
 #include "ui/inventory.h"
+#include "ui/damage_popup.h"
+#include "ui/text_renderer.h"
 #include "core/input_manager.h"
 
 MortalState::MortalState() {
-
+    damagePopups = new DamagePopupManager();
 }
 
 MortalState::~MortalState() {
-
+    if (damagePopups) {
+        delete damagePopups;
+        damagePopups = nullptr;
+    }
 }
 
 void MortalState::input() {
     if (inputManager->IsKeyPressed(SDLK_E)) {
         if (inventory) {
+            inventory->SetMode(InventoryMode::NoValues);
             inventory->Toggle();
         }
     }
@@ -107,82 +113,23 @@ void MortalState::input() {
             }
         }
     }
-    
-    if (inputManager->IsKeyPressed(SDLK_TAB)) {
-        Player* player = context->getPlayer();
-        Planet* currentPlanet = context->getCurrentPlanet();
-        ResourceManager* resourceManager = context->getResourceManager();
-
-        if (!player || !currentPlanet || !resourceManager) {
-            return;
-        }
-
-        // Only feed resources for ONE child per E press
-        // Check if planet can accept more energy (has capacity and not already full)
-        if (!currentPlanet->HasChildCapacity()) {
-            SDL_Log("Planet has already generated maximum children");
-            return;
-        }
-        
-        if (currentPlanet->CanGenerateChild()) {
-            // Already has enough energy - generate the child
-            context->GeneratePlanetInTree(context->getCurrentPlanetId());
-            
-            SDL_Log("Generated child planet!");
-            return;
-        }
-        
-        std::unordered_map<int, int>* inventory = player->getInventory();
-        std::vector<std::pair<int, int>> entries(inventory->begin(), inventory->end());
-        
-        float energyCost = currentPlanet->GetEnergyCost();
-        float missing = energyCost - currentPlanet->GetCurrentEnergy();
-        
-        // Process each resource type; only accept what is needed to reach ONE child
-        for (const auto& entry : entries) {
-            if (missing <= 0.0f) break; // Already have enough for this child
-            
-            int resourceId = entry.first;
-            int remainingQty = entry.second;
-            
-            float energyPerUnit = resourceManager->GetResourceValue(resourceId);
-            
-            // Skip non-energy resources
-            if (energyPerUnit <= 0.0f) {
-                continue;
-            }
-            
-            // Calculate exact units needed to fill the gap (not more)
-            int unitsNeeded = (int)ceilf(missing / energyPerUnit);
-            if (unitsNeeded < 1) unitsNeeded = 1;
-            int consumeNow = (remainingQty < unitsNeeded) ? remainingQty : unitsNeeded;
-            
-            // Only add the exact energy needed, not more
-            float addEnergy = energyPerUnit * (float)consumeNow;
-            if (addEnergy > missing) {
-                addEnergy = missing;
-            }
-            
-            currentPlanet->AddEnergy(addEnergy);
-            player->ConsumeResource(resourceId, consumeNow);
-            missing -= addEnergy;
-        }
-        
-        char energyMsg[128];
-        snprintf(energyMsg, sizeof(energyMsg), "Your planet now has %.1f/%.1f energy", 
-                currentPlanet->GetCurrentEnergy(), currentPlanet->GetEnergyCost());
-        SDL_Log("%s", energyMsg);
-        
-        // Check if we now have enough to generate
-        if (currentPlanet->CanGenerateChild()) {
-            SDL_Log("Energy requirement met! Press E again to generate child planet.");
-        }
-    }
 }
 
 void MortalState::update() {
     // Update face transition cooldown
     context->updateFaceTransitionCooldown();
+    
+    // Update damage popups
+    if (damagePopups) {
+        float deltaTimeSeconds = (float)context->getDeltaTime() / 1000.0f;
+        damagePopups->Update(deltaTimeSeconds);
+    }
+    
+    // Update HUD pickup events
+    if (hud) {
+        float deltaTimeSeconds = (float)context->getDeltaTime() / 1000.0f;
+        hud->Update(deltaTimeSeconds);
+    }
         
     TextureManager* textureManager = context->getTextureManager();
     TileManager* tileManager = context->getTileManager();
@@ -198,7 +145,7 @@ void MortalState::update() {
     if (inventory && inventory->IsOpen()) {
         // Inventory is open - let it handle scrolling
         ResourceManager* resourceManager = context->getResourceManager();
-        inventory->Update(inputManager, player, resourceManager);
+        inventory->Update(renderer, inputManager, player, resourceManager);
     } else if (mouseWheelY != 0.0f) {
         // Inventory is closed - handle camera zoom
         float zoomSpeed = 0.1f;
@@ -219,9 +166,46 @@ void MortalState::update() {
     int gridX = (int)(worldX / TILE_RENDER_SIZE);
     int gridY = (int)(worldY / TILE_RENDER_SIZE);
 
+    if (inputManager->IsMouseButtonPressed(3) && inventory) {
+        Planet* currentPlanet = context->getCurrentPlanet();
+        if (currentPlanet && context->getCurrentPlanetFace() == 4 && tileManager && camera && currentPlanet->HasChildCapacity()) {
+            BigBangEngine* engine = currentPlanet->GetPortalEngine();
+            if (engine) {
+                int mapId = context->getMap();
+                TileGrid* topGrid = tileManager->GetTileGrid(mapId);
+                if (topGrid) {
+                    float portalCenterWorldX = (topGrid->width * TILE_RENDER_SIZE) / 2.0f;
+                    float portalCenterWorldY = (topGrid->height * TILE_RENDER_SIZE) / 2.0f;
+                    
+                    // Convert portal center to render coordinates
+                    float portalRenderX, portalRenderY;
+                    float zoom = camera->GetZoom();
+                    camera->WorldToRender(portalCenterWorldX, portalCenterWorldY, portalRenderX, portalRenderY, VIRTUAL_WIDTH, VIRTUAL_HEIGHT);
+                    
+                    // Calculate portal size (based on scale and frame size)
+                    float portalScale = engine->GetDisplayScale();
+                    const float kFrameSize = 64.0f;
+                    float portalSize = zoom * 0.5f * portalScale * kFrameSize;
+                    float portalRadius = portalSize / 2.0f;
+                    
+                    // Check if mouse is within portal bounds (using already calculated mouseRenderX/Y)
+                    float dx = mouseRenderX - portalRenderX;
+                    float dy = mouseRenderY - portalRenderY;
+                    float distance = sqrtf(dx * dx + dy * dy);
+                    
+                    if (distance <= portalRadius) {
+                        // Right-clicked on BigBangEngine - open inventory in WithValues mode
+                        inventory->SetMode(InventoryMode::WithValues);
+                        inventory->Open();
+                    }
+                }
+            }
+        }
+    }
+
     ObjectInfo* objInfo = objectManager->GetObjectAt(context->getObjectMap(), gridX, gridY);
 
-    if (inputManager->IsMouseButtonHeld(1)) {
+    if (inputManager->IsMouseButtonHeld(1) && inventory && !inventory->IsOpen()) {
         if (objectManager->PlayerCanInteract(context->getObjectMap(), gridX, gridY, context->getPlayer())) {
             // Get object info to check tool requirement
             ObjectInfo* objectInfo = objectManager->GetObjectAt(context->getObjectMap(), gridX, gridY);
@@ -302,33 +286,99 @@ void MortalState::update() {
                     // Damage the object with tool damage
                     bool wasDestroyed = objectManager->DamageInstance(context->getObjectMap(), gridX, gridY, damage);
                     
+                    // Create damage popup at object position
+                    if (damagePopups) {
+                        float worldX = gridX * TILE_RENDER_SIZE + TILE_RENDER_SIZE / 2.0f;
+                        float worldY = gridY * TILE_RENDER_SIZE + TILE_RENDER_SIZE / 2.0f;
+                        SDL_Color damageColor = {255, 255, 255, 255};
+                        damagePopups->AddPopup(worldX, worldY, damage, damageColor);
+                    }
+                    
                     // Update last mining time
                     lastMiningTime = currentTime;
+            
+            // If object was destroyed, drop resources
+            if (wasDestroyed && objBeforeDamage) {
+                ResourceManager* resourceManager = context->getResourceManager();
+                int resourceArrayId = context->getResourceArray();
+                
+                if (resourceManager && resourceArrayId >= 0) {
+                    // Calculate world position (center of tile)
+                    float baseX = gridX * TILE_RENDER_SIZE + TILE_RENDER_SIZE / 2.0f;
+                    float baseY = gridY * TILE_RENDER_SIZE + TILE_RENDER_SIZE / 2.0f;
                     
-                    // If object was destroyed, drop resources
-                    if (wasDestroyed && objBeforeDamage) {
-                        ResourceManager* resourceManager = context->getResourceManager();
-                        int resourceArrayId = context->getResourceArray();
-                        
-                        if (resourceManager && resourceArrayId >= 0) {
-                            // Calculate world position (center of tile)
-                            float baseX = gridX * TILE_RENDER_SIZE + TILE_RENDER_SIZE / 2.0f;
-                            float baseY = gridY * TILE_RENDER_SIZE + TILE_RENDER_SIZE / 2.0f;
+                    // Drop all resources with initial velocity
+                    const float INITIAL_SPEED = 50.0f;  // Initial velocity (pixels per second)
+                            const int MAX_DROPS = 10;
                             
-                            // Drop all resources with initial velocity
-                            const float INITIAL_SPEED = 50.0f;  // Initial velocity (pixels per second)
+                            std::unordered_map<int, int> resourceQuantities;
+                    for (const DropInstance& drop : objBeforeDamage->drops) {
+                                resourceQuantities[drop.resourceId] += drop.quantity;
+                            }
                             
-                            for (const DropInstance& drop : objBeforeDamage->drops) {
-                                // Drop each resource with random direction
-                                for (int i = 0; i < drop.quantity; i++) {
-                                    // Random angle for direction
+                            int totalQuantity = 0;
+                            for (const auto& pair : resourceQuantities) {
+                                totalQuantity += pair.second;
+                            }
+                            
+                            if (resourceQuantities.size() == 1) {
+                                int resourceId = resourceQuantities.begin()->first;
+                                int quantity = resourceQuantities.begin()->second;
+                                
+                                int numDrops = std::min(MAX_DROPS, quantity);
+                                int baseQuantityPerDrop = quantity / numDrops;
+                                int remainder = quantity % numDrops;
+                                
+                                for (int i = 0; i < numDrops; i++) {
+                                    int dropQuantity = baseQuantityPerDrop + (i < remainder ? 1 : 0);
+                                    
                                     float angle = (float)(std::rand() % 360) * M_PI / 180.0f;
                                     
-                                    // Calculate initial velocity components
                                     float vx = cosf(angle) * INITIAL_SPEED;
                                     float vy = sinf(angle) * INITIAL_SPEED;
                                     
-                                    resourceManager->AddResource(resourceArrayId, baseX, baseY, drop.resourceId, 1, vx, vy);
+                                    resourceManager->AddResource(resourceArrayId, baseX, baseY, resourceId, dropQuantity, vx, vy);
+                                }
+                            } else {
+                                std::vector<std::pair<int, int>> dropsToCreate;
+                                
+                                int totalDropsCreated = 0;
+                                for (const auto& pair : resourceQuantities) {
+                                    int resourceId = pair.first;
+                                    int quantity = pair.second;
+                                    
+                                    float proportion = (float)quantity / (float)totalQuantity;
+                                    int numDropsForResource = std::max(1, (int)std::round(proportion * MAX_DROPS));
+                                    
+                                    if (totalDropsCreated + numDropsForResource > MAX_DROPS) {
+                                        numDropsForResource = MAX_DROPS - totalDropsCreated;
+                                    }
+                                    
+                                    if (numDropsForResource > 0) {
+                                        int baseQuantityPerDrop = quantity / numDropsForResource;
+                                        int remainder = quantity % numDropsForResource;
+                                        
+                                        for (int i = 0; i < numDropsForResource; i++) {
+                                            int dropQuantity = baseQuantityPerDrop + (i < remainder ? 1 : 0);
+                                            dropsToCreate.push_back({resourceId, dropQuantity});
+                                        }
+                                        
+                                        totalDropsCreated += numDropsForResource;
+                                    }
+                                    
+                                    if (totalDropsCreated >= MAX_DROPS) break;
+                                }
+                                
+                                // Create the drops
+                                for (const auto& drop : dropsToCreate) {
+                            // Random angle for direction
+                            float angle = (float)(std::rand() % 360) * M_PI / 180.0f;
+                            
+                            // Calculate initial velocity components
+                            float vx = cosf(angle) * INITIAL_SPEED;
+                            float vy = sinf(angle) * INITIAL_SPEED;
+                            
+                                    resourceManager->AddResource(resourceArrayId, baseX, baseY, drop.first, drop.second, vx, vy);
                                 }
                             }
                         }
@@ -349,20 +399,21 @@ void MortalState::update() {
         float moveX = 0.0f;
         float moveY = 0.0f;
         
-        // Check vertical movement (W/S)
-        if (inputManager->IsKeyHeld(SDLK_W)) {
-            moveY -= 1.0f;
-        }
-        if (inputManager->IsKeyHeld(SDLK_S)) {
-            moveY += 1.0f;
-        }
-        
-        // Check horizontal movement (A/D)
-        if (inputManager->IsKeyHeld(SDLK_A)) {
-            moveX -= 1.0f;
-        }
-        if (inputManager->IsKeyHeld(SDLK_D)) {
-            moveX += 1.0f;
+        if (inventory && !inventory->IsOpen()) {
+            if (inputManager->IsKeyHeld(SDLK_W)) {
+                moveY -= 1.0f;
+            }
+            if (inputManager->IsKeyHeld(SDLK_S)) {
+                moveY += 1.0f;
+            }
+            
+            // Check horizontal movement (A/D)
+            if (inputManager->IsKeyHeld(SDLK_A)) {
+                moveX -= 1.0f;
+            }
+            if (inputManager->IsKeyHeld(SDLK_D)) {
+                moveX += 1.0f;
+            }
         }
         
         if (moveX != 0.0f || moveY != 0.0f) {
@@ -464,9 +515,6 @@ void MortalState::update() {
                 else if (player->getPlayerDirection() == Direction::RIGHT) {
                     player->setCurrentPlayerAnimation(PlayerAnimations:: StandingStillRight);
                 }
-                else {
-                    SDL_Log("test");
-                }
             }
             // Idle punching animation
             if (inputManager->IsMouseButtonHeld(1)) {
@@ -499,7 +547,7 @@ void MortalState::update() {
         float playerY = player->getY();
         float deltaTime = (float)context->getDeltaTime();
         
-        resourceManager->Update(resourceArrayId, playerX, playerY, deltaTime, player);
+        resourceManager->Update(resourceArrayId, playerX, playerY, deltaTime, player, hud ? hud : nullptr);
     }
     
     Planet* currentPlanet = context->getCurrentPlanet();
@@ -560,37 +608,39 @@ void MortalState::render() {
     }
     
     // Render BigBangEngine if viewing TOP face
-    if (context->getCurrentPlanet() && context->getCurrentPlanetFace() == 4 /* TOP */) {
+    if (context->getCurrentPlanet() && context->getCurrentPlanetFace() == 4) {
         Planet* planet = context->getCurrentPlanet();
-        BigBangEngine* engine = planet->GetPortalEngine();
-        if (engine) {
-            // Ensure the portal texture is loaded
-            engine->EnsureTextureLoaded(textureManager);
-            
-            // Set target scale based on current energy ratio
-            float currentEnergy = planet->GetCurrentEnergy();
-            float energyCost = planet->GetEnergyCost();
-            float energyRatio = (energyCost > 0.0f) ? (currentEnergy / energyCost) : 0.0f;
-            if (energyRatio > 1.0f) energyRatio = 1.0f;
-            engine->SetTargetEnergyRatio(energyRatio);
-            
-            // Update animation and growth interpolation
-            engine->Update((float)context->getDeltaTime());
-            
-            // Compute center of current grid (TOP face) - match player spawn calculation
-            int mapId = context->getMap();
-            TileGrid* topGrid = tileManager->GetTileGrid(mapId);
-            if (topGrid) {
-                // Use same calculation as player spawn: (width * TILE_RENDER_SIZE) / 2.0f
-                float centerX = (topGrid->width * TILE_RENDER_SIZE) / 2.0f;
-                float centerY = (topGrid->height * TILE_RENDER_SIZE) / 2.0f;
+        if (planet->HasChildCapacity()) {
+            BigBangEngine* engine = planet->GetPortalEngine();
+            if (engine) {
+                // Ensure the portal texture is loaded
+                engine->EnsureTextureLoaded(textureManager);
                 
-                float portalRenderX, portalRenderY;
-                camera->WorldToRender(centerX, centerY, portalRenderX, portalRenderY, VIRTUAL_WIDTH, VIRTUAL_HEIGHT);
+                // Set target scale based on current energy ratio
+                float currentEnergy = planet->GetCurrentEnergy();
+                float energyCost = planet->GetEnergyCost();
+                float energyRatio = (energyCost > 0.0f) ? (currentEnergy / energyCost) : 0.0f;
+                if (energyRatio > 1.0f) energyRatio = 1.0f;
+                engine->SetTargetEnergyRatio(energyRatio);
                 
-                // Use smoothly interpolated display scale
-                float portalScale = engine->GetDisplayScale();
-                engine->Render(textureManager, portalRenderX, portalRenderY, zoom * 0.5f * portalScale);
+                // Update animation and growth interpolation
+                engine->Update((float)context->getDeltaTime());
+                
+                // Compute center of current grid (TOP face) - match player spawn calculation
+                int mapId = context->getMap();
+                TileGrid* topGrid = tileManager->GetTileGrid(mapId);
+                if (topGrid) {
+                    // Use same calculation as player spawn: (width * TILE_RENDER_SIZE) / 2.0f
+                    float centerX = (topGrid->width * TILE_RENDER_SIZE) / 2.0f;
+                    float centerY = (topGrid->height * TILE_RENDER_SIZE) / 2.0f;
+                    
+                    float portalRenderX, portalRenderY;
+                    camera->WorldToRender(centerX, centerY, portalRenderX, portalRenderY, VIRTUAL_WIDTH, VIRTUAL_HEIGHT);
+                    
+                    // Use smoothly interpolated display scale
+                    float portalScale = engine->GetDisplayScale();
+                    engine->Render(textureManager, portalRenderX, portalRenderY, zoom * 0.5f * portalScale);
+                }
             }
         }
     }
@@ -682,24 +732,26 @@ void MortalState::render() {
     }
 
     // Convert mouse window coordinates to render/logical coordinates
-        float mouseScreenX = inputManager->GetMouseX();
-        float mouseScreenY = inputManager->GetMouseY();
+    float mouseScreenX = inputManager->GetMouseX();
+    float mouseScreenY = inputManager->GetMouseY();
     float mouseRenderX, mouseRenderY;
     SDL_RenderCoordinatesFromWindow(renderer, mouseScreenX, mouseScreenY, &mouseRenderX, &mouseRenderY);
 
-        float mouseWheelY = inputManager->GetMouseWheelY();
+    float mouseWheelY = inputManager->GetMouseWheelY();
     
-    // Convert render coordinates to world coordinates
     float worldX, worldY;
-    camera->ScreenToWorld(mouseRenderX, mouseRenderY, worldX, worldY);
+    camera->RenderToWorld(mouseRenderX, mouseRenderY, worldX, worldY, VIRTUAL_WIDTH, VIRTUAL_HEIGHT);
     int gridX = (int)(worldX / TILE_RENDER_SIZE);
     int gridY = (int)(worldY / TILE_RENDER_SIZE);
 
-    // Get object at mouse position (if any)
     ObjectInfo* objInfo = objectManager->GetObjectAt(context->getObjectMap(), gridX, gridY);
     
-    // Render HUD overlay (on top of everything)
-    // resourceManager is already defined above, reuse it
+    int crosshairIndex = 0;
+    Player* currentPlayer = context->getPlayer();
+    if (currentPlayer && objectManager->PlayerCanInteract(context->getObjectMap(), gridX, gridY, currentPlayer) && inventory && !inventory->IsOpen()) {
+        crosshairIndex = 1;
+    }
+    
     if (hud && player && resourceManager && textureManager) {
         hud->Render(player, resourceManager, textureManager);
     }
@@ -708,10 +760,58 @@ void MortalState::render() {
         inventory->Render(renderer, player, resourceManager, textureManager);
     }
     
+    // Render damage popups
+    if (damagePopups && hud) {
+        TextRenderer* textRenderer = hud->GetTextRenderer();
+        if (textRenderer && camera) {
+            damagePopups->Render(textRenderer, camera, VIRTUAL_WIDTH, VIRTUAL_HEIGHT);
+        }
+    }
+    
+    const int crosshairSize = 7;
+    int srcX = crosshairIndex * crosshairSize;
+    int srcY = 0;
+    
+    // Center the crosshair on the mouse position
+    float crosshairX = mouseRenderX - crosshairSize / 2.0f;
+    float crosshairY = mouseRenderY - crosshairSize / 2.0f;
+    
+    textureManager->RenderSprite("crosshairs", srcX, srcY, crosshairSize, crosshairSize, crosshairX, crosshairY, 1.0f);
+    
     SDL_RenderPresent(renderer);
 }
 
 void MortalState::onEnter() {
+    if (inventory && context) {
+        inventory->SetSubmitCallback([this](float totalValue, const std::unordered_map<int, int>& resourcesToConsume) {
+            // Add null check to prevent segfault
+            if (!context) {
+                SDL_Log("Error: context is null in submit callback");
+                return;
+            }
+            Planet* currentPlanet = context->getCurrentPlanet();
+            if (currentPlanet) {
+                currentPlanet->AddEnergy(totalValue);
+                
+                // Consume resources from player inventory
+                Player* currentPlayer = context->getPlayer();
+                if (currentPlayer) {
+                    for (const auto& entry : resourcesToConsume) {
+                        int resourceId = entry.first;
+                        int quantity = entry.second;
+                        if (quantity > 0) {
+                            currentPlayer->ConsumeResource(resourceId, quantity);
+                        }
+                    }
+                }
+            } else {
+                SDL_Log("Warning: Current planet is null in submit callback");
+            }
+        });
+    }
+    // Hide system cursor when entering MortalState
+    SDL_HideCursor();
+    
     if (player) {
         Camera* camera = context->getCamera();
         if (camera) {
@@ -735,5 +835,6 @@ void MortalState::onEnter() {
 }
 
 void MortalState:: onExit() {
-
+    // Show system cursor when exiting MortalState
+    SDL_ShowCursor();
 }

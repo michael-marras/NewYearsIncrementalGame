@@ -7,11 +7,13 @@
 typedef uint64_t Uint64;
 
 class Inventory;
+class DamagePopupManager;
 
 class MortalState : public BaseState {
     private:
         Uint64 lastMiningTime = 0;
         Inventory* inventory = nullptr;
+        DamagePopupManager* damagePopups = nullptr;
         
     public:
 

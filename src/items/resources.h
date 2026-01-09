@@ -98,7 +98,8 @@ public:
 
     // Update resources (falling animation and magnetic pickup)
     // Adds picked up resources to player inventory and logs pickup info
-    void Update(int arrayId, float playerX, float playerY, float deltaTimeMs, class Player* player);
+    // Optional HUD parameter to notify about pickups
+    void Update(int arrayId, float playerX, float playerY, float deltaTimeMs, class Player* player, class HUD* hud = nullptr);
 
 private:
     std::unordered_map<int, ResourceInfo> resourceTypes;      // Resource definitions by ID

@@ -106,7 +106,7 @@ CachedGlyph* TextRenderer::GetGlyph(unsigned long charCode) {
     glyph.texture = texture;
     glyph.width = face->glyph->bitmap.width;
     glyph.height = face->glyph->bitmap.rows;
-    glyph.advanceX = face->glyph->advance.x >> 6;  // Convert from 26.6 fixed point to pixels
+    glyph.advanceX = face->glyph->advance.x >> 8;
     glyph.bearingX = face->glyph->bitmap_left;
     glyph.bearingY = face->glyph->bitmap_top;
     
@@ -280,39 +280,13 @@ void TextRenderer::RenderText(const char* text, float x, float y, const std::str
     float currentX = adjustedX;
     p = text;
     
-    // First pass: Render black outline by rendering with offsets
-    while (*p) {
-        unsigned long charCode = (unsigned char)*p;
-        
-        if (charCode < 32) {
-            p++;
-            continue;
-        }
-        
-        CachedGlyph* glyph = GetGlyph(charCode);
-        if (glyph && glyph->texture) {
-            float glyphX = currentX + glyph->bearingX;
-            float glyphY = adjustedY - glyph->bearingY;
-            
-            SDL_FRect dstRect;
-            dstRect.w = (float)glyph->width;
-            dstRect.h = (float)glyph->height;
-            
-            for (int i = 0; i < 8; i++) {
-                dstRect.x = glyphX;
-                dstRect.y = glyphY;
-                SDL_RenderTexture(renderer, glyph->texture, nullptr, &dstRect);
-            }
-            
-            currentX += glyph->advanceX;
-        }
-        
-        p++;
-    }
-    
-    // Second pass: Render the actual colored text on top
+
+    // Render the colored text
     currentX = adjustedX;
     p = text;
+    
+    // Character spacing for pixel fonts (adds gap between letters)
+    const float charSpacing = 1.0f;
     
     while (*p) {
         unsigned long charCode = (unsigned char)*p;
@@ -340,8 +314,9 @@ void TextRenderer::RenderText(const char* text, float x, float y, const std::str
             
             SDL_RenderTexture(renderer, glyph->texture, nullptr, &dstRect);
             
-            // Advance to next character position
-            currentX += glyph->advanceX;
+            float glyphWidth = (float)(glyph->width + glyph->bearingX);
+            float advance = std::max((float)glyph->advanceX, glyphWidth);
+            currentX += advance + charSpacing;
         }
         
         p++;
@@ -353,7 +328,10 @@ int TextRenderer::GetTextWidth(const char* text) {
         return 0;
     }
     
-    int width = 0;
+    // Character spacing for pixel fonts (must match rendering spacing)
+    const float charSpacing = 1.0f;
+    
+    float width = 0.0f;
     const char* p = text;
     
     while (*p) {
@@ -365,12 +343,15 @@ int TextRenderer::GetTextWidth(const char* text) {
         
         CachedGlyph* glyph = GetGlyph(charCode);
         if (glyph) {
-            width += glyph->advanceX;
+            // Use the same calculation as rendering for consistency
+            float glyphWidth = (float)(glyph->width + glyph->bearingX);
+            float advance = std::max((float)glyph->advanceX, glyphWidth);
+            width += advance + charSpacing;
         }
         p++;
     }
     
-    return width;
+    return (int)width;
 }
 
 void TextRenderer::ClearGlyphCache() {

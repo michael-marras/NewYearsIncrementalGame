@@ -49,7 +49,7 @@ void SetupObjects(ObjectManager* objectManager, TextureManager* textureManager, 
         {9, "winter_objects", 80, 128, 16, 16, true, "winter_small_gold_rock", 50, "", "pickaxe", {{"raw_gold", 1}}},
         
         // Trees and Plants (require axe)
-        {10, "winter_objects", 0, 72, 16, 24, true, "winter_tree", 100, "", "axe", {{"log", 3}}},
+        {10, "winter_objects", 0, 72, 16, 24, true, "winter_tree", 100, "", "axe", {{"log", 99999}}},
         {11, "winter_objects", 96, 80, 16, 16, true, "winter_bush", 50, "", "axe", {{"leaf", 4}}},
         {12, "winter_objects", 1, 20, 15, 28, true, "winter_well", 200, "", "", {}},
 
@@ -69,7 +69,7 @@ void SetupObjects(ObjectManager* objectManager, TextureManager* textureManager, 
         {21, "summer_objects", 80, 128, 16, 16, true, "summer_small_gold_rock", 50, "", "pickaxe", {{"raw_gold", 1}}},
         
         // Trees and Plants (require axe)
-        {22, "summer_objects", 0, 72, 16, 24, true, "summer_tree", 100, "", "axe", {{"log", 3}}},
+        {22, "summer_objects", 0, 72, 16, 24, true, "summer_tree", 100, "", "axe", {{"log", 99999}}},
         {23, "summer_objects", 96, 80, 16, 16, true, "summer_bush", 50, "", "axe", {{"leaf", 4}}},
         {24, "summer_objects", 1, 20, 15, 28, true, "summer_well", 200, "", "", {}},
     };
