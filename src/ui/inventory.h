@@ -61,9 +61,9 @@ public:
     
     /**
      * Set callback function to be called when submit button is clicked
-     * @param callback Function that takes total value (float) and resources to consume (resourceId -> quantity)
+     * @param callback Function that takes planet pointer, total value (float) and resources to consume (resourceId -> quantity)
      */
-    void SetSubmitCallback(std::function<void(float, const std::unordered_map<int, int>&)> callback) { submitCallback = callback; }
+    void SetSubmitCallback(std::function<void(Planet*, float, const std::unordered_map<int, int>&)> callback) { submitCallback = callback; }
     
     /**
      * Update inventory state and handle mouse input
@@ -96,8 +96,8 @@ private:
     // Track total value for WithValues mode (updated during render)
     float currentTotalValue = 0.0f;
     
-    // Callback function for submit button (called with total value and resources to consume)
-    std::function<void(float, const std::unordered_map<int, int>&)> submitCallback = nullptr;
+    // Callback function for submit button (called with planet, total value and resources to consume)
+    std::function<void(Planet*, float, const std::unordered_map<int, int>&)> submitCallback = nullptr;
     
     /**
      * Render text at specified position

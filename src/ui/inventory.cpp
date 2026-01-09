@@ -6,6 +6,7 @@
 #include <cstdio>
 #include <cstring>
 #include <cstdlib>
+#include <cmath>
 #include <SDL3/SDL.h>
 
 Inventory::Inventory(SDL_Renderer* renderer) : textRenderer(nullptr), isOpen(false), yScroll(0.0f), mode(InventoryMode::NoValues), currentTotalValue(0.0f) {
@@ -146,14 +147,20 @@ void Inventory::Update(SDL_Renderer* renderer, InputManager* inputManager, Playe
                                         if (remaining > 0.0f) {
                                             // Calculate partial quantity needed
                                             float resourceValuePerUnit = resourceInfo->value;
-                                            int partialQuantity = static_cast<int>(remaining / resourceValuePerUnit);
+                                            int partialQuantity = static_cast<int>(std::ceil(remaining / resourceValuePerUnit));
                                             // Ensure we don't consume more than the user input
                                             if (partialQuantity > inputValue) {
                                                 partialQuantity = inputValue;
                                             }
                                             if (partialQuantity > 0) {
                                                 resourcesToConsume[resourceId] = partialQuantity;
-                                                totalValue += resourceValuePerUnit * static_cast<float>(partialQuantity);
+                                                float actualValue = resourceValuePerUnit * static_cast<float>(partialQuantity);
+                                                totalValue += actualValue;
+                                                // If we're still slightly under target (within one resource unit), set to target exactly
+                                                // This ensures the planet fills completely when we have sufficient resources
+                                                if (totalValue < targetValue && (targetValue - totalValue) <= resourceValuePerUnit * 0.5f) {
+                                                    totalValue = targetValue;
+                                                }
                                             }
                                         }
                                         break; // Reached target, stop
@@ -170,14 +177,21 @@ void Inventory::Update(SDL_Renderer* renderer, InputManager* inputManager, Playe
                                 }
                             }
                         }
+
+                        if (hasLimit && totalValue < targetValue) {
+                            float difference = targetValue - totalValue;
+                            if (difference < 0.01f) {
+                                totalValue = targetValue;
+                            }
+                        }
                         
-                        // Clamp totalValue to target if it slightly exceeded
+                        // Clamp totalValue to target if it exceeded (can happen with rounding up)
                         if (hasLimit && totalValue > targetValue) {
                             totalValue = targetValue;
                         }
                         
-                        if (submitCallback) {
-                            submitCallback(totalValue, resourcesToConsume);
+                        if (submitCallback && currentPlanet) {
+                            submitCallback(currentPlanet, totalValue, resourcesToConsume);
                         }
                         Toggle();
                         

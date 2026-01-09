@@ -17,11 +17,13 @@ struct GeneratedMap {
 
 // Generate both tile map and objects from a seed
 // Returns the grid IDs for both tile and object grids
+// If planet is provided, will create object nodes instead of directly placing objects
 GeneratedMap GenerateMapFromSeed(unsigned int seed, 
                                  TileManager* tileManager, 
                                  ObjectManager* objectManager,
                                  ResourceManager* resourceManager,
-                                 int width, int height, PlanetBiome planetBiome, PlanetType planetType);
+                                 int width, int height, PlanetBiome planetBiome, PlanetType planetType,
+                                 Planet* planet = nullptr, PlanetFace face = PlanetFace::TOP);
 
 // Generate a cube planet with 6 faces from a seed
 // Returns a Planet with all 6 faces initialized

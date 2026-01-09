@@ -305,7 +305,8 @@ void MortalState::update() {
                     
                     // Create damage popup at object position
                     if (damagePopups) {
-                        float worldX = gridX * TILE_RENDER_SIZE + TILE_RENDER_SIZE / 2.0f;
+                        float randomOffsetX = (std::rand() % 11) - 5;
+                        float worldX = gridX * TILE_RENDER_SIZE + TILE_RENDER_SIZE / 2.0f + randomOffsetX;
                         float worldY = gridY * TILE_RENDER_SIZE + TILE_RENDER_SIZE / 2.0f;
                         SDL_Color damageColor = {255, 255, 255, 255};
                         damagePopups->AddPopup(worldX, worldY, damage, damageColor);
@@ -567,7 +568,14 @@ void MortalState::update() {
         resourceManager->Update(resourceArrayId, playerX, playerY, deltaTime, player, hud ? hud : nullptr);
     }
     
+    // Update object nodes for regenerating objects
     Planet* currentPlanet = context->getCurrentPlanet();
+    if (currentPlanet && objectManager) {
+        float deltaTimeSeconds = (float)context->getDeltaTime() / 1000.0f;
+        // Update nodes for all faces (or just current face for performance)
+        // For now, update all faces - can optimize to only update current face later
+        currentPlanet->UpdateAllObjectNodes(deltaTimeSeconds, objectManager);
+    }
     if (currentPlanet && currentPlanet->CanGenerateChild()) {
         BigBangEngine* engine = currentPlanet->GetPortalEngine();
         if (engine && engine->IsFullyGrown()) {
@@ -805,15 +813,15 @@ void MortalState::render() {
 
 void MortalState::onEnter() {
     if (inventory && context) {
-        inventory->SetSubmitCallback([this](float totalValue, const std::unordered_map<int, int>& resourcesToConsume) {
+        inventory->SetSubmitCallback([this](Planet* planet, float totalValue, const std::unordered_map<int, int>& resourcesToConsume) {
             // Add null check to prevent segfault
             if (!context) {
                 SDL_Log("Error: context is null in submit callback");
                 return;
             }
-            Planet* currentPlanet = context->getCurrentPlanet();
-            if (currentPlanet) {
-                currentPlanet->AddEnergy(totalValue);
+            if (planet) {
+                // Use the planet that was used for calculation (passed from inventory)
+                planet->AddEnergy(totalValue);
                 
                 // Consume resources from player inventory
                 Player* currentPlayer = context->getPlayer();
@@ -827,7 +835,7 @@ void MortalState::onEnter() {
                     }
                 }
             } else {
-                SDL_Log("Warning: Current planet is null in submit callback");
+                SDL_Log("Warning: Planet is null in submit callback");
             }
         });
     }

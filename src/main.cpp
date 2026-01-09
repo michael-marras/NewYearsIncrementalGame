@@ -119,20 +119,20 @@ struct SDLApplication {
             
             // TEMP: Add random resources for testing inventory
             // Add 1-10000 of each registered resource (IDs 1-13 based on resource_definitions.cpp)
-            if (resourceManager) {
-                std::srand(static_cast<unsigned int>(SDL_GetTicks())); // Seed random number generator
-                for (int resourceId = 1; resourceId <= 13; resourceId++) {
-                    if (resourceManager->HasResource(resourceId)) {
-                        int randomQuantity = (std::rand() % 10000) + 1; // Random between 1 and 10000
-                        player->AddResource(resourceId, randomQuantity);
-                        ResourceInfo* info = resourceManager->GetResource(resourceId);
-                        if (info) {
-                            SDL_Log("TEMP: Added %d x %s to player inventory", randomQuantity, info->name.c_str());
-                        }
-                    }
-                }
-                SDL_Log("TEMP: Finished adding random resources to player inventory");
-            }
+            // if (resourceManager) {
+            //     std::srand(static_cast<unsigned int>(SDL_GetTicks())); // Seed random number generator
+            //     for (int resourceId = 1; resourceId <= 13; resourceId++) {
+            //         if (resourceManager->HasResource(resourceId)) {
+            //             int randomQuantity = (std::rand() % 10000) + 1; // Random between 1 and 10000
+            //             player->AddResource(resourceId, randomQuantity);
+            //             ResourceInfo* info = resourceManager->GetResource(resourceId);
+            //             if (info) {
+            //                 SDL_Log("TEMP: Added %d x %s to player inventory", randomQuantity, info->name.c_str());
+            //             }
+            //         }
+            //     }
+            //     SDL_Log("TEMP: Finished adding random resources to player inventory");
+            // }
         }
         
         context->GeneratePlanetTree();

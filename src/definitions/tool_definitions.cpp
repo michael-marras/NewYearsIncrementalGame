@@ -7,8 +7,8 @@ void SetupTools(ToolManager* toolManager, TextureManager* textureManager) {
     // Format: RegisterTool(id, sheet, x, y, width, height, type, damage, speed_ms, name)
     // damage: damage per hit (higher = more damage)
     // speed: cooldown in milliseconds between hits (lower = faster mining)
-    toolManager->RegisterTool(1, "tools_sheet", 0, 0, 16, 16, "axe", 5000, 200, "Wood Axe");
-    toolManager->RegisterTool(2, "tools_sheet", 16, 0, 16, 16, "pickaxe", 5000, 150, "Iron Pickaxe");
+    toolManager->RegisterTool(1, "tools_sheet", 0, 0, 16, 16, "axe", 25, 200, "Wood Axe");
+    toolManager->RegisterTool(2, "tools_sheet", 16, 0, 16, 16, "pickaxe", 30, 150, "Iron Pickaxe");
 
 }
 

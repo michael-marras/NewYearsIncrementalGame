@@ -1,21 +1,18 @@
 #include "world/map_generation.h"
 #include "items/resources.h"
 #include "world/planet.h"
+#include "world/object_node.h"
 #include <cstdlib>
 #include <vector>
 #include <string>
-
-struct ObjectPlacement {
-    std::string objectName;
-    float density;
-    int fixedCount;
-};
+#include <cmath>
 
 GeneratedMap GenerateMapFromSeed(unsigned int seed, 
                                  TileManager* tileManager, 
                                  ObjectManager* objectManager,
                                  ResourceManager* resourceManager,
-                                 int width, int height, PlanetBiome planetBiome, PlanetType planetType) {
+                                 int width, int height, PlanetBiome planetBiome, PlanetType planetType,
+                                 Planet* planet, PlanetFace face) {
     // Seed the random number generator for reproducible generation
     std::srand(seed);
     
@@ -40,101 +37,57 @@ GeneratedMap GenerateMapFromSeed(unsigned int seed,
         return result;
     }
     
-    std::vector<ObjectPlacement> objectPlacements;
-    
-    // Determine object names based on biome
-    std::string treeName = (planetBiome == PlanetBiome::SUMMER) ? "summer_tree" : "winter_tree";
-    std::string bushName = (planetBiome == PlanetBiome::SUMMER) ? "summer_bush" : "winter_bush";
-    std::string wellName = (planetBiome == PlanetBiome::SUMMER) ? "summer_well" : "winter_well";
-    std::string bigRockName = (planetBiome == PlanetBiome::SUMMER) ? "summer_big_rock" : "winter_big_rock";
-    std::string medRockName = (planetBiome == PlanetBiome::SUMMER) ? "summer_medium_rock" : "winter_medium_rock";
-    std::string bigIronName = (planetBiome == PlanetBiome::SUMMER) ? "summer_big_iron_rock" : "winter_big_iron_rock";
-    std::string medIronName = (planetBiome == PlanetBiome::SUMMER) ? "summer_medium_iron_rock" : "winter_medium_iron_rock";
-    std::string bigGoldName = (planetBiome == PlanetBiome::SUMMER) ? "summer_big_gold_rock" : "winter_big_gold_rock";
-    std::string medGoldName = (planetBiome == PlanetBiome::SUMMER) ? "summer_medium_gold_rock" : "winter_medium_gold_rock";
-    
-    objectPlacements = {
-        {treeName, 0.0f, 0},
-        {bushName, 0.0f, 0},
-        {wellName, 0.0f, 0},
-        {bigRockName, 0.0f, 0},
-        {medRockName, 0.0f, 0},
-        {bigIronName, 0.0f, 0},
-        {medIronName, 0.0f, 0},
-        {bigGoldName, 0.0f, 0},
-        {medGoldName, 0.0f, 0},
-    };
-    
-    if (planetType == PlanetType::TREE_PLANET) {
-        for (auto& placement : objectPlacements) {
-            if (placement.objectName.find("tree") != std::string::npos) {
-                placement.density = 0.25f;
-            } else if (placement.objectName.find("bush") != std::string::npos) {
-                placement.density = 0.015f;
-            }
-        }
-    } else if (planetType == PlanetType::ROCK_PLANET) {
-        for (auto& placement : objectPlacements) {
-            if (placement.objectName.find("rock") != std::string::npos && 
-                placement.objectName.find("iron") == std::string::npos &&
-                placement.objectName.find("gold") == std::string::npos) {
-                // Regular rocks
-                if (placement.objectName.find("big") != std::string::npos) {
-                    placement.density = 0.15f;
-                } else if (placement.objectName.find("medium") != std::string::npos) {
-                    placement.density = 0.075f;
-                }
-            } else if (placement.objectName.find("tree") != std::string::npos) {
-                placement.density = 0.1f;
-            }
-        }
-    } else if (planetType == PlanetType::IRON_PLANET) {
-        for (auto& placement : objectPlacements) {
-            if (placement.objectName.find("iron") != std::string::npos) {
-                if (placement.objectName.find("big") != std::string::npos) {
-                    placement.density = 0.1f;
-                } else if (placement.objectName.find("medium") != std::string::npos) {
-                    placement.density = 0.05f;
-                }
-            }
-        }
-    } else if (planetType == PlanetType::GOLD_PLANET) {
-        for (auto& placement : objectPlacements) {
-            if (placement.objectName.find("gold") != std::string::npos) {
-                if (placement.objectName.find("big") != std::string::npos) {
-                    placement.density = 0.1f;
-                } else if (placement.objectName.find("medium") != std::string::npos) {
-                    placement.density = 0.05f;
-                }
-            }
-        }
-    }
-    
-    // Loop through all object placements
-    for (const auto& placement : objectPlacements) {
-        if (placement.density == 0.0f && placement.fixedCount == 0) {
-            continue;
+    // Create object nodes instead of directly placing objects
+    // This allows for regenerating objects dynamically
+    if (planet) {
+        ObjectNodeManager* nodeManager = planet->GetOrCreateObjectNodeManager(face);
+        
+        // Determine which node types to create based on planet type
+        std::vector<ObjectNodeType> nodeTypes;
+        int numNodes = 0;
+        
+        if (planetType == PlanetType::TREE_PLANET) {
+            nodeTypes.push_back(ObjectNodeType::TREE_NODE);
+            numNodes = 15 + (width * width / 500);
+        } else if (planetType == PlanetType::ROCK_PLANET) {
+            nodeTypes.push_back(ObjectNodeType::ROCK_NODE);
+            numNodes = 12 + (width * width / 600);
+        } else if (planetType == PlanetType::IRON_PLANET) {
+            nodeTypes.push_back(ObjectNodeType::IRON_NODE);
+            numNodes = 10 + (width * width / 600);
+        } else if (planetType == PlanetType::GOLD_PLANET) {
+            nodeTypes.push_back(ObjectNodeType::GOLD_NODE);
+            numNodes = 8 + (width * width / 700);
         }
         
-        ObjectInfo* objInfo = objectManager->GetObjectByName(placement.objectName.c_str());
-        if (!objInfo) {
-            continue;
-        }
-
-        int numObjects;
-        if (placement.fixedCount > 0) {
-            numObjects = placement.fixedCount;
-        } else {
-            numObjects = static_cast<int>(placement.density * width * height);
-        }
-        
-        for (int i = 0; i < numObjects; i++) {
-            int x = std::rand() % width;
-            int y = std::rand() % height;
+        // Create nodes at random positions
+        for (int i = 0; i < numNodes && !nodeTypes.empty(); i++) {
+            ObjectNodeType nodeTypeToCreate = nodeTypes[std::rand() % nodeTypes.size()];
             
-            if (!objGrid->HasObject(x, y)) {
-                objGrid->SetObject(x, y, objInfo->id);
+            // Random position (avoid edges by a margin)
+            int margin = 5;
+            int x = margin + std::rand() % (width - 2 * margin);
+            int y = margin + std::rand() % (height - 2 * margin);
+
+            int tier = planet->GetTier();
+            float tierMultiplier = 1.0f + (tier * 0.4f);
+            
+            ObjectNode newNode;
+            float range = (8.0f + (std::rand() % 5)) * tierMultiplier;
+            float spawnRate = (0.2f + (std::rand() % 30) / 100.0f) * tierMultiplier;
+            float initialEnergy = (50.0f + (std::rand() % 50)) * tierMultiplier;
+            float maxEnergy = (100.0f + (std::rand() % 100)) * tierMultiplier;
+            float energyRegen = (0.3f + (std::rand() % 40) / 100.0f) * tierMultiplier;
+            int maxObjects = static_cast<int>((15 + (std::rand() % 15)) * tierMultiplier);
+            
+            newNode.Initialize(nodeTypeToCreate, face, x, y, range, spawnRate, initialEnergy, 
+                              maxEnergy, energyRegen, maxObjects);
+            
+            if (objGrid) {
+                newNode.SpawnInitialObjects(objectManager, objectGridId, width, height, planetBiome);
             }
+            
+            nodeManager->AddNode(newNode);
         }
     }
     
@@ -267,7 +220,7 @@ Planet* GeneratePlanetFromSeed(unsigned int seed,
     // This ensures each face is unique but reproducible
     for (int i = 0; i < 6; i++) {
         unsigned int faceSeed = seed + i;
-        GeneratedMap faceMap = GenerateMapFromSeed(faceSeed, tileManager, objectManager, resourceManager, width, width, planet->GetPlanetBiome(), planet->GetPlanetType());
+        GeneratedMap faceMap = GenerateMapFromSeed(faceSeed, tileManager, objectManager, resourceManager, width, width, planet->GetPlanetBiome(), planet->GetPlanetType(), planet, faces[i]);
         planet->SetFaceData(faces[i], faceMap.tileGridId, faceMap.objectGridId, faceMap.resourceArrayId);
     }
     
