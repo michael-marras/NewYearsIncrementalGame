@@ -75,42 +75,36 @@ bool TileManager::HasTile(int id) {
     return tiles.find(id) != tiles.end();
 }
 
-int TileManager::CreateTileGrid(int width, int height) {
-    TileGrid* grid = new TileGrid(width, height);
-    
-    // Random tile IDs to choose from
-    const int tileOptions[] = {4, 5, 6, 11, 12, 13, 18, 19, 20, 25, 26};
-    const int numOptions = sizeof(tileOptions) / sizeof(tileOptions[0]);
-    
-    // Fill grid with random tiles
-    for (int y = 0; y < height; y++) {
-        for (int x = 0; x < width; x++) {
-            int randomIndex = std::rand() % numOptions;
-            grid->SetTile(x, y, tileOptions[randomIndex]);
-        }
-    }
-    
-    int gridId = nextGridId++;
-    grids[gridId] = grid;
-    return gridId;
-}
-
 int TileManager::CreateTileGridwGroupingsSeeded(int width, int height, unsigned int seed, PlanetBiome planetBiome){
     std::srand(seed);
     TileGrid* grid = new TileGrid(width, height);
 
     int offset;
-    if (planetBiome == PlanetBiome::SUMMER) {
-        offset = 35;
-    } else if (planetBiome == PlanetBiome::WINTER) {
-        offset = 0;
-    } else {
-        offset = 0;
+    switch (planetBiome) {
+        case PlanetBiome::SUMMER:
+            offset = 0;
+            break;
+        case PlanetBiome::FALL:
+            offset = 9;
+            break;
+        case PlanetBiome::WINTER:
+            offset = 18;
+            break;
+        case PlanetBiome::SPRING:
+            offset = 27;
+            break;
+        case PlanetBiome::FANTASY:
+            offset = 36;
+            break;
+        default:
+            offset = 0;
+            break;
     }
 
-    const int high[] = {6 + offset, 13 + offset, 20 + offset};
-    const int med[] = {5 + offset, 12 + offset, 19 + offset};
-    const int low[] = {4 + offset, 11 + offset, 18 + offset};
+
+    const int high[] = {2 + offset, 5 + offset, 8 + offset};
+    const int med[] = {1 + offset, 4 + offset, 7 + offset};
+    const int low[] = {0 + offset, 3 + offset, 6 + offset};
     const int numHigh = sizeof(high) / sizeof(high[0]);
     const int numMed = sizeof(med) / sizeof(med[0]);
     const int numLow = sizeof(low) / sizeof(low[0]);
@@ -172,7 +166,7 @@ int TileManager::CreateTileGridwGroupingsSeeded(int width, int height, unsigned 
                 }
             }
 
-            int tileId = 4 + offset;
+            int tileId = 0 + offset;
             if (bestPatchIndex >= 0) {
                 const Patch& patch = patches[bestPatchIndex];
                 if (bestDistance <= patch.highRadius) {

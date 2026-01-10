@@ -771,8 +771,10 @@ void MortalState::render() {
         bool isSwinging = (player->getPlayerState() == SWINGING);
         int equippedToolId = player->GetEquippedToolId();
         Direction playerDir = player->getPlayerDirection();
-        bool isFacingBack = (playerDir == Direction::BACK);
+        bool isFacingBack = (playerDir == Direction::BACK || playerDir == Direction::BACK_LEFT || playerDir == Direction::BACK_RIGHT);
+        bool isFacingBackWhileSwinging = isSwinging && (playerDir == Direction::BACK || playerDir == Direction::BACK_LEFT || playerDir == Direction::BACK_RIGHT);
         
+        // Render tool on back (behind player) when not swinging/swinging forward
         if (!isSwinging && equippedToolId >= 0 && !isFacingBack) {
             ToolManager* toolManager = context->getToolManager();
             if (toolManager) {
@@ -796,61 +798,16 @@ void MortalState::render() {
             }
         }
         
-        textureManager->RenderPlayer(player, renderX, renderY, player -> getCurrentPlayerAnimation(), zoom);
-        
-        if (!isSwinging && equippedToolId >= 0 && isFacingBack) {
+        // Render equipped tool in player's hand when swinging BACK/BACK_LEFT/BACK_RIGHT (before player)
+        if (isFacingBackWhileSwinging && equippedToolId >= 0) {
             ToolManager* toolManager = context->getToolManager();
             if (toolManager) {
                 ToolInfo* toolInfo = toolManager->GetTool(equippedToolId);
                 if (toolInfo) {
-                    float toolX = renderX;
-                    float toolY = renderY + -3.0f * zoom;
+                    float toolOffsetX = 4.5f * zoom;
+                    float toolOffsetY = -5.0f * zoom;
                     
                     bool flipTool = true;
-                    
-                    textureManager->RenderTool(toolManager, equippedToolId, toolX, toolY, zoom, flipTool, 180.0);
-                }
-            }
-        }
-        
-        // Render equipped tool in player's hand when punching
-        if (isSwinging && equippedToolId >= 0) {
-            ToolManager* toolManager = context->getToolManager();
-            if (toolManager) {
-                ToolInfo* toolInfo = toolManager->GetTool(equippedToolId);
-                if (toolInfo) {
-                    Direction playerDir = player->getPlayerDirection();
-                    float toolOffsetX = 0.0f;
-                    float toolOffsetY = 0.0f;
-                    
-                    switch (playerDir) {
-                        case Direction::RIGHT:
-                            toolOffsetX = 6.0f * zoom;
-                            toolOffsetY = -2.0f * zoom;
-                            break;
-                        case Direction::LEFT:
-                            toolOffsetX = -6.0f * zoom;
-                            toolOffsetY = -2.0f * zoom;
-                            break;
-                        case Direction::FORWARD:
-                        case Direction::FORWARD_LEFT:
-                        case Direction::FORWARD_RIGHT:
-                            toolOffsetX = 5.0f * zoom;
-                            toolOffsetY = -4.0f * zoom;
-                            break;
-                        case Direction::BACK:
-                        case Direction::BACK_LEFT:
-                        case Direction::BACK_RIGHT:
-                            toolOffsetX = -4.0f * zoom;
-                            toolOffsetY = -10.0f * zoom;
-                            break;
-                        default:
-                            toolOffsetX = 4.0f * zoom;
-                            toolOffsetY = -2.0f * zoom;
-                            break;
-                    }
-                    
-                    bool flipTool = (playerDir == Direction::LEFT || playerDir == Direction::BACK);
                     
                     float hiltX = renderX + toolOffsetX;
                     float hiltY = renderY + toolOffsetY;
@@ -878,7 +835,100 @@ void MortalState::render() {
                         arcAngle = 60.0 - (90.0 * eased);
                     }
                     
-                    if (playerDir == Direction::LEFT || playerDir == Direction::BACK) {
+                    arcAngle = -arcAngle;
+                    
+                    float hiltPosX = (float)toolInfo->width / 2.0f;
+                    float hiltPosY = (float)toolInfo->height - 2.0f;
+                    
+                    textureManager->RenderTool(toolManager, equippedToolId, hiltX, hiltY, zoom, flipTool, arcAngle, hiltPosX, hiltPosY);
+                }
+            }
+        }
+        
+        textureManager->RenderPlayer(player, renderX, renderY, player -> getCurrentPlayerAnimation(), zoom);
+        
+        // Render tool on back (after player) when not swinging and facing back
+        if (!isSwinging && equippedToolId >= 0 && isFacingBack) {
+            ToolManager* toolManager = context->getToolManager();
+            if (toolManager) {
+                ToolInfo* toolInfo = toolManager->GetTool(equippedToolId);
+                if (toolInfo) {
+                    float toolX = renderX;
+                    float toolY = renderY + -3.0f * zoom;
+                    
+                    bool flipTool = true;
+                    
+                    textureManager->RenderTool(toolManager, equippedToolId, toolX, toolY, zoom, flipTool, 180.0);
+                }
+            }
+        }
+        
+        // Render equipped tool in player's hand when swinging (forward directions, after player)
+        if (isSwinging && equippedToolId >= 0 && !isFacingBackWhileSwinging) {
+            ToolManager* toolManager = context->getToolManager();
+            if (toolManager) {
+                ToolInfo* toolInfo = toolManager->GetTool(equippedToolId);
+                if (toolInfo) {
+                    float toolOffsetX = 0.0f;
+                    float toolOffsetY = 0.0f;
+                    
+                    switch (playerDir) {
+                        case Direction::RIGHT:
+                            toolOffsetX = 3.5f * zoom;
+                            toolOffsetY = -3.5f * zoom;
+                            break;
+                        case Direction::LEFT:
+                            toolOffsetX = -3.5f * zoom;
+                            toolOffsetY = -3.5f * zoom;
+                            break;
+                        case Direction::FORWARD:
+                        case Direction::FORWARD_LEFT:
+                        case Direction::FORWARD_RIGHT:
+                            toolOffsetX = 6.0f * zoom;
+                            toolOffsetY = -4.0f * zoom;
+                            break;
+                        default:
+                            toolOffsetX = 4.0f * zoom;
+                            toolOffsetY = -2.0f * zoom;
+                            break;
+                    }
+                    
+                    bool flipTool = (playerDir == Direction::LEFT);
+                    
+                    float hiltX = renderX + toolOffsetX;
+                    float hiltY = renderY + toolOffsetY;
+                    
+                    Uint64 animTime = player->getAnimationTime();
+                    PlayerAnimations currentAnim = player->getCurrentPlayerAnimation();
+                    
+                    bool handRaised = (currentAnim == PlayerAnimations::SwingingForwardToolUp ||
+                                      currentAnim == PlayerAnimations::SwingingBackToolup ||
+                                      currentAnim == PlayerAnimations::SwingingLeftToolUp ||
+                                      currentAnim == PlayerAnimations::SwingingRightToolUp);
+                    
+                    float frameProgress = (float)animTime / 100.0f;
+                    if (frameProgress > 1.0f) frameProgress = 1.0f;
+
+                    double arcAngle;
+                    
+                    bool isForwardSwing = (playerDir == Direction::FORWARD || playerDir == Direction::FORWARD_LEFT || playerDir == Direction::FORWARD_RIGHT);
+                    
+                    if (handRaised) {
+                        float t = frameProgress;
+                        float eased = t * t * (3.0f - 2.0f * t);
+                        arcAngle = -30.0 + (90.0 * eased);
+                    } else {
+                        float t = frameProgress;
+                        float eased = t * t * (3.0f - 2.0f * t);
+                        arcAngle = 60.0 - (90.0 * eased);
+                    }
+                    
+                    if (playerDir == Direction::LEFT) {
+                        arcAngle = -arcAngle;
+                    }
+                    
+                    // Reverse the arc direction for forward swings
+                    if (isForwardSwing) {
                         arcAngle = -arcAngle;
                     }
                     

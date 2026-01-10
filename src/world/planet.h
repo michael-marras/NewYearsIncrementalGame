@@ -39,8 +39,11 @@ enum class PlanetSize {
 
 // Enum for planet biomes (visual/seasonal theme)
 enum class PlanetBiome {
+    SUMMER,
+    FALL,
     WINTER,
-    SUMMER
+    SPRING,
+    FANTASY
 };
 
 // Enum for planet types (resource/object spawn characteristics)

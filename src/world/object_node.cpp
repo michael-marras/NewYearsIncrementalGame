@@ -114,7 +114,7 @@ int ObjectNode::TrySpawn(ObjectManager* objectManager, int objectGridId, int pla
     
     // Try to spawn multiple objects in this batch
     int objectsSpawned = 0;
-    int maxAttempts = batchSize * 15;  // More attempts for larger batches
+    int maxAttempts = batchSize * 15;
     
     for (int attempt = 0; attempt < maxAttempts && objectsSpawned < batchSize; attempt++) {
         // Generate random position within range
@@ -239,20 +239,50 @@ void ObjectNode::SpawnInitialObjects(ObjectManager* objectManager, int objectGri
 }
 
 std::string ObjectNode::GetSpawnObjectName(PlanetBiome biome) const {
-    bool isSummer = (biome == PlanetBiome::SUMMER);
+    // Determine biome prefix
+    std::string biomePrefix;
+    switch (biome) {
+        case PlanetBiome::SUMMER:
+            biomePrefix = "summer";
+            break;
+        case PlanetBiome::FALL:
+            biomePrefix = "fall";
+            break;
+        case PlanetBiome::WINTER:
+            biomePrefix = "winter";
+            break;
+        case PlanetBiome::SPRING:
+            biomePrefix = "spring";
+            break;
+        case PlanetBiome::FANTASY:
+            biomePrefix = "fantasy";
+            break;
+        default:
+            biomePrefix = "summer";
+            break;
+    }
     
+    // Determine object type suffix
+    std::string objectSuffix;
     switch (type) {
         case ObjectNodeType::TREE_NODE:
-            return isSummer ? "summer_tree" : "winter_tree";
+            objectSuffix = "_tree";
+            break;
         case ObjectNodeType::ROCK_NODE:
-            return isSummer ? "summer_medium_rock" : "winter_medium_rock";
+            objectSuffix = "_medium_rock";
+            break;
         case ObjectNodeType::IRON_NODE:
-            return isSummer ? "summer_medium_iron_rock" : "winter_medium_iron_rock";
+            objectSuffix = "_medium_iron_rock";
+            break;
         case ObjectNodeType::GOLD_NODE:
-            return isSummer ? "summer_medium_gold_rock" : "winter_medium_gold_rock";
+            objectSuffix = "_medium_gold_rock";
+            break;
         default:
-            return isSummer ? "summer_tree" : "winter_tree";
+            objectSuffix = "_tree";
+            break;
     }
+    
+    return biomePrefix + objectSuffix;
 }
 
 bool ObjectNode::IsInRange(int checkX, int checkY) const {

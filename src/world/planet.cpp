@@ -3,6 +3,7 @@
 #include "world/BigBangEngine.h"
 #include <cmath>
 #include <cstdlib>
+#include <unordered_map>
 #include "utils/constants.h"
 #include "world/tiles.h"
 #include "core/textures.h"
@@ -334,9 +335,19 @@ void Planet::RenderToTexture(SDL_Renderer* renderer,
         if (grid) {
             int tilesRendered = 0;
             int tilesFailed = 0;
+            std::unordered_map<int, int> invalidTileIds;
+            
             for (int y = 0; y < grid->height; y++) {
                 for (int x = 0; x < grid->width; x++) {
                     int tileId = grid->GetTile(x, y);
+                    
+                    // Check if tile ID is valid before attempting to render
+                    if (!tileManager->HasTile(tileId)) {
+                        tilesFailed++;
+                        invalidTileIds[tileId]++;
+                        continue;
+                    }
+                    
                     float tileX = x * TILE_RENDER_SIZE;
                     float tileY = y * TILE_RENDER_SIZE;
                     bool rendered = textureManager->RenderTile(tileManager, tileId, tileX, tileY, 1.0f);
@@ -344,11 +355,21 @@ void Planet::RenderToTexture(SDL_Renderer* renderer,
                         tilesRendered++;
                     } else {
                         tilesFailed++;
+                        invalidTileIds[tileId]++;
                     }
                 }
             }
+            
             if (tilesFailed > 0) {
                 SDL_Log("Warning: Failed to render %d tiles (rendered %d) for planet with grid ID %d", tilesFailed, tilesRendered, tileGridId);
+                
+                // Log which tile IDs are invalid
+                if (!invalidTileIds.empty()) {
+                    SDL_Log("Invalid tile IDs found:");
+                    for (const auto& pair : invalidTileIds) {
+                        SDL_Log("  Tile ID %d: %d occurrences", pair.first, pair.second);
+                    }
+                }
             }
             if (tilesRendered == 0 && tilesFailed > 0) {
                 SDL_Log("Error: No tiles rendered! Grid ID: %d, Size: %dx%d, Total tiles: %d", tileGridId, grid->width, grid->height, grid->width * grid->height);

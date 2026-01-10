@@ -143,8 +143,36 @@ Planet* GeneratePlanetFromSeed(unsigned int seed,
         }
     }
 
-    // Determine biome (50/50 WINTER/SUMMER)
-    PlanetBiome planetBiome = (seed % 2 == 0) ? PlanetBiome::SUMMER : PlanetBiome::WINTER;
+    // Determine biome (FANTASY has 1/20 chance, others share remaining 95%)
+    std::srand(seed + 3000);
+    int biomeRoll = std::rand() % 100;  // 0-99 for percentage-based selection
+    PlanetBiome planetBiome;
+    
+    if (biomeRoll < 5) {
+        // 5% chance for FANTASY (0-4)
+        planetBiome = PlanetBiome::FANTASY;
+    } else {
+        // 95% chance split among 4 biomes (23.75% each)
+        // Remap 5-99 to 0-3 for the 4 regular biomes
+        int regularBiomeRoll = (biomeRoll - 5) % 4;
+        switch (regularBiomeRoll) {
+            case 0:
+                planetBiome = PlanetBiome::SUMMER;
+                break;
+            case 1:
+                planetBiome = PlanetBiome::FALL;
+                break;
+            case 2:
+                planetBiome = PlanetBiome::WINTER;
+                break;
+            case 3:
+                planetBiome = PlanetBiome::SPRING;
+                break;
+            default:
+                planetBiome = PlanetBiome::SUMMER;
+                break;
+        }
+    }
     planet->SetPlanetBiome(planetBiome);
     
     PlanetType planetType;
