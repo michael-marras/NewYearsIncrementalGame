@@ -1,6 +1,7 @@
 #include "items/resources.h"
 #include "utils/constants.h"
 #include "entities/player.h"
+#include "ui/hud.h"
 #include <SDL3/SDL.h>
 #include <cstdio>
 #include <cstring>
@@ -14,7 +15,8 @@ ResourceManager::~ResourceManager() {
 }
 
 void ResourceManager::RegisterResource(int id, const char* sheetName, int sheetX, int sheetY,
-                                       int width, int height, bool pickupable, const char* name, float value) {
+                                       int width, int height, bool pickupable, const char* name, 
+                                       float value, const char* displayName) {
     std::string resourceName;
 
     // Use provided name, or generate default name if not provided
@@ -37,6 +39,7 @@ void ResourceManager::RegisterResource(int id, const char* sheetName, int sheetX
     resource.height = height;
     resource.pickupable = pickupable;
     resource.value = value;
+    resource.displayName = displayName;
 
     resourceTypes[id] = resource;
     nameToId[resourceName] = id;
@@ -182,19 +185,22 @@ void ResourceManager::DestroyAllArrays() {
     resourceArrays.clear();
 }
 
-void ResourceManager::Update(int arrayId, float playerX, float playerY, float deltaTimeMs, Player* player) {
+void ResourceManager::Update(int arrayId, float playerX, float playerY, float deltaTimeMs, Player* player, HUD* hud) {
     ResourceArray* resourceArray = GetResourceArray(arrayId);
     if (!resourceArray) {
         return;
     }
     
+    float pickupRange = player ? player->GetPickupRange() : 10.0f;
     const float SHOOT_OUT_DURATION = 150.0f;
-    const float IDLE_DURATION = 100.0f;
-    const float MAGNETIC_RANGE = 30.0f;
-    const float PICKUP_RANGE = 10.0f;
-    const float MAGNETIC_ACCELERATION = 120.0f;
-    const float MAX_MAGNETIC_SPEED = 500.0f;
+    const float IDLE_DURATION = 200.0f;
+    const float MAGNETIC_RANGE = pickupRange;
+    const float ACTUAL_PICKUP_DISTANCE = 10.0f;
+    const float MAGNETIC_ACCELERATION = 1000.0f;
+    const float MAX_MAGNETIC_SPEED = 100.0f;
+    const float VELOCITY_CORRECTION_STRENGTH = 15.0f;
     const float DELTA_TIME_SEC = deltaTimeMs / 1000.0f;
+
     
     for (size_t i = resourceArray->resources.size(); i > 0; i--) {
         size_t idx = i - 1;
@@ -203,25 +209,32 @@ void ResourceManager::Update(int arrayId, float playerX, float playerY, float de
         float dx = playerX - resource.x;
         float dy = playerY - resource.y;
         float distance = sqrtf(dx * dx + dy * dy);
-        
-        if (distance < PICKUP_RANGE) {
-            if (player) {
-                player->AddResource(resource.resourceId, resource.quantity);
-                
-                ResourceInfo* resourceInfo = GetResource(resource.resourceId);
-                if (resourceInfo) {
-                    SDL_Log("Picked up %d x %s (Resource ID: %d)", 
-                            resource.quantity, 
-                            resourceInfo->name.c_str(), 
-                            resource.resourceId);
-                } else {
-                    SDL_Log("Picked up %d x Resource ID: %d", resource.quantity, resource.resourceId);
+        if (resource.state == ResourceState::MAGNETIC) {
+            if (distance < ACTUAL_PICKUP_DISTANCE) {
+                if (player) {
+                    player->AddResource(resource.resourceId, resource.quantity);
+                    
+                    // Notify HUD about pickup
+                    if (hud) {
+                        hud->OnResourcePickedUp(resource.resourceId, resource.quantity);
+                    }
+                    
+                    ResourceInfo* resourceInfo = GetResource(resource.resourceId);
+                    if (resourceInfo) {
+                        SDL_Log("Picked up %d x %s (Resource ID: %d)", 
+                                resource.quantity, 
+                                resourceInfo->name.c_str(), 
+                                resource.resourceId);
+                    } else {
+                        SDL_Log("Picked up %d x Resource ID: %d", resource.quantity, resource.resourceId);
+                    }
                 }
+                
+                resourceArray->resources.erase(resourceArray->resources.begin() + idx);
+                continue;
             }
-            
-            resourceArray->resources.erase(resourceArray->resources.begin() + idx);
-            continue;
         }
+            
         
         switch (resource.state) {
             case ResourceState::SHOOT_OUT: {
@@ -254,10 +267,18 @@ void ResourceManager::Update(int arrayId, float playerX, float playerY, float de
                 if (distance > 0.001f) {
                     float normalizedX = dx / distance;
                     float normalizedY = dy / distance;
-                    
+
+                    float idealVx = normalizedX * MAX_MAGNETIC_SPEED;
+                    float idealVy = normalizedY * MAX_MAGNETIC_SPEED;
+
+                    float correctionFactor = VELOCITY_CORRECTION_STRENGTH * DELTA_TIME_SEC;
+                    resource.vx = resource.vx * (1.0f - correctionFactor) + idealVx * correctionFactor;
+                    resource.vy = resource.vy * (1.0f - correctionFactor) + idealVy * correctionFactor;
+
                     resource.vx += normalizedX * MAGNETIC_ACCELERATION * DELTA_TIME_SEC;
                     resource.vy += normalizedY * MAGNETIC_ACCELERATION * DELTA_TIME_SEC;
                     
+                    // Cap speed
                     float speed = sqrtf(resource.vx * resource.vx + resource.vy * resource.vy);
                     if (speed > MAX_MAGNETIC_SPEED) {
                         float scale = MAX_MAGNETIC_SPEED / speed;

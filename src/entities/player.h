@@ -302,6 +302,30 @@ class Player {
          */
         std::unordered_map<int, int>* getToolInventory();
         
+        /**
+         * Get the player's reach/interact range
+         * @return Reach range in pixels
+         */
+        float GetReach() const { return reach; }
+        
+        /**
+         * Set the player's reach/interact range
+         * @param range Reach range in pixels
+         */
+        void SetReach(float range) { reach = range; }
+        
+        /**
+         * Get the player's resource pickup range
+         * @return Pickup range in pixels
+         */
+        float GetPickupRange() const { return pickupRange; }
+        
+        /**
+         * Set the player's resource pickup range
+         * @param range Pickup range in pixels
+         */
+        void SetPickupRange(float range) { pickupRange = range; }
+        
     private:
         // Position
         float posX;
@@ -328,6 +352,10 @@ class Player {
         
         // Currently equipped tool ID (-1 if none)
         int equippedToolId = -1;
+        
+        // Interaction ranges (upgradeable)
+        float reach = 20.0f;
+        float pickupRange = 20.0f;
         
         // distinguish between playable and non playable characters
         bool isPlayer;

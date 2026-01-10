@@ -16,6 +16,7 @@ struct ResourceInfo {
     int height;
     bool pickupable;
     float value;
+    std::string displayName;
 };
 
 // Resource pickup stages
@@ -51,7 +52,7 @@ public:
 
     // Register a resource type (like RegisterObject)
     void RegisterResource(int id, const char* sheetName, int sheetX, int sheetY,
-                         int width, int height, bool pickupable = true, const char* name = nullptr, float value = 0.0f);
+                         int width, int height, bool pickupable = true, const char* name = nullptr, float value = 0.0f, const char* displayName = nullptr);
 
     // Get resource info by ID
     ResourceInfo* GetResource(int id);
@@ -97,7 +98,8 @@ public:
 
     // Update resources (falling animation and magnetic pickup)
     // Adds picked up resources to player inventory and logs pickup info
-    void Update(int arrayId, float playerX, float playerY, float deltaTimeMs, class Player* player);
+    // Optional HUD parameter to notify about pickups
+    void Update(int arrayId, float playerX, float playerY, float deltaTimeMs, class Player* player, class HUD* hud = nullptr);
 
 private:
     std::unordered_map<int, ResourceInfo> resourceTypes;      // Resource definitions by ID

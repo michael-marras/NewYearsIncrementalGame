@@ -16,9 +16,9 @@ class InputManager {
         float mouseY = 0.0f;
         float mouseDeltaX = 0.0f;
         float mouseDeltaY = 0.0f;
-        bool mouseButtons[3] = {false, false, false};
-        bool mouseButtonsPressed[3] = {false, false, false};
-        bool mouseButtonsReleased[3] = {false, false, false};
+        bool mouseButtons[4] = {false, false, false, false};  // 0-3: left, middle, right, extra
+        bool mouseButtonsPressed[4] = {false, false, false, false};
+        bool mouseButtonsReleased[4] = {false, false, false, false};
         
         // Mouse wheel
         float mouseWheelY = 0.0f;

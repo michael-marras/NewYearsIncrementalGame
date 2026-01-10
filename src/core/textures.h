@@ -50,6 +50,16 @@ public:
     // Render the items on the ground
     bool RenderResource(class ResourceManager* resourceManager, int resourceId, float dstX, float dstY, float scale = 1.0f);
     
+    // Render a tool by ID (requires ToolManager - see tools.h)
+    // rotationCenterX/Y: rotation center relative to the tool's top-left corner (if not provided, uses center)
+    bool RenderTool(class ToolManager* toolManager, int toolId, float dstX, float dstY, float scale = 1.0f, bool flipHorizontal = false, double rotation = 0.0, float rotationCenterX = -1.0f, float rotationCenterY = -1.0f);
+    
+    // Render inventory UI
+    bool RenderInventory(float scale = 1.0f);
+    
+    // Render compass arrow with rotation
+    bool RenderCompass(float dstX, float dstY, float direction, float scale = 1.0f);
+    
     // Clean up all textures (called automatically in destructor)
     void Cleanup();
 

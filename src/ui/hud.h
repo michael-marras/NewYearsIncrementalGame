@@ -2,31 +2,51 @@
 #define HUD_H
 
 #include <SDL3/SDL.h>
-#include "entities/player.h"
-#include "items/resources.h"
+#include <vector>
+#include <string>
 
-// Forward declarations
+class Player;
+class ResourceManager;
 class TextureManager;
 class TextRenderer;
 
-// HUD (Heads-Up Display) for gameplay overlay
+// Resource pickup event tracking
+struct ResourcePickupEvent {
+    int resourceId;
+    int totalQuantity; 
+    float timer;
+    float lifetime; 
+    
+    ResourcePickupEvent(int id, int qty) 
+        : resourceId(id), totalQuantity(qty), timer(6.0f), lifetime(6.0f) {}
+};
+
 class HUD {
 public:
     HUD(SDL_Renderer* renderer);
     ~HUD();
     
-    // Render the HUD overlay (resource counters, etc.)
     void Render(Player* player, ResourceManager* resourceManager, TextureManager* textureManager);
+    
+    // Update pickup events (call each frame with deltaTime in seconds)
+    void Update(float deltaTime);
+    
+    // Notify HUD that a resource was picked up
+    void OnResourcePickedUp(int resourceId, int quantity);
+    
+    // Get text renderer for use by other systems
+    TextRenderer* GetTextRenderer() const { return textRenderer; }
     
 private:
     SDL_Renderer* renderer;
     TextRenderer* textRenderer;
+    std::vector<ResourcePickupEvent> pickupEvents;
     
-    // Helper function to render text using TextRenderer
     void RenderText(const char* text, float x, float y, SDL_Color color);
     
-    // Render resource counter
     void RenderResourceCounter(Player* player, ResourceManager* resourceManager, TextureManager* textureManager, float startX, float startY);
+    
+    void RenderPickupEvents(ResourceManager* resourceManager, TextureManager* textureManager);
 };
 
 #endif // HUD_H

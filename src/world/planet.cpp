@@ -1,4 +1,5 @@
 #include "world/planet.h"
+#include "world/object_node.h"
 #include "world/BigBangEngine.h"
 #include <cmath>
 #include <cstdlib>
@@ -38,6 +39,15 @@ Planet::~Planet() {
         SDL_DestroyTexture(cachedTexture);
         cachedTexture = nullptr;
     }
+    
+    // Clean up object node managers
+    for (auto& pair : objectNodeManagers) {
+        if (pair.second) {
+            delete pair.second;
+            pair.second = nullptr;
+        }
+    }
+    objectNodeManagers.clear();
 }
 
 PlanetFaceData* Planet::GetFaceData(PlanetFace face) {
@@ -177,6 +187,69 @@ void Planet::LocalToUniverse(float localX, float localY, float& outUniverseX, fl
 void Planet::UniverseToLocal(float inUniverseX, float inUniverseY, float& outLocalX, float& outLocalY) const {
     outLocalX = inUniverseX - universeX;
     outLocalY = inUniverseY - universeY;
+}
+
+ObjectNodeManager* Planet::GetOrCreateObjectNodeManager(PlanetFace face) {
+    auto it = objectNodeManagers.find(face);
+    if (it != objectNodeManagers.end()) {
+        return it->second;
+    }
+    // Create new node manager for this face
+    ObjectNodeManager* manager = new ObjectNodeManager();
+    objectNodeManagers[face] = manager;
+    return manager;
+}
+
+ObjectNodeManager* Planet::GetObjectNodeManager(PlanetFace face) {
+    auto it = objectNodeManagers.find(face);
+    if (it != objectNodeManagers.end()) {
+        return it->second;
+    }
+    return nullptr;
+}
+
+const ObjectNodeManager* Planet::GetObjectNodeManager(PlanetFace face) const {
+    auto it = objectNodeManagers.find(face);
+    if (it != objectNodeManagers.end()) {
+        return it->second;
+    }
+    return nullptr;
+}
+
+void Planet::UpdateObjectNodes(PlanetFace face, float deltaTime, ObjectManager* objectManager) {
+    ObjectNodeManager* nodeManager = GetObjectNodeManager(face);
+    if (!nodeManager || !objectManager) {
+        return;
+    }
+    
+    PlanetFaceData* faceData = GetFaceData(face);
+    if (!faceData || faceData->objectGridId < 0) {
+        return;
+    }
+    
+    int planetWidth = radius * 2;
+    int planetHeight = radius * 2;
+    
+    nodeManager->UpdateAll(deltaTime, objectManager, faceData->objectGridId, planetWidth, planetHeight, planetBiome);
+}
+
+void Planet::UpdateAllObjectNodes(float deltaTime, ObjectManager* objectManager) {
+    if (!objectManager) {
+        return;
+    }
+    
+    PlanetFace faces[] = {
+        PlanetFace::FRONT,
+        PlanetFace::BACK,
+        PlanetFace::LEFT,
+        PlanetFace::RIGHT,
+        PlanetFace::TOP,
+        PlanetFace::BOTTOM
+    };
+    
+    for (int i = 0; i < 6; i++) {
+        UpdateObjectNodes(faces[i], deltaTime, objectManager);
+    }
 }
 
 void Planet::CalculateChildUniversePosition(int parentDepth, int parentIndex, bool isLeftChild, float ringSpacing, float& outChildX, float& outChildY) {

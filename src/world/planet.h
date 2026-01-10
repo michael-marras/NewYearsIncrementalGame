@@ -12,6 +12,10 @@ class TextureManager;
 class ObjectManager;
 class ResourceManager;
 class Player;
+class ObjectNodeManager;
+
+// Note: PlanetFace and PlanetBiome are defined in object_node.h to avoid circular dependency
+// We need to include object_node.h before using these enums in implementations
 
 // Enum for the 6 faces of a cube planet
 enum class PlanetFace {
@@ -228,6 +232,27 @@ public:
     bool IsDirty() const { return isDirty; }
     
     /**
+     * Get object node manager for a specific face (creates one if it doesn't exist)
+     */
+    ObjectNodeManager* GetOrCreateObjectNodeManager(PlanetFace face);
+    
+    /**
+     * Get object node manager for a specific face (returns nullptr if doesn't exist)
+     */
+    ObjectNodeManager* GetObjectNodeManager(PlanetFace face);
+    const ObjectNodeManager* GetObjectNodeManager(PlanetFace face) const;
+    
+    /**
+     * Update all object nodes on a specific face (call each frame)
+     */
+    void UpdateObjectNodes(PlanetFace face, float deltaTime, ObjectManager* objectManager);
+    
+    /**
+     * Update all object nodes on all faces (call each frame)
+     */
+    void UpdateAllObjectNodes(float deltaTime, ObjectManager* objectManager);
+    
+    /**
      * Calculate the universe position for a child planet based on depth/index binary tree layout
      * @param parentDepth Depth of parent planet in tree (0 = root)
      * @param parentIndex Index of parent planet within its depth (0 to 2^depth - 1)
@@ -240,6 +265,7 @@ public:
 
 private:
     std::unordered_map<PlanetFace, PlanetFaceData> faces;
+    std::unordered_map<PlanetFace, ObjectNodeManager*> objectNodeManagers;
     PlanetBiome planetBiome = PlanetBiome::WINTER;
     PlanetType planetType = PlanetType::TREE_PLANET;
     int tier = 0;

@@ -213,7 +213,7 @@ bool ObjectManager::PlayerCanInteract(int gridId, int x, int y, Player* player) 
     float dy = objectWorldY - playerY;
     float dist = sqrtf(dx * dx + dy * dy);
 
-    return dist < 20;
+    return dist < player->GetReach();
 }
 
 void ObjectManager::SetInstanceHealth(int gridId, int x, int y, int health) {
