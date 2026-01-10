@@ -3,6 +3,7 @@
 #include <string>
 #include <unordered_map>
 #include <cstdint>
+#include <vector>
 
 // Forward Declarations
 class TextureManager;
@@ -109,6 +110,11 @@ class Player {
          */
         Player(int posX, int posY);
 
+        /**
+         * Constructor
+         */
+        Player(int posX, int posY, bool isPlayer);
+        
         /**
          * Set player X position
          */

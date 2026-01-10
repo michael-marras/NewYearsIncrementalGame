@@ -213,7 +213,52 @@ bool ObjectManager::PlayerCanInteract(int gridId, int x, int y, Player* player) 
     float dy = objectWorldY - playerY;
     float dist = sqrtf(dx * dx + dy * dy);
 
-    return dist < player->GetReach();
+    // Check to see if player is facing the object
+    bool playerIsFacing;
+    if (std::abs(dx) > std::abs(dy)) { // Horizontal direction check
+        if (dx < 0) {
+            if (player->getPlayerDirection() == Direction::LEFT) {
+                playerIsFacing = true;
+            }
+            else if(player->getPlayerDirection() != Direction::LEFT) {
+                playerIsFacing = false;
+            }
+        }
+        else if (dx > 0) {
+            if (player->getPlayerDirection() == Direction::RIGHT) {
+                playerIsFacing = true;
+            }
+            else if(player->getPlayerDirection() != Direction::RIGHT) {
+                playerIsFacing = false;
+            }
+        }
+        else {
+            playerIsFacing = true;
+        }
+    }
+    else { // Vertical direction check
+        if (dy > 0) {
+            if (player->getPlayerDirection() == Direction::FORWARD) {
+                playerIsFacing = true;
+            }
+            else if(player->getPlayerDirection() != Direction::FORWARD) {
+                playerIsFacing = false;
+            }
+        }
+        else if (dy < 0) {
+            if (player->getPlayerDirection() == Direction::BACK) {
+                playerIsFacing = true;
+            }
+            else if(player->getPlayerDirection() != Direction::BACK) {
+                playerIsFacing = false;
+            }
+        }
+        else {
+            playerIsFacing = true;
+        }
+    }
+
+    return dist < player->GetReach() && playerIsFacing;
 }
 
 void ObjectManager::SetInstanceHealth(int gridId, int x, int y, int health) {

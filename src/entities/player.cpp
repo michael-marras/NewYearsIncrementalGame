@@ -34,6 +34,19 @@ Player::Player(int posX, int posY) {
     this->equippedToolId = -1;
 }
 
+Player::Player(int posX, int posY, bool isPlayer) {
+    this->posX = 0.0f;
+    this->posY = 0.0f;
+    this->currentPlanet = nullptr;
+    this->currentAnimation = PlayerAnimations:: StandingStillForward;
+    this->playerWalkingStage = WalkingStages:: NOT_WALKING;
+    this->playerWalkingStage = WalkingStages:: NOT_WALKING;
+    this->animationTime = 0;
+    this->playerState=IDLE;
+    this->equippedToolId = -1;
+    this->isPlayer = isPlayer;
+}
+
 void Player::setX(float X) {
     this->posX = X;
 }

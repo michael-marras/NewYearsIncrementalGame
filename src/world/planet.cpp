@@ -39,15 +39,27 @@ Planet::~Planet() {
         SDL_DestroyTexture(cachedTexture);
         cachedTexture = nullptr;
     }
+
+    // CLean up NPCs TODO
+    for (Player* NPC : this->NPCs) {
+        delete NPC;
+    }
+    NPCs.clear();
     
     // Clean up object node managers
-    for (auto& pair : objectNodeManagers) {
-        if (pair.second) {
-            delete pair.second;
-            pair.second = nullptr;
+    objectNodeManagers.clear();
+
+    // // Clean up NPCs TODO
+    unsigned int NPCsSize = this->NPCs.size();
+    if (NPCsSize > 0) {
+        for (unsigned int i = 0; i < NPCsSize; i++) {
+            Player* NPC = this->NPCs[i];
+            if (NPC) {
+                delete NPC;
+                NPC = nullptr;
+            }
         }
     }
-    objectNodeManagers.clear();
 }
 
 PlanetFaceData* Planet::GetFaceData(PlanetFace face) {
@@ -431,5 +443,12 @@ void Planet::RenderToTexture(SDL_Renderer* renderer,
     
     // Clear dirty flag after rendering
     isDirty = false;
+}
+
+void Planet::AddNPCs(int numNPCs, float x, float y) {
+    for (int i = 0; i < numNPCs; i++) {
+        Player* newNPC = new Player(x, y, false);
+        (this->NPCs).push_back(newNPC);
+    }
 }
     

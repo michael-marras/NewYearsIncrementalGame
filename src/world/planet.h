@@ -3,6 +3,7 @@
 
 #include <unordered_map>
 #include "world/BigBangEngine.h"
+#include <entities/player.h>
 
 // Forward declarations
 struct SDL_Renderer;
@@ -263,6 +264,11 @@ public:
      */
     static void CalculateChildUniversePosition(int parentDepth, int parentIndex, bool isLeftChild, float ringSpacing, float& outChildX, float& outChildY);
 
+    /**
+     * Add new NPCs to a planet
+     */
+    void AddNPCs(int numNPCs, float x, float y);
+
 private:
     std::unordered_map<PlanetFace, PlanetFaceData> faces;
     std::unordered_map<PlanetFace, ObjectNodeManager*> objectNodeManagers;
@@ -284,6 +290,9 @@ private:
     // Universe position (where this planet exists in the universe)
     float universeX = 0.0f;
     float universeY = 0.0f;
+
+    // NPC's
+    std::vector<Player*> NPCs = {};
     
 public:
     BigBangEngine* GetPortalEngine() { return &portalEngine; }
