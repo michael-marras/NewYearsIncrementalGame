@@ -51,16 +51,16 @@ Planet::~Planet() {
     objectNodeManagers.clear();
 
     // // Clean up NPCs TODO
-    unsigned int NPCsSize = this->NPCs.size();
-    if (NPCsSize > 0) {
-        for (unsigned int i = 0; i < NPCsSize; i++) {
-            Player* NPC = this->NPCs[i];
-            if (NPC) {
-                delete NPC;
-                NPC = nullptr;
-            }
-        }
-    }
+    // unsigned int NPCsSize = this->NPCs.size();
+    // if (NPCsSize > 0) {
+    //     for (unsigned int i = 0; i < NPCsSize; i++) {
+    //         Player* NPC = this->NPCs[i];
+    //         if (NPC) {
+    //             delete NPC;
+    //             NPC = nullptr;
+    //         }
+    //     }
+    // }
 }
 
 PlanetFaceData* Planet::GetFaceData(PlanetFace face) {
