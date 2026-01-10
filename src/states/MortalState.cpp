@@ -746,7 +746,129 @@ void MortalState::render() {
     if (player) {
         float renderX, renderY;
         camera->WorldToRender(player->getX(), player->getY(), renderX, renderY, VIRTUAL_WIDTH, VIRTUAL_HEIGHT);
+        
+        // Check if player is punching
+        bool isPunching = (player->getPlayerState() == PUNCHING);
+        int equippedToolId = player->GetEquippedToolId();
+        Direction playerDir = player->getPlayerDirection();
+        bool isFacingBack = (playerDir == Direction::BACK);
+        
+        if (!isPunching && equippedToolId >= 0 && !isFacingBack) {
+            ToolManager* toolManager = context->getToolManager();
+            if (toolManager) {
+                ToolInfo* toolInfo = toolManager->GetTool(equippedToolId);
+                if (toolInfo) {
+                    float toolOffsetX = 0.0f;
+                    
+                    if (playerDir == Direction::LEFT) {
+                        toolOffsetX = 3.0f * zoom;
+                    } else if (playerDir == Direction::RIGHT) {
+                        toolOffsetX = -3.0f * zoom;
+                    }
+                    
+                    float toolX = renderX + toolOffsetX;
+                    float toolY = renderY + -3.0f * zoom;
+                    
+                    bool flipTool = (playerDir == Direction::LEFT);
+                    
+                    textureManager->RenderTool(toolManager, equippedToolId, toolX, toolY, zoom, flipTool, 180.0);
+                }
+            }
+        }
+        
         textureManager->RenderPlayer(player, renderX, renderY, player -> getCurrentPlayerAnimation(), zoom);
+        
+        if (!isPunching && equippedToolId >= 0 && isFacingBack) {
+            ToolManager* toolManager = context->getToolManager();
+            if (toolManager) {
+                ToolInfo* toolInfo = toolManager->GetTool(equippedToolId);
+                if (toolInfo) {
+                    float toolX = renderX;
+                    float toolY = renderY + -3.0f * zoom;
+                    
+                    bool flipTool = true;
+                    
+                    textureManager->RenderTool(toolManager, equippedToolId, toolX, toolY, zoom, flipTool, 180.0);
+                }
+            }
+        }
+        
+        // Render equipped tool in player's hand when punching
+        if (isPunching && equippedToolId >= 0) {
+            ToolManager* toolManager = context->getToolManager();
+            if (toolManager) {
+                ToolInfo* toolInfo = toolManager->GetTool(equippedToolId);
+                if (toolInfo) {
+                    Direction playerDir = player->getPlayerDirection();
+                    float toolOffsetX = 0.0f;
+                    float toolOffsetY = 0.0f;
+                    
+                    switch (playerDir) {
+                        case Direction::RIGHT:
+                            toolOffsetX = 6.0f * zoom;
+                            toolOffsetY = -2.0f * zoom;
+                            break;
+                        case Direction::LEFT:
+                            toolOffsetX = -6.0f * zoom;
+                            toolOffsetY = -2.0f * zoom;
+                            break;
+                        case Direction::FORWARD:
+                        case Direction::FORWARD_LEFT:
+                        case Direction::FORWARD_RIGHT:
+                            toolOffsetX = 5.0f * zoom;
+                            toolOffsetY = -4.0f * zoom;
+                            break;
+                        case Direction::BACK:
+                        case Direction::BACK_LEFT:
+                        case Direction::BACK_RIGHT:
+                            toolOffsetX = -4.0f * zoom;
+                            toolOffsetY = -10.0f * zoom;
+                            break;
+                        default:
+                            toolOffsetX = 4.0f * zoom;
+                            toolOffsetY = -2.0f * zoom;
+                            break;
+                    }
+                    
+                    bool flipTool = (playerDir == Direction::LEFT || playerDir == Direction::BACK);
+                    
+                    float hiltX = renderX + toolOffsetX;
+                    float hiltY = renderY + toolOffsetY;
+                    
+                    Uint64 animTime = player->getAnimationTime();
+                    PlayerAnimations currentAnim = player->getCurrentPlayerAnimation();
+                    
+                    bool handRaised = (currentAnim == PlayerAnimations::StandingStillForwardLeftHandUp ||
+                                      currentAnim == PlayerAnimations::StandingStillLeftRightHandUp ||
+                                      currentAnim == PlayerAnimations::StandingStillRightLeftHandUp ||
+                                      currentAnim == PlayerAnimations::StandingStillBackRightHandUp);
+                    
+                    float frameProgress = (float)animTime / 100.0f;
+                    if (frameProgress > 1.0f) frameProgress = 1.0f;
+
+                    double arcAngle;
+                    
+                    if (handRaised) {
+                        float t = frameProgress;
+                        float eased = t * t * (3.0f - 2.0f * t);
+                        arcAngle = -30.0 + (90.0 * eased);
+                    } else {
+                        float t = frameProgress;
+                        float eased = t * t * (3.0f - 2.0f * t);
+                        arcAngle = 60.0 - (90.0 * eased);
+                    }
+                    
+                    if (playerDir == Direction::LEFT || playerDir == Direction::BACK) {
+                        arcAngle = -arcAngle;
+                    }
+                    
+                    float hiltPosX = (float)toolInfo->width / 2.0f;
+                    float hiltPosY = (float)toolInfo->height - 2.0f;
+                    
+                    textureManager->RenderTool(toolManager, equippedToolId, hiltX, hiltY, zoom, flipTool, arcAngle, hiltPosX, hiltPosY);
+                }
+            }
+        }
     }
     
     // Render objects in front of player
@@ -781,8 +903,11 @@ void MortalState::render() {
         hud->Render(player, resourceManager, textureManager);
     }
 
-    if (inventory && renderer && player && resourceManager && textureManager) {
-        inventory->Render(renderer, player, resourceManager, textureManager);
+    if (inventory && renderer && player && resourceManager && textureManager && context) {
+        ToolManager* toolManager = context->getToolManager();
+        if (toolManager) {
+            inventory->Render(renderer, player, resourceManager, textureManager, toolManager);
+        }
     }
     
     // Render engine compass

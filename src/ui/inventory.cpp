@@ -3,6 +3,7 @@
 #include "core/textures.h"
 #include "core/input_manager.h"
 #include "world/planet.h"
+#include "items/tools.h"
 #include <cstdio>
 #include <cstring>
 #include <cstdlib>
@@ -339,12 +340,12 @@ void Inventory::Update(SDL_Renderer* renderer, InputManager* inputManager, Playe
     }
 }
 
-void Inventory::Render(SDL_Renderer* renderer, Player* player, ResourceManager* resourceManager, TextureManager* textureManager) {
+void Inventory::Render(SDL_Renderer* renderer, Player* player, ResourceManager* resourceManager, TextureManager* textureManager, ToolManager* toolManager) {
     if (!isOpen) {
         return;
     }
     
-    if (!renderer || !player || !resourceManager || !textureManager) {
+    if (!renderer || !player || !resourceManager || !textureManager || !toolManager) {
         return;
     }
     
@@ -388,6 +389,7 @@ void Inventory::Render(SDL_Renderer* renderer, Player* player, ResourceManager* 
     const float startX = panelStartX + padding;
     const float startY = panelStartY + padding;
 
+    // Count valid resources
     int validItemCount = 0;
     for (const auto& entry : *playerInventory) {
         int resourceId = entry.first;
@@ -516,8 +518,27 @@ void Inventory::Render(SDL_Renderer* renderer, Player* player, ResourceManager* 
 
 void Inventory::RenderNoValue(SDL_Renderer* renderer, ResourceInfo* resourceInfo, int quantity, float textX, float textY) {
     SDL_Color textColor = {255, 255, 255, 255};
-    const char* displayName = resourceInfo->displayName.empty() ? resourceInfo->name.c_str() : resourceInfo->displayName.c_str();
+    const char* displayName = nullptr;
+    
+    if (resourceInfo) {
+        displayName = resourceInfo->displayName.empty() ? resourceInfo->name.c_str() : resourceInfo->displayName.c_str();
+    } else {
+        // For tools, this should be called with a tool name
+        return; // Tools should use the overloaded version
+    }
+    
     RenderText(renderer, displayName, textX, textY, "left-center", textColor);
+    
+    const float quantityAlignX = textX + 180.0f;
+    
+    char quantityBuffer[32];
+    snprintf(quantityBuffer, sizeof(quantityBuffer), "x%d", quantity);
+    RenderText(renderer, quantityBuffer, quantityAlignX, textY, "right-center", textColor);
+}
+
+void Inventory::RenderNoValue(SDL_Renderer* renderer, const char* name, int quantity, float textX, float textY) {
+    SDL_Color textColor = {255, 255, 255, 255};
+    RenderText(renderer, name, textX, textY, "left-center", textColor);
     
     const float quantityAlignX = textX + 180.0f;
     

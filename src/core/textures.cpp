@@ -3,6 +3,7 @@
 #include "entities/player.h"
 #include "world/objects.h"
 #include "items/resources.h"
+#include "items/tools.h"
 #include <SDL3/SDL.h>
 
 TextureManager::TextureManager(SDL_Renderer* renderer) 
@@ -175,6 +176,48 @@ bool TextureManager::RenderResource(ResourceManager* resourceManager, int resour
                         resource->sheetX, resource->sheetY,
                         resource->width, resource->height,
                         topLeftX, topLeftY, scale);
+}
+
+bool TextureManager::RenderTool(ToolManager* toolManager, int toolId, float dstX, float dstY, float scale, bool flipHorizontal, double rotation, float rotationCenterX, float rotationCenterY) {
+    if (!toolManager) return false;
+
+    ToolInfo* tool = toolManager->GetTool(toolId);
+    if (!tool) return false;
+
+    TextureInfo* tex = GetTexture(tool->sheetName.c_str());
+    if (!tex) return false;
+
+    SDL_FRect srcRect;
+    srcRect.x = (float)tool->sheetX;
+    srcRect.y = (float)tool->sheetY;
+    srcRect.w = (float)tool->width;
+    srcRect.h = (float)tool->height;
+
+    float topLeftX = dstX - (tool->width * scale / 2.0f);
+    float topLeftY = dstY - (tool->height * scale / 2.0f);
+
+    SDL_FRect dstRect;
+    dstRect.x = topLeftX;
+    dstRect.y = topLeftY;
+    dstRect.w = (float)tool->width * scale;
+    dstRect.h = (float)tool->height * scale;
+
+    SDL_FPoint center;
+    // If custom rotation center provided, use it (relative to dstRect top-left)
+    // Otherwise use center of tool
+    if (rotationCenterX >= 0.0f && rotationCenterY >= 0.0f) {
+        center.x = rotationCenterX * scale;
+        center.y = rotationCenterY * scale;
+    } else {
+        center.x = dstRect.w / 2.0f;
+        center.y = dstRect.h / 2.0f;
+    }
+
+    SDL_FlipMode flipMode = flipHorizontal ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE;
+    
+    int result = SDL_RenderTextureRotated(renderer, tex->texture, &srcRect, &dstRect, rotation, &center, flipMode);
+    
+    return result == 0;
 }
 
 bool TextureManager::RenderInventory(float scale) {

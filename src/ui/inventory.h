@@ -11,6 +11,7 @@
 class TextureManager;
 class TextRenderer;
 class InputManager;
+class ToolManager;
 
 enum class InventoryMode {
     NoValues,
@@ -80,8 +81,9 @@ public:
      * @param player Player reference for inventory data
      * @param resourceManager Resource manager for resource info
      * @param textureManager Texture manager for rendering
+     * @param toolManager Tool manager for tool info
      */
-    void Render(SDL_Renderer* renderer, Player* player, ResourceManager* resourceManager, TextureManager* textureManager);
+    void Render(SDL_Renderer* renderer, Player* player, ResourceManager* resourceManager, TextureManager* textureManager, ToolManager* toolManager);
     
 private:
     TextRenderer* textRenderer;
@@ -156,6 +158,16 @@ private:
      * @param textY Y coordinate for text rendering
      */
     void RenderNoValue(SDL_Renderer* renderer, ResourceInfo* resourceInfo, int quantity, float textX, float textY);
+    
+    /**
+     * Render inventory item without value (for tools)
+     * @param renderer SDL renderer for rendering operations
+     * @param name Item name
+     * @param quantity Quantity of the item
+     * @param textX X coordinate for text rendering
+     * @param textY Y coordinate for text rendering
+     */
+    void RenderNoValue(SDL_Renderer* renderer, const char* name, int quantity, float textX, float textY);
     
     /**
      * Render inventory item with value
