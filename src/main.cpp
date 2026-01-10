@@ -25,6 +25,7 @@
 #include "states/MortalState.h"
 #include "states/GodState.h"
 #include <vector>
+#include "utils/sound.h"
 
 enum class StateType : uint8_t {
     GOD_STATE,
@@ -49,7 +50,7 @@ struct SDLApplication {
 
     //constructor
     SDLApplication(const char* title) {
-        SDL_Init(SDL_INIT_VIDEO);
+        SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO);
         const ResolutionPreset& initialPreset = RESOLUTION_PRESETS[context->getCurrentResolutionIndex()];
         window = SDL_CreateWindow(title, initialPreset.width, initialPreset.height, SDL_WINDOW_RESIZABLE);
         renderer = SDL_CreateRenderer(window, NULL);
@@ -102,6 +103,8 @@ struct SDLApplication {
         ToolManager* toolManager = context->getToolManager();
         player = context->getPlayer();
         Camera* camera = context->getCamera();
+        Sound* sound = new Sound("audio/coin-collect-retro-8-bit-sound-effect-145251.wav");
+        sound->SetupDevice();
         
         SetupTiles(tileManager, textureManager);
         SetupResources(resourceManager, textureManager);
@@ -142,7 +145,7 @@ struct SDLApplication {
         
         // Initialize states
         mortalState = std::make_unique<MortalState>();
-        mortalState->setDependencies(context.get(), renderer, &input, player, hud, inventory);
+        mortalState->setDependencies(context.get(), renderer, &input, player, hud, inventory, sound);
 
         godState = std::make_unique<GodState>();
         godState->setDependencies(context.get(), renderer, &input, player);

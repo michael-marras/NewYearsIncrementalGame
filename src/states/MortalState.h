@@ -3,6 +3,7 @@
 
 #include "BaseState.h"
 #include <cstdint>
+#include "../utils/sound.h"
 
 typedef uint64_t Uint64;
 
@@ -23,13 +24,14 @@ class MortalState : public BaseState {
 
         ~MortalState();
 
-        void setDependencies(GameContext* ctx, SDL_Renderer* rend, InputManager* inp, Player* plyr, HUD* h, Inventory* inv) {
+        void setDependencies(GameContext* ctx, SDL_Renderer* rend, InputManager* inp, Player* plyr, HUD* h, Inventory* inv, Sound* snd) {
             context = ctx;
             renderer = rend;
             inputManager = inp;
             player = plyr;
             hud = h;
             inventory = inv;
+            sound = snd;
         }
 
         /**

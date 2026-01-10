@@ -26,6 +26,7 @@
 #include "ui/text_renderer.h"
 #include "ui/engine_compass.h"
 #include "core/input_manager.h"
+#include "../utils/sound.h"
 
 MortalState::MortalState() {
     damagePopups = new DamagePopupManager();
@@ -317,6 +318,7 @@ void MortalState::update() {
             
             // If object was destroyed, drop resources
             if (wasDestroyed && objBeforeDamage) {
+                sound->PlaySound();
                 ResourceManager* resourceManager = context->getResourceManager();
                 int resourceArrayId = context->getResourceArray();
                 
@@ -416,7 +418,7 @@ void MortalState::update() {
         
         float moveX = 0.0f;
         float moveY = 0.0f;
-        
+
         if (inventory && !inventory->IsOpen() && !(player->getPlayerState() == SWINGING || player->getPlayerState() == PUNCHING)) {
             if (inputManager->IsKeyHeld(SDLK_W)) {
                 moveY -= 1.0f;

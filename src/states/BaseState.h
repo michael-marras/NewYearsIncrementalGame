@@ -1,11 +1,13 @@
 #ifndef BASESTATE_H
 #define BASESTATE_H
+#include<unordered_map>
 
 // Forward declarations
 class GameContext;
 class InputManager;
 class Player;
 class HUD;
+class Sound;
 
 struct SDL_Renderer;
 
@@ -55,6 +57,7 @@ class BaseState {
         InputManager* inputManager = nullptr;
         Player* player = nullptr;
         HUD* hud = nullptr;
+        Sound* sound;
 };
 
 

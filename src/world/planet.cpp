@@ -45,6 +45,7 @@ Planet::~Planet() {
     for (Player* NPC : this->NPCs) {
         delete NPC;
     }
+    
     NPCs.clear();
     
     // Clean up object node managers
