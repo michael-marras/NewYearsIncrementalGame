@@ -113,9 +113,9 @@ struct SDLApplication {
         textureManager->LoadImageFromRes("crosshairs", "crosshairs.png");
         
         if (player) {
-            player->AddTool(1, 1);
-            player->AddTool(2, 1);
-            player->EquipTool(1);
+            player->AddTool(7, 1);
+            player->AddTool(8, 1);
+            player->EquipTool(7);
             
             // TEMP: Add random resources for testing inventory
             // Add 1-10000 of each registered resource (IDs 1-13 based on resource_definitions.cpp)

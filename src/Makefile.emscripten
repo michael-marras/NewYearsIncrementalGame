@@ -1,0 +1,191 @@
+# Makefile for compiling with Emscripten (WebAssembly)
+
+# Emscripten compiler
+CXX = em++
+CXXFLAGS = -std=c++17 -Wall -Wextra -O2
+
+# Directories
+SRC_DIR = .
+BUILD_DIR = build_emscripten
+SDL_DIR = ../SDL
+SDL_INCLUDE = $(SDL_DIR)/include
+# SDL3 should be built for Emscripten in SDL/build-emscripten or SDL/build
+SDL_BUILD_DIR = $(SDL_DIR)/build-emscripten
+SDL_BUILD_DIR_ALT = $(SDL_DIR)/build
+SDL_LIB = $(if $(wildcard $(SDL_BUILD_DIR)/libSDL3.a),$(SDL_BUILD_DIR)/libSDL3.a,$(SDL_BUILD_DIR_ALT)/libSDL3.a)
+
+# FreeType include path for Emscripten
+# Try multiple possible locations where FreeType headers might be
+# 1. Ports build directory (standard location)
+FREETYPE_PORT_DIR := $(shell echo $$HOME/.emscripten_cache/ports-builds/freetype/include)
+# 2. Check if FreeType is in Emscripten's system directory
+EMSCRIPTEN_ROOT := $(shell which emcc 2>/dev/null | xargs dirname 2>/dev/null | xargs dirname 2>/dev/null || echo "")
+FREETYPE_SYSTEM_DIR := $(if $(EMSCRIPTEN_ROOT),$(EMSCRIPTEN_ROOT)/cache/ports-builds/freetype/include,)
+# 3. Try common system locations (if FreeType is installed system-wide)
+FREETYPE_SYSTEM_PATH := /usr/local/include/freetype2 /opt/homebrew/include/freetype2 /usr/include/freetype2
+
+# Function to find first existing FreeType include directory
+FREETYPE_FIND := $(shell \
+    if [ -f "$(FREETYPE_PORT_DIR)/ft2build.h" ]; then \
+        echo "$(FREETYPE_PORT_DIR)"; \
+    elif [ -n "$(FREETYPE_SYSTEM_DIR)" ] && [ -f "$(FREETYPE_SYSTEM_DIR)/ft2build.h" ]; then \
+        echo "$(FREETYPE_SYSTEM_DIR)"; \
+    else \
+        for path in $(FREETYPE_SYSTEM_PATH); do \
+            if [ -f "$$path/ft2build.h" ]; then \
+                echo "$$path"; \
+                break; \
+            fi; \
+        done; \
+    fi \
+)
+
+FREETYPE_INCLUDE_DIR := $(FREETYPE_FIND)
+FREETYPE_INCLUDE_CHECK := $(if $(FREETYPE_INCLUDE_DIR),$(FREETYPE_INCLUDE_DIR)/ft2build.h,)
+
+# Add include path if found, otherwise add the most likely path anyway
+ifdef FREETYPE_INCLUDE_DIR
+    FREETYPE_CFLAGS = -I$(FREETYPE_INCLUDE_DIR)
+else
+    # Default to port directory - will fail with clear error if not found
+    FREETYPE_CFLAGS = -I$(FREETYPE_PORT_DIR)
+    FREETYPE_INCLUDE_CHECK := $(FREETYPE_PORT_DIR)/ft2build.h
+endif
+
+# Include paths
+INCLUDES = -I. -I$(SDL_INCLUDE) $(FREETYPE_CFLAGS)
+
+# Check if SDL3 is built
+SDL_CHECK = $(wildcard $(SDL_LIB))
+ifndef SDL_CHECK
+    $(warning WARNING: SDL3 library not found at $(SDL_LIB))
+    $(warning Please build SDL3 for Emscripten first: cd ../SDL && mkdir build-emscripten && cd build-emscripten && emcmake cmake .. -DSDL_SHARED=OFF -DSDL_STATIC=ON -DSDL_TESTS=OFF && emmake make)
+endif
+
+# Emscripten-specific flags
+# Note: FreeType will be linked via SDL3's dependencies or separately
+EMFLAGS = \
+    -sUSE_FREETYPE=1 \
+    -sALLOW_MEMORY_GROWTH=1 \
+    -sMAXIMUM_MEMORY=2GB \
+    -sINITIAL_MEMORY=256MB \
+    --preload-file res@/res \
+    --preload-file fonts@/fonts \
+    -sASYNCIFY \
+    -sEXPORTED_FUNCTIONS='["_main","_malloc","_free"]' \
+    -sEXPORTED_RUNTIME_METHODS='["ccall","cwrap","FS"]' \
+    --shell-file shell.html \
+    -o $(BUILD_DIR)/index.html
+
+# Libraries to link
+LIBS = $(SDL_LIB)
+
+# Source files (same as regular Makefile)
+SRC = main.cpp core/textures.cpp world/tiles.cpp world/objects.cpp items/resources.cpp items/tools.cpp definitions/tile_definitions.cpp definitions/object_definitions.cpp definitions/resource_definitions.cpp definitions/tool_definitions.cpp world/map_generation.cpp world/planet.cpp world/planet_tree.cpp world/object_node.cpp core/camera.cpp core/input_manager.cpp entities/player.cpp definitions/frame_definitions.cpp states/GameContext.cpp states/MortalState.cpp states/GodState.cpp ui/hud.cpp ui/inventory.cpp ui/text_renderer.cpp ui/damage_popup.cpp ui/engine_compass.cpp core/Animations.cpp world/BigBangEngine.cpp
+
+OBJ = $(SRC:%.cpp=$(BUILD_DIR)/%.o)
+TARGET = $(BUILD_DIR)/index.html
+
+# Default target - check FreeType first
+all: check-freetype $(TARGET)
+
+# Create build directory structure
+$(BUILD_DIR):
+	mkdir -p $(BUILD_DIR)/core
+	mkdir -p $(BUILD_DIR)/world
+	mkdir -p $(BUILD_DIR)/items
+	mkdir -p $(BUILD_DIR)/definitions
+	mkdir -p $(BUILD_DIR)/entities
+	mkdir -p $(BUILD_DIR)/states
+	mkdir -p $(BUILD_DIR)/ui
+
+# Link and generate HTML
+$(TARGET): $(OBJ) shell.html | $(BUILD_DIR)
+	@if [ ! -f "$(SDL_LIB)" ]; then \
+		echo "ERROR: SDL3 library not found. Please build SDL3 for Emscripten first."; \
+		echo "Run: cd ../SDL && mkdir -p build-emscripten && cd build-emscripten"; \
+		echo "     emcmake cmake .. -DSDL_SHARED=OFF -DSDL_STATIC=ON -DSDL_TESTS=OFF"; \
+		echo "     emmake make -j4"; \
+		exit 1; \
+	fi
+	$(CXX) $(OBJ) $(EMFLAGS) $(LIBS)
+	@echo Build complete: $(TARGET)
+	@echo Files generated in $(BUILD_DIR)/
+
+# Check for FreeType port before compiling
+check-freetype:
+	@if [ -z "$(FREETYPE_INCLUDE_DIR)" ] || [ ! -f "$(FREETYPE_INCLUDE_CHECK)" ]; then \
+		echo ""; \
+		echo "ERROR: FreeType headers not found!"; \
+		echo ""; \
+		echo "FreeType is required for text rendering. Please try one of the following:"; \
+		echo ""; \
+		echo "Option 1: Build FreeType port (recommended):"; \
+		echo "  embuilder build freetype"; \
+		echo ""; \
+		echo "Option 2: Install FreeType system-wide:"; \
+		echo "  macOS: brew install freetype"; \
+		echo "  Linux: sudo apt-get install libfreetype6-dev (Ubuntu/Debian)"; \
+		echo ""; \
+		echo "Option 3: If FreeType is already installed, make sure it's in one of:"; \
+		echo "  - $(FREETYPE_PORT_DIR)"; \
+		echo "  - /usr/local/include/freetype2"; \
+		echo "  - /opt/homebrew/include/freetype2"; \
+		echo "  - /usr/include/freetype2"; \
+		echo ""; \
+		echo "Checking for FreeType in common locations..."; \
+		for path in $(FREETYPE_PORT_DIR) /usr/local/include/freetype2 /opt/homebrew/include/freetype2 /usr/include/freetype2; do \
+			if [ -f "$$path/ft2build.h" ]; then \
+				echo "  Found: $$path/ft2build.h"; \
+			fi; \
+		done; \
+		echo ""; \
+		exit 1; \
+	fi
+	@echo "✓ FreeType headers found at: $(FREETYPE_INCLUDE_DIR)"
+
+# Compile main.cpp
+$(BUILD_DIR)/main.o: main.cpp | $(BUILD_DIR)
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
+
+# Specific rules for nested directories
+$(BUILD_DIR)/core/%.o: core/%.cpp | $(BUILD_DIR)
+	@mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
+
+$(BUILD_DIR)/world/%.o: world/%.cpp | $(BUILD_DIR)
+	@mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
+
+$(BUILD_DIR)/items/%.o: items/%.cpp | $(BUILD_DIR)
+	@mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
+
+$(BUILD_DIR)/definitions/%.o: definitions/%.cpp | $(BUILD_DIR)
+	@mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
+
+$(BUILD_DIR)/entities/%.o: entities/%.cpp | $(BUILD_DIR)
+	@mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
+
+$(BUILD_DIR)/states/%.o: states/%.cpp | $(BUILD_DIR)
+	@mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
+
+$(BUILD_DIR)/ui/%.o: ui/%.cpp | $(BUILD_DIR)
+	@mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
+
+# Clean build artifacts
+clean:
+	rm -rf $(BUILD_DIR)
+	@echo Clean complete
+
+# Create a zip file for distribution
+package: $(TARGET)
+	cd $(BUILD_DIR) && zip -r ../game_web.zip ./*
+	@echo Package created: game_web.zip
+
+.PHONY: all clean package check-freetype
+

@@ -6,11 +6,6 @@ void SetupTools(ToolManager* toolManager, TextureManager* textureManager) {
     textureManager->LoadImageFromRes("stone_tools", "stone_tools.png");
     textureManager->LoadImageFromRes("iron_tools", "iron_tools.png");
     textureManager->LoadImageFromRes("gold_tools", "gold_tools.png");
-
-    // Format: RegisterTool(id, sheet, x, y, width, height, type, damage, speed_ms, name)
-    // damage: damage per hit (higher = more damage)
-    // speed: cooldown in milliseconds between hits (lower = faster mining)
-    // Each sheet is 32x16: axes at x=0-15, picks at x=16-31
     
     // Wood tools
     toolManager->RegisterTool(1, "wood_tools", 0, 0, 16, 16, "axe", 25, 200, "Wood Axe");
