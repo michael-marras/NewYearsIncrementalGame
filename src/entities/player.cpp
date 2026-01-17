@@ -5,7 +5,7 @@ Player::Player() {
     this->posX = 0.0f;
     this->posY = 0.0f;
     this->currentPlanet = nullptr;
-    this->currentAnimation = PlayerAnimations:: StandingStillForward;
+    this->currentAnimation = PlayerAnimations::STANDING_STILL_FORWARD;
     this->playerWalkingStage = WalkingStages:: NOT_WALKING;
     this->playerWalkingStage = WalkingStages:: NOT_WALKING;
     this->animationTime = 0;
@@ -18,7 +18,7 @@ Player::Player(bool isPlayer) {
     this->posX = 0.0f;
     this->posY = 0.0f;
     this->currentPlanet = nullptr;
-    this->currentAnimation = PlayerAnimations:: StandingStillForward;
+    this->currentAnimation = PlayerAnimations::STANDING_STILL_FORWARD;
     this->playerWalkingStage = WalkingStages:: NOT_WALKING;
     this->playerWalkingStage = WalkingStages:: NOT_WALKING;
     this->animationTime = 0;
@@ -38,7 +38,7 @@ Player::Player(int posX, int posY, bool isPlayer) {
     this->posX = 0.0f;
     this->posY = 0.0f;
     this->currentPlanet = nullptr;
-    this->currentAnimation = PlayerAnimations:: StandingStillForward;
+    this->currentAnimation = PlayerAnimations::STANDING_STILL_FORWARD;
     this->playerWalkingStage = WalkingStages:: NOT_WALKING;
     this->playerWalkingStage = WalkingStages:: NOT_WALKING;
     this->animationTime = 0;

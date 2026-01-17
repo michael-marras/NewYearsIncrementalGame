@@ -20,26 +20,26 @@ void Animations::AnimatePlayer(Player* player, PlayerStates playerState) {
         switch (player->getPlayerDirection()) {
             case Direction::BACK:
                 frames = {
-                    PlayerAnimations::StandingStillBack,
-                    PlayerAnimations::StandingStillBackRightHandUp
+                    PlayerAnimations::STANDING_STILL_BACK,
+                    PlayerAnimations::STANDING_STILL_BACK_RIGHT_HAND_UP
                 };
                 break;
             case Direction::FORWARD:
                 frames = {
-                    PlayerAnimations::StandingStillForward,
-                    PlayerAnimations::StandingStillForwardLeftHandUp
+                    PlayerAnimations::STANDING_STILL_FORWARD,
+                    PlayerAnimations::STANDING_STILL_FORWARD_LEFT_HAND_UP
                 };
                 break;
             case Direction::LEFT:
                 frames = {
-                    PlayerAnimations::StandingStillLeft,
-                    PlayerAnimations::StandingStillLeftRightHandUp
+                    PlayerAnimations::STANDING_STILL_LEFT,
+                    PlayerAnimations::STANDING_STILL_LEFT_RIGHT_HAND_UP
                 };
                 break;
             case Direction::RIGHT:
                 frames = {
-                    PlayerAnimations::StandingStillRight,
-                    PlayerAnimations::StandingStillRightLeftHandUp
+                    PlayerAnimations::STANDING_STILL_RIGHT,
+                    PlayerAnimations::STANDING_STILL_RIGHT_LEFT_HAND_UP
                 };
                 break;
         }
@@ -70,34 +70,34 @@ void Animations::AnimatePlayer(Player* player, PlayerStates playerState) {
         switch (player->getPlayerDirection()) {
             case Direction::BACK:
                 frames = {
-                    PlayerAnimations:: WalkingBackRightFoot,
-                    PlayerAnimations:: WalkingBackIntermediary,
-                    PlayerAnimations:: WalkingBackLeftFoot,
+                    PlayerAnimations::WALKING_BACK_RIGHT_FOOT,
+                    PlayerAnimations::WALKING_BACK_INTERMEDIARY,
+                    PlayerAnimations::WALKING_BACK_LEFT_FOOT,
                 };
                 break;
             case Direction::FORWARD:
                 frames = {
-                    PlayerAnimations:: WalkingForwardLeftFoot,
-                    PlayerAnimations:: WalkingForwardIntermediary,
-                    PlayerAnimations:: WalkingForwardRightFoot
+                    PlayerAnimations::WALKING_FORWARD_LEFT_FOOT,
+                    PlayerAnimations::WALKING_FORWARD_INTERMEDIARY,
+                    PlayerAnimations::WALKING_FORWARD_RIGHT_FOOT
                 };
                 break;
             case Direction::LEFT:
             case Direction::BACK_LEFT:
             case Direction::FORWARD_LEFT:
                 frames = {
-                    PlayerAnimations:: WalkingLeftLeftFoot,
-                    PlayerAnimations:: WalkingLeftIntermediary,
-                    PlayerAnimations:: WalkingLeftRightFoot
+                    PlayerAnimations::WALKING_LEFT_LEFT_FOOT,
+                    PlayerAnimations::WALKING_LEFT_INTERMEDIARY,
+                    PlayerAnimations::WALKING_LEFT_RIGHT_FOOT
                 };
                 break;
             case Direction::RIGHT:
             case Direction::BACK_RIGHT:
             case Direction::FORWARD_RIGHT:
                 frames = {
-                    PlayerAnimations:: WalkingRightRightFoot,
-                    PlayerAnimations:: WalkingRightIntermediary,
-                    PlayerAnimations:: WalkingRightLeftFoot
+                    PlayerAnimations::WALKING_RIGHT_RIGHT_FOOT,
+                    PlayerAnimations::WALKING_RIGHT_INTERMEDIARY,
+                    PlayerAnimations::WALKING_RIGHT_LEFT_FOOT
                 };
                 break;
         }
@@ -130,26 +130,26 @@ void Animations::AnimatePlayer(Player* player, PlayerStates playerState) {
         switch (player->getPlayerDirection()) {
             case Direction::BACK:
                 frames = {
-                    PlayerAnimations::SwingingBackToolup,
-                    PlayerAnimations::SwingingBackToolDown
+                    PlayerAnimations::SWINGING_BACK_TOOL_UP,
+                    PlayerAnimations::SWINGING_BACK_TOOL_DOWN
                 };
                 break;
             case Direction::FORWARD:
                 frames = {
-                    PlayerAnimations::SwingingForwardToolUp,
-                    PlayerAnimations::SwingingForwardToolDown
+                    PlayerAnimations::SWINGING_FORWARD_TOOL_UP,
+                    PlayerAnimations::SWINGING_FORWARD_TOOL_DOWN
                 };
                 break;
             case Direction::LEFT:
                 frames = {
-                    PlayerAnimations::SwingingLeftToolUp,
-                    PlayerAnimations::SwingingLeftToolDown
+                    PlayerAnimations::SWINGING_LEFT_TOOL_UP,
+                    PlayerAnimations::SWINGING_LEFT_TOOL_DOWN
                 };
                 break;
             case Direction::RIGHT:
                 frames = {
-                    PlayerAnimations::SwingingRightToolUp,
-                    PlayerAnimations::SwingingRightToolDown
+                    PlayerAnimations::SWINGING_RIGHT_TOOL_UP,
+                    PlayerAnimations::SWINGING_RIGHT_TOOL_DOWN
                 };
                 break;
         }

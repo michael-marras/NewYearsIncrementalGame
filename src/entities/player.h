@@ -20,34 +20,34 @@ enum PlayerStates: uint8_t {
 
 // animations
 enum class PlayerAnimations: uint8_t {
-    StandingStillForward,
-    WalkingForwardLeftFoot,
-    WalkingForwardIntermediary,
-    WalkingForwardRightFoot,
-    WalkingBackRightFoot,
-    WalkingBackIntermediary,
-    WalkingBackLeftFoot,
-    StandingStillBack,
-    WalkingLeftLeftFoot,
-    WalkingLeftIntermediary,
-    WalkingLeftRightFoot,
-    StandingStillLeft,
-    WalkingRightRightFoot,
-    WalkingRightIntermediary,
-    WalkingRightLeftFoot,
-    StandingStillRight,
-    StandingStillForwardLeftHandUp,
-    StandingStillLeftRightHandUp,
-    StandingStillRightLeftHandUp,
-    StandingStillBackRightHandUp,
-    SwingingForwardToolUp,
-    SwingingForwardToolDown,
-    SwingingBackToolup,
-    SwingingBackToolDown,
-    SwingingRightToolUp,
-    SwingingRightToolDown,
-    SwingingLeftToolUp,
-    SwingingLeftToolDown,
+    STANDING_STILL_FORWARD,
+    WALKING_FORWARD_LEFT_FOOT,
+    WALKING_FORWARD_INTERMEDIARY,
+    WALKING_FORWARD_RIGHT_FOOT,
+    WALKING_BACK_RIGHT_FOOT,
+    WALKING_BACK_INTERMEDIARY,
+    WALKING_BACK_LEFT_FOOT,
+    STANDING_STILL_BACK,
+    WALKING_LEFT_LEFT_FOOT,
+    WALKING_LEFT_INTERMEDIARY,
+    WALKING_LEFT_RIGHT_FOOT,
+    STANDING_STILL_LEFT,
+    WALKING_RIGHT_RIGHT_FOOT,
+    WALKING_RIGHT_INTERMEDIARY,
+    WALKING_RIGHT_LEFT_FOOT,
+    STANDING_STILL_RIGHT,
+    STANDING_STILL_FORWARD_LEFT_HAND_UP,
+    STANDING_STILL_LEFT_RIGHT_HAND_UP,
+    STANDING_STILL_RIGHT_LEFT_HAND_UP,
+    STANDING_STILL_BACK_RIGHT_HAND_UP,
+    SWINGING_FORWARD_TOOL_UP,
+    SWINGING_FORWARD_TOOL_DOWN,
+    SWINGING_BACK_TOOL_UP,
+    SWINGING_BACK_TOOL_DOWN,
+    SWINGING_RIGHT_TOOL_UP,
+    SWINGING_RIGHT_TOOL_DOWN,
+    SWINGING_LEFT_TOOL_UP,
+    SWINGING_LEFT_TOOL_DOWN,
 
     //Count of Player Animations
     PlayerAnimationsCount
@@ -80,7 +80,12 @@ enum class Direction: uint8_t {
     BACK_RIGHT
 };
 
-enum class WalkingStages : uint8_t {NOT_WALKING, LEFT_FOOT, RIGHT_FOOT, INTERMEDIARY};
+enum class WalkingStages : uint8_t {
+    NOT_WALKING, 
+    LEFT_FOOT, 
+    RIGHT_FOOT, 
+    INTERMEDIARY
+};
 
 // Frame information structure
 struct frameInfo {
@@ -166,7 +171,7 @@ class Player {
          *  Register the player animation from the sprite sheet
          */
         PlayerAnimations RegisterPlayerAnimationsFromGrid(const char* sheetName, int cols, int rows, 
-            int startX = 0, int startY = 0, PlayerAnimations startId = PlayerAnimations::StandingStillForward);
+            int startX = 0, int startY = 0, PlayerAnimations startId = PlayerAnimations::STANDING_STILL_FORWARD);
 
         /**
          *

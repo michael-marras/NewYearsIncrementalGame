@@ -36,7 +36,6 @@ struct SDLApplication {
     SDL_Window* window;
     SDL_Renderer* renderer;
     InputManager input;
-    //to run indefinitely
     std::unique_ptr<GameContext> context = std::make_unique<GameContext>();
     Player* player = context -> getPlayer();
     HUD* hud = nullptr;

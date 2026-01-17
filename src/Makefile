@@ -3,6 +3,9 @@
 # Compiler settings
 CXX = clang++
 CXXFLAGS = -std=c++17 -Wall -Wextra
+# Debug flags with AddressSanitizer (use 'make debug' to build with sanitizers)
+CXXFLAGS_DEBUG = -std=c++17 -Wall -Wextra -g -fsanitize=address -fno-omit-frame-pointer
+LDFLAGS_SANITIZE = -fsanitize=address
 
 # Directories
 SRC_DIR = .
@@ -43,6 +46,14 @@ all: $(TARGET)
 $(TARGET): $(OBJ)
 	$(CXX) $(OBJ) $(LDFLAGS) $(LIBS) -o $(TARGET)
 	@echo Build complete: $(TARGET)
+
+# Debug target with AddressSanitizer
+debug: CXXFLAGS := $(CXXFLAGS_DEBUG)
+debug: LDFLAGS := $(LDFLAGS) $(LDFLAGS_SANITIZE)
+debug: clean $(TARGET)
+	@echo Build complete with AddressSanitizer: $(TARGET)
+	@echo "Run with: ./game"
+	@echo "Memory leaks will be reported when the program exits"
 
 # Compile source to object files
 $(BUILD_DIR)/main.o: main.cpp
@@ -167,4 +178,4 @@ clean:
 	@echo Clean complete
 
 # Phony targets
-.PHONY: all clean
+.PHONY: all clean debug

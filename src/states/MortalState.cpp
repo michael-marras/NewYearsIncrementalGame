@@ -517,23 +517,23 @@ void MortalState::update() {
         }
         // Idle animations
         else {
-            if ((currentAnimation != PlayerAnimations:: StandingStillBack   || 
-                currentAnimation != PlayerAnimations:: StandingStillForward ||
-                currentAnimation != PlayerAnimations:: StandingStillLeft    ||
-                currentAnimation != PlayerAnimations:: StandingStillRight)  &&
+            if ((currentAnimation != PlayerAnimations::STANDING_STILL_BACK   || 
+                currentAnimation != PlayerAnimations::STANDING_STILL_FORWARD ||
+                currentAnimation != PlayerAnimations::STANDING_STILL_LEFT    ||
+                currentAnimation != PlayerAnimations::STANDING_STILL_RIGHT)  &&
                 player->getPlayerState() != PUNCHING && player->getPlayerState() != SWINGING) 
             {
                 if (player->getPlayerDirection() == Direction::BACK) {
-                    player->setCurrentPlayerAnimation(PlayerAnimations:: StandingStillBack);
+                    player->setCurrentPlayerAnimation(PlayerAnimations::STANDING_STILL_BACK);
                 }
                 else if (player->getPlayerDirection() == Direction::FORWARD) {
-                    player->setCurrentPlayerAnimation(PlayerAnimations:: StandingStillForward);
+                    player->setCurrentPlayerAnimation(PlayerAnimations::STANDING_STILL_FORWARD);
                 }
                 else if (player->getPlayerDirection() == Direction::LEFT) {
-                    player->setCurrentPlayerAnimation(PlayerAnimations:: StandingStillLeft);
+                    player->setCurrentPlayerAnimation(PlayerAnimations::STANDING_STILL_LEFT);
                 }
                 else if (player->getPlayerDirection() == Direction::RIGHT) {
-                    player->setCurrentPlayerAnimation(PlayerAnimations:: StandingStillRight);
+                    player->setCurrentPlayerAnimation(PlayerAnimations::STANDING_STILL_RIGHT);
                 }
             }
             // Idle punching animation
@@ -817,10 +817,10 @@ void MortalState::render() {
                     Uint64 animTime = player->getAnimationTime();
                     PlayerAnimations currentAnim = player->getCurrentPlayerAnimation();
                     
-                    bool handRaised = (currentAnim == PlayerAnimations::SwingingForwardToolUp ||
-                                      currentAnim == PlayerAnimations::SwingingBackToolup ||
-                                      currentAnim == PlayerAnimations::SwingingLeftToolUp ||
-                                      currentAnim == PlayerAnimations::SwingingRightToolUp);
+                    bool handRaised = (currentAnim == PlayerAnimations::SWINGING_FORWARD_TOOL_UP ||
+                                      currentAnim == PlayerAnimations::SWINGING_BACK_TOOL_UP ||
+                                      currentAnim == PlayerAnimations::SWINGING_LEFT_TOOL_UP ||
+                                      currentAnim == PlayerAnimations::SWINGING_RIGHT_TOOL_UP);
                     
                     float frameProgress = (float)animTime / 100.0f;
                     if (frameProgress > 1.0f) frameProgress = 1.0f;
@@ -903,10 +903,10 @@ void MortalState::render() {
                     Uint64 animTime = player->getAnimationTime();
                     PlayerAnimations currentAnim = player->getCurrentPlayerAnimation();
                     
-                    bool handRaised = (currentAnim == PlayerAnimations::SwingingForwardToolUp ||
-                                      currentAnim == PlayerAnimations::SwingingBackToolup ||
-                                      currentAnim == PlayerAnimations::SwingingLeftToolUp ||
-                                      currentAnim == PlayerAnimations::SwingingRightToolUp);
+                    bool handRaised = (currentAnim == PlayerAnimations::SWINGING_FORWARD_TOOL_UP ||
+                                      currentAnim == PlayerAnimations::SWINGING_BACK_TOOL_UP ||
+                                      currentAnim == PlayerAnimations::SWINGING_LEFT_TOOL_UP ||
+                                      currentAnim == PlayerAnimations::SWINGING_RIGHT_TOOL_UP);
                     
                     float frameProgress = (float)animTime / 100.0f;
                     if (frameProgress > 1.0f) frameProgress = 1.0f;
