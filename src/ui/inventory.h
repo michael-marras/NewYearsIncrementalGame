@@ -9,7 +9,7 @@
 #include "items/resources.h"
 
 class TextureManager;
-class TextRenderer;
+// class TextRenderer; // DISABLED: FreeType dependency removed
 class InputManager;
 class ToolManager;
 
@@ -86,7 +86,7 @@ public:
     void Render(SDL_Renderer* renderer, Player* player, ResourceManager* resourceManager, TextureManager* textureManager, ToolManager* toolManager);
     
 private:
-    TextRenderer* textRenderer;
+    // TextRenderer* textRenderer; // DISABLED: FreeType dependency removed
     bool isOpen;
     float yScroll = 0.0f;
     InventoryMode mode = InventoryMode::NoValues;

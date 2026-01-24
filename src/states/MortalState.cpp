@@ -13,6 +13,11 @@
 #include "world/planet.h"
 #include "world/planet_tree.h"
 #include "core/textures.h"
+
+// Define M_PI if not defined (Windows/MSVC compatibility)
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
 #include "world/tiles.h"
 #include "world/objects.h"
 #include "items/resources.h"
@@ -23,7 +28,7 @@
 #include "ui/hud.h"
 #include "ui/inventory.h"
 #include "ui/damage_popup.h"
-#include "ui/text_renderer.h"
+// #include "ui/text_renderer.h" // DISABLED: FreeType dependency removed
 #include "ui/engine_compass.h"
 #include "core/input_manager.h"
 #include "../utils/sound.h"
@@ -988,11 +993,16 @@ void MortalState::render() {
     }
     
     // Render damage popups
-    if (damagePopups && hud) {
-        TextRenderer* textRenderer = hud->GetTextRenderer();
-        if (textRenderer && camera) {
-            damagePopups->Render(textRenderer, camera, VIRTUAL_WIDTH, VIRTUAL_HEIGHT);
-        }
+    // DISABLED: FreeType dependency removed
+    // if (damagePopups && hud) {
+    //     TextRenderer* textRenderer = hud->GetTextRenderer();
+    //     if (textRenderer && camera) {
+    //         damagePopups->Render(textRenderer, camera, VIRTUAL_WIDTH, VIRTUAL_HEIGHT);
+    //     }
+    // }
+    if (damagePopups && hud && camera) {
+        void* textRenderer = hud->GetTextRenderer();
+        damagePopups->Render(textRenderer, camera, VIRTUAL_WIDTH, VIRTUAL_HEIGHT);
     }
     
     const int crosshairSize = 7;

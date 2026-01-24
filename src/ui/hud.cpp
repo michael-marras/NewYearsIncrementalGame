@@ -1,5 +1,5 @@
 #include "ui/hud.h"
-#include "ui/text_renderer.h"
+// #include "ui/text_renderer.h" // DISABLED: FreeType dependency removed
 #include "core/textures.h"
 #include "utils/constants.h"
 #include "entities/player.h"
@@ -9,32 +9,34 @@
 #include <algorithm>
 #include <SDL3/SDL.h>
 
-HUD::HUD(SDL_Renderer* renderer) : renderer(renderer), textRenderer(nullptr) {
+HUD::HUD(SDL_Renderer* renderer) : renderer(renderer) /* textRenderer(nullptr) */ {
+    // DISABLED: FreeType dependency removed
     // Create text renderer
-    textRenderer = new TextRenderer(renderer);
+    // textRenderer = new TextRenderer(renderer);
     
     // Get base path for font loading
-    const char* basePath = SDL_GetBasePath();
-    char* fontPath = nullptr;
-    if (basePath) {
-        SDL_asprintf(&fontPath, "%sfonts/pixelfont.ttf", basePath);
-    } else {
-        SDL_asprintf(&fontPath, "fonts/pixelfont.ttf");
-    }
+    // const char* basePath = SDL_GetBasePath();
+    // char* fontPath = nullptr;
+    // if (basePath) {
+    //     SDL_asprintf(&fontPath, "%sfonts/pixelfont.ttf", basePath);
+    // } else {
+    //     SDL_asprintf(&fontPath, "fonts/pixelfont.ttf");
+    // }
     
     // Load font at size 16
-    if (!textRenderer->LoadFont(fontPath, 16)) {
-        SDL_Log("Warning: Failed to load font, text rendering may not work");
-    }
+    // if (!textRenderer->LoadFont(fontPath, 16)) {
+    //     SDL_Log("Warning: Failed to load font, text rendering may not work");
+    // }
     
-    SDL_free(fontPath);
+    // SDL_free(fontPath);
 }
 
 HUD::~HUD() {
-    if (textRenderer) {
-        delete textRenderer;
-        textRenderer = nullptr;
-    }
+    // DISABLED: FreeType dependency removed
+    // if (textRenderer) {
+    //     delete textRenderer;
+    //     textRenderer = nullptr;
+    // }
 }
 
 void HUD::Render(Player* player, ResourceManager* resourceManager, TextureManager* textureManager) {
@@ -84,7 +86,9 @@ void HUD::RenderResourceCounter(Player* player, ResourceManager* resourceManager
 }
 
 void HUD::RenderPickupEvents(ResourceManager* resourceManager, TextureManager* textureManager) {
-    if (!resourceManager || !textureManager || !textRenderer) {
+    // DISABLED: FreeType dependency removed
+    // if (!resourceManager || !textureManager || !textRenderer) {
+    if (!resourceManager || !textureManager) {
         return;
     }
     
@@ -93,58 +97,65 @@ void HUD::RenderPickupEvents(ResourceManager* resourceManager, TextureManager* t
         return;
     }
     
+    // DISABLED: Text rendering removed with FreeType
     // Render in top-right corner
-    const float padding = 10.0f;
-    const float startY = 10.0f;
-    const float iconSize = 16.0f;
-    const float iconTextSpacing = -2.0f;
-    const float lineHeight = 20.0f;
-    const float virtualWidth = (float)VIRTUAL_WIDTH;
+    // const float padding = 10.0f;
+    // const float startY = 10.0f;
+    // const float iconSize = 16.0f;
+    // const float iconTextSpacing = -2.0f;
+    // const float lineHeight = 20.0f;
+    // const float virtualWidth = (float)VIRTUAL_WIDTH;
     
-    float currentY = startY;
+    // float currentY = startY;
     
     // Render each active pickup event
-    for (const auto& event : pickupEvents) {
-        ResourceInfo* resourceInfo = resourceManager->GetResource(event.resourceId);
-        if (!resourceInfo) {
-            continue;
-        }
-        
-        float alpha = 1.0f;
-        if (event.timer < 1.0f) {
-            alpha = event.timer / 1.0f;
-            if (alpha < 0.0f) alpha = 0.0f;
-        }
-        Uint8 alphaByte = (Uint8)(alpha * 255.0f);
-        
-        // Render resource icon
-        float iconCenterX = virtualWidth - padding - iconSize / 2.0f;
-        float iconCenterY = currentY + iconSize / 2.0f;
-        textureManager->RenderResource(resourceManager, event.resourceId, iconCenterX, iconCenterY, 1.0f);
-        
-        // Render quantity text (e.g., "+15")
-        char buffer[32];
-        snprintf(buffer, sizeof(buffer), "+%d", event.totalQuantity);
-        
-        SDL_Color textColor = {255, 255, 255, alphaByte};
-        float textX = iconCenterX - iconSize / 2.0f - iconTextSpacing;
-        float textY = iconCenterY;
-        
-        // Get text width for right alignment
-        int textWidth = textRenderer->GetTextWidth(buffer);
-        textX -= textWidth;
-        
-        RenderText(buffer, textX, textY, textColor);
-        
-        currentY += lineHeight;
-    }
+    // for (const auto& event : pickupEvents) {
+    //     ResourceInfo* resourceInfo = resourceManager->GetResource(event.resourceId);
+    //     if (!resourceInfo) {
+    //         continue;
+    //     }
+    //     
+    //     float alpha = 1.0f;
+    //     if (event.timer < 1.0f) {
+    //         alpha = event.timer / 1.0f;
+    //         if (alpha < 0.0f) alpha = 0.0f;
+    //     }
+    //     Uint8 alphaByte = (Uint8)(alpha * 255.0f);
+    //     
+    //     // Render resource icon
+    //     float iconCenterX = virtualWidth - padding - iconSize / 2.0f;
+    //     float iconCenterY = currentY + iconSize / 2.0f;
+    //     textureManager->RenderResource(resourceManager, event.resourceId, iconCenterX, iconCenterY, 1.0f);
+    //     
+    //     // Render quantity text (e.g., "+15")
+    //     char buffer[32];
+    //     snprintf(buffer, sizeof(buffer), "+%d", event.totalQuantity);
+    //     
+    //     SDL_Color textColor = {255, 255, 255, alphaByte};
+    //     float textX = iconCenterX - iconSize / 2.0f - iconTextSpacing;
+    //     float textY = iconCenterY;
+    //     
+    //     // Get text width for right alignment
+    //     int textWidth = textRenderer->GetTextWidth(buffer);
+    //     textX -= textWidth;
+    //     
+    //     RenderText(buffer, textX, textY, textColor);
+    //     
+    //     currentY += lineHeight;
+    // }
 }
 
 void HUD::RenderText(const char* text, float x, float y, SDL_Color color) {
-    if (!text || !textRenderer) {
-        return;
-    }
+    // DISABLED: FreeType dependency removed
+    // if (!text || !textRenderer) {
+    //     return;
+    // }
+    // 
+    // textRenderer->RenderText(text, x, y, "left-center", color);
     
-    textRenderer->RenderText(text, x, y, "left-center", color);
+    (void)text;  // Suppress unused parameter warnings
+    (void)x;
+    (void)y;
+    (void)color;
 }
 

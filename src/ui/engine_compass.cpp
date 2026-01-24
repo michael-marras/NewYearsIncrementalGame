@@ -6,6 +6,11 @@
 #include <SDL3/SDL.h>
 #include <cmath>
 
+// Define M_PI if not defined (Windows/MSVC compatibility)
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
+
 void EngineCompass::Update(Player* player, Planet* planet, int currentFace) {
     if (!player || !planet) {
         return;

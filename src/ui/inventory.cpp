@@ -1,5 +1,5 @@
 #include "ui/inventory.h"
-#include "ui/text_renderer.h"
+// #include "ui/text_renderer.h" // DISABLED: FreeType dependency removed
 #include "core/textures.h"
 #include "core/input_manager.h"
 #include "world/planet.h"
@@ -10,31 +10,34 @@
 #include <cmath>
 #include <SDL3/SDL.h>
 
-Inventory::Inventory(SDL_Renderer* renderer) : textRenderer(nullptr), isOpen(false), yScroll(0.0f), mode(InventoryMode::NoValues), currentTotalValue(0.0f) {
+Inventory::Inventory(SDL_Renderer* renderer) : /* textRenderer(nullptr), */ isOpen(false), yScroll(0.0f), mode(InventoryMode::NoValues), currentTotalValue(0.0f) {
+    // DISABLED: FreeType dependency removed
     // Create text renderer
-    textRenderer = new TextRenderer(renderer);
+    // textRenderer = new TextRenderer(renderer);
     
     // Get base path for font loading
-    const char* basePath = SDL_GetBasePath();
-    char* fontPath = nullptr;
-    if (basePath) {
-        SDL_asprintf(&fontPath, "%sfonts/pixelfont.ttf", basePath);
-    } else {
-        SDL_asprintf(&fontPath, "fonts/pixelfont.ttf");
-    }
+    // const char* basePath = SDL_GetBasePath();
+    // char* fontPath = nullptr;
+    // if (basePath) {
+    //     SDL_asprintf(&fontPath, "%sfonts/pixelfont.ttf", basePath);
+    // } else {
+    //     SDL_asprintf(&fontPath, "fonts/pixelfont.ttf");
+    // }
     
-    if (!textRenderer->LoadFont(fontPath, 14)) {
-        SDL_Log("Warning: Failed to load font for inventory, text rendering may not work");
-    }
+    // if (!textRenderer->LoadFont(fontPath, 14)) {
+    //     SDL_Log("Warning: Failed to load font for inventory, text rendering may not work");
+    // }
     
-    SDL_free(fontPath);
+    // SDL_free(fontPath);
+    (void)renderer; // Suppress unused parameter warning
 }
 
 Inventory::~Inventory() {
-    if (textRenderer) {
-        delete textRenderer;
-        textRenderer = nullptr;
-    }
+    // DISABLED: FreeType dependency removed
+    // if (textRenderer) {
+    //     delete textRenderer;
+    //     textRenderer = nullptr;
+    // }
 }
 
 void Inventory::Toggle() {
@@ -492,10 +495,11 @@ void Inventory::Render(SDL_Renderer* renderer, Player* player, ResourceManager* 
         const float submitButtonY = 27.0f + count * 24 + 8.0f - yScroll;
         const float submitButtonX = panelStartX + panelWidth - submitButtonWidth - padding;
         
-        SDL_Color totalTextColor = {255, 255, 255, 255};
-        char totalTextBuffer[64];
-        snprintf(totalTextBuffer, sizeof(totalTextBuffer), "Total Value: $%.0f", currentTotalValue);
-        RenderText(renderer, totalTextBuffer, 56, submitButtonY + 7, "left-center", totalTextColor);
+        // DISABLED: Text rendering removed
+        // SDL_Color totalTextColor = {255, 255, 255, 255};
+        // char totalTextBuffer[64];
+        // snprintf(totalTextBuffer, sizeof(totalTextBuffer), "Total Value: $%.0f", currentTotalValue);
+        // RenderText(renderer, totalTextBuffer, 56, submitButtonY + 7, "left-center", totalTextColor);
         
         SDL_SetRenderDrawColor(renderer, 100, 150, 100, 255);
         SDL_FRect submitButtonRect = {submitButtonX, submitButtonY, submitButtonWidth, submitButtonHeight};
@@ -505,11 +509,14 @@ void Inventory::Render(SDL_Renderer* renderer, Player* player, ResourceManager* 
         SDL_SetRenderDrawColor(renderer, 200, 200, 200, 255);
         SDL_RenderRect(renderer, &submitButtonRect);
         
+        // DISABLED: Text rendering removed
         // Draw button text
-        const float submitTextX = submitButtonX + submitButtonWidth / 2.0f;
-        const float submitTextY = submitButtonY + submitButtonHeight / 2.0f;
-        SDL_Color submitTextColor = {255, 255, 255, 255};
-        RenderText(renderer, "Submit", submitTextX, submitTextY, "center-center", submitTextColor);
+        // const float submitTextX = submitButtonX + submitButtonWidth / 2.0f;
+        // const float submitTextY = submitButtonY + submitButtonHeight / 2.0f;
+        // SDL_Color submitTextColor = {255, 255, 255, 255};
+        // RenderText(renderer, "Submit", submitTextX, submitTextY, "center-center", submitTextColor);
+        
+        (void)panelEndY; // Suppress unused variable warning
     }
     
     SDL_SetRenderClipRect(renderer, nullptr);
@@ -517,34 +524,40 @@ void Inventory::Render(SDL_Renderer* renderer, Player* player, ResourceManager* 
 }
 
 void Inventory::RenderNoValue(SDL_Renderer* renderer, ResourceInfo* resourceInfo, int quantity, float textX, float textY) {
-    SDL_Color textColor = {255, 255, 255, 255};
-    const char* displayName = nullptr;
+    // DISABLED: FreeType dependency removed
+    // SDL_Color textColor = {255, 255, 255, 255};
+    // const char* displayName = nullptr;
+    // 
+    // if (resourceInfo) {
+    //     displayName = resourceInfo->displayName.empty() ? resourceInfo->name.c_str() : resourceInfo->displayName.c_str();
+    // } else {
+    //     // For tools, this should be called with a tool name
+    //     return; // Tools should use the overloaded version
+    // }
+    // 
+    // RenderText(renderer, displayName, textX, textY, "left-center", textColor);
+    // 
+    // const float quantityAlignX = textX + 180.0f;
+    // 
+    // char quantityBuffer[32];
+    // snprintf(quantityBuffer, sizeof(quantityBuffer), "x%d", quantity);
+    // RenderText(renderer, quantityBuffer, quantityAlignX, textY, "right-center", textColor);
     
-    if (resourceInfo) {
-        displayName = resourceInfo->displayName.empty() ? resourceInfo->name.c_str() : resourceInfo->displayName.c_str();
-    } else {
-        // For tools, this should be called with a tool name
-        return; // Tools should use the overloaded version
-    }
-    
-    RenderText(renderer, displayName, textX, textY, "left-center", textColor);
-    
-    const float quantityAlignX = textX + 180.0f;
-    
-    char quantityBuffer[32];
-    snprintf(quantityBuffer, sizeof(quantityBuffer), "x%d", quantity);
-    RenderText(renderer, quantityBuffer, quantityAlignX, textY, "right-center", textColor);
+    (void)renderer; (void)resourceInfo; (void)quantity; (void)textX; (void)textY; // Suppress warnings
 }
 
 void Inventory::RenderNoValue(SDL_Renderer* renderer, const char* name, int quantity, float textX, float textY) {
-    SDL_Color textColor = {255, 255, 255, 255};
-    RenderText(renderer, name, textX, textY, "left-center", textColor);
+    // DISABLED: FreeType dependency removed
+    // SDL_Color textColor = {255, 255, 255, 255};
+    // RenderText(renderer, name, textX, textY, "left-center", textColor);
+    // 
+    // const float quantityAlignX = textX + 180.0f;
+    // 
+    // char quantityBuffer[32];
+    // snprintf(quantityBuffer, sizeof(quantityBuffer), "x%d", quantity);
+    // RenderText(renderer, quantityBuffer, quantityAlignX, textY, "right-center", textColor);
     
-    const float quantityAlignX = textX + 180.0f;
-    
-    char quantityBuffer[32];
-    snprintf(quantityBuffer, sizeof(quantityBuffer), "x%d", quantity);
-    RenderText(renderer, quantityBuffer, quantityAlignX, textY, "right-center", textColor);
+    (void)renderer; (void)name; (void)quantity; (void)textX; (void)textY; // Suppress warnings
 }
 
 void Inventory::RenderWithValue(SDL_Renderer* renderer, TextureManager* textureManager, ResourceInfo* resourceInfo, int resourceId, int quantity, float textX, float textY) {
@@ -552,9 +565,10 @@ void Inventory::RenderWithValue(SDL_Renderer* renderer, TextureManager* textureM
         return;
     }
 
-    SDL_Color textColor = {255, 255, 255, 255};
-    const char* displayName = resourceInfo->displayName.empty() ? resourceInfo->name.c_str() : resourceInfo->displayName.c_str();
-    RenderText(renderer, displayName, textX, textY, "left-center", textColor);
+    // DISABLED: FreeType dependency removed - text rendering commented out
+    // SDL_Color textColor = {255, 255, 255, 255};
+    // const char* displayName = resourceInfo->displayName.empty() ? resourceInfo->name.c_str() : resourceInfo->displayName.c_str();
+    // RenderText(renderer, displayName, textX, textY, "left-center", textColor);
     
     // Render input box to the left of the value
     const float inputBoxWidth = 40.0f;
@@ -578,52 +592,59 @@ void Inventory::RenderWithValue(SDL_Renderer* renderer, TextureManager* textureM
         SDL_RenderRect(renderer, &inputBoxRect);
     }
     
+    // DISABLED: Text rendering for input box
     // Render input text or placeholder
-    std::string inputText;
-    auto it = inputTexts.find(resourceId);
-    if (it != inputTexts.end()) {
-        inputText = it->second;
-    }
-    if (inputText.empty() && focusedResourceId != resourceId) {
-        inputText = "0";
-    }
+    // std::string inputText;
+    // auto it = inputTexts.find(resourceId);
+    // if (it != inputTexts.end()) {
+    //     inputText = it->second;
+    // }
+    // if (inputText.empty() && focusedResourceId != resourceId) {
+    //     inputText = "0";
+    // }
     
     // Validate input doesn't exceed quantity
     int inputValue = GetInputValue(resourceId);
     if (inputValue > quantity) {
         char buffer[32];
         snprintf(buffer, sizeof(buffer), "%d", quantity);
-        inputText = buffer;
+        // inputText = buffer;
         inputTexts[resourceId] = buffer;
     }
     
-    const float inputTextX = inputBoxX + 4.0f;
-    const float inputTextY = inputBoxY + inputBoxHeight / 2.0f;
-    SDL_Color inputTextColor = {255, 255, 255, 255};
-    if (focusedResourceId == resourceId) {
-        inputTextColor = {200, 255, 200, 255};
-    }
-    RenderText(renderer, inputText.c_str(), inputTextX, inputTextY, "left-center", inputTextColor);
+    // DISABLED: Text rendering
+    // const float inputTextX = inputBoxX + 4.0f;
+    // const float inputTextY = inputBoxY + inputBoxHeight / 2.0f;
+    // SDL_Color inputTextColor = {255, 255, 255, 255};
+    // if (focusedResourceId == resourceId) {
+    //     inputTextColor = {200, 255, 200, 255};
+    // }
+    // RenderText(renderer, inputText.c_str(), inputTextX, inputTextY, "left-center", inputTextColor);
     
-    const float quantityAlignX = textX + 50.0f;
+    // const float quantityAlignX = textX + 50.0f;
     
-    char quantityBuffer[32];
-    snprintf(quantityBuffer, sizeof(quantityBuffer), "x%d", quantity);
-    RenderText(renderer, quantityBuffer, quantityAlignX, textY, "left-center", textColor);
+    // char quantityBuffer[32];
+    // snprintf(quantityBuffer, sizeof(quantityBuffer), "x%d", quantity);
+    // RenderText(renderer, quantityBuffer, quantityAlignX, textY, "left-center", textColor);
 
-    int inputValueForCalc = GetInputValue(resourceId);
-    float totalValue = resourceInfo->value * static_cast<float>(inputValueForCalc);
-    char valueBuffer[32];
-    snprintf(valueBuffer, sizeof(valueBuffer), "$%.0f", totalValue);
-    RenderText(renderer, valueBuffer, valueAlignX, textY, "right-center", textColor);
+    // int inputValueForCalc = GetInputValue(resourceId);
+    // float totalValue = resourceInfo->value * static_cast<float>(inputValueForCalc);
+    // char valueBuffer[32];
+    // snprintf(valueBuffer, sizeof(valueBuffer), "$%.0f", totalValue);
+    // RenderText(renderer, valueBuffer, valueAlignX, textY, "right-center", textColor);
+    
+    (void)inputBoxSpacing; (void)valueAlignX; // Suppress warnings
 }
 
 void Inventory::RenderText(SDL_Renderer* renderer, const char* text, float x, float y, const std::string& alignment, SDL_Color color) {
-    if (!text || !textRenderer || !textRenderer->IsFontLoaded()) {
-        return;
-    }
+    // DISABLED: FreeType dependency removed
+    // if (!text || !textRenderer || !textRenderer->IsFontLoaded()) {
+    //     return;
+    // }
+    // 
+    // textRenderer->RenderText(text, x, y, alignment, color);
     
-    textRenderer->RenderText(text, x, y, alignment, color);
+    (void)renderer; (void)text; (void)x; (void)y; (void)alignment; (void)color; // Suppress warnings
 }
 
 

@@ -31,7 +31,9 @@ public:
     void Update(float deltaTime);
     
     // Render all popups (requires TextRenderer and Camera)
-    void Render(class TextRenderer* textRenderer, class Camera* camera, int virtualWidth, int virtualHeight);
+    // DISABLED: FreeType dependency removed
+    // void Render(class TextRenderer* textRenderer, class Camera* camera, int virtualWidth, int virtualHeight);
+    void Render(void* textRenderer, class Camera* camera, int virtualWidth, int virtualHeight); // Stub to maintain API compatibility
     
     // Clear all popups
     void Clear();

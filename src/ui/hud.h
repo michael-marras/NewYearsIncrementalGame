@@ -8,7 +8,7 @@
 class Player;
 class ResourceManager;
 class TextureManager;
-class TextRenderer;
+// class TextRenderer; // DISABLED: FreeType dependency removed
 
 // Resource pickup event tracking
 struct ResourcePickupEvent {
@@ -35,11 +35,13 @@ public:
     void OnResourcePickedUp(int resourceId, int quantity);
     
     // Get text renderer for use by other systems
-    TextRenderer* GetTextRenderer() const { return textRenderer; }
+    // DISABLED: FreeType dependency removed
+    // TextRenderer* GetTextRenderer() const { return textRenderer; }
+    void* GetTextRenderer() const { return nullptr; } // Stub to maintain API compatibility
     
 private:
     SDL_Renderer* renderer;
-    TextRenderer* textRenderer;
+    // TextRenderer* textRenderer; // DISABLED: FreeType dependency removed
     std::vector<ResourcePickupEvent> pickupEvents;
     
     void RenderText(const char* text, float x, float y, SDL_Color color);

@@ -12,6 +12,11 @@
 #include "entities/player.h"
 #include <SDL3/SDL.h>
 
+// Define M_PI if not defined (Windows/MSVC compatibility)
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
+
 int GetPlanetRadius(PlanetSize size) {
     switch (size) {
         case PlanetSize::TINY:
