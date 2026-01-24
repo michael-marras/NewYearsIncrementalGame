@@ -587,7 +587,7 @@ void MortalState::update() {
         float playerY = player->getY();
         float deltaTime = (float)context->getDeltaTime();
         
-        resourceManager->Update(resourceArrayId, playerX, playerY, deltaTime, player, hud ? hud : nullptr);
+        resourceManager->Update(resourceArrayId, playerX, playerY, deltaTime, player, hud ? hud.get() : nullptr);
     }
     
     // Update object nodes for regenerating objects
