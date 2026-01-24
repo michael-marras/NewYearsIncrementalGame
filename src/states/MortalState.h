@@ -3,18 +3,19 @@
 
 #include "BaseState.h"
 #include <cstdint>
+#include <memory>
 #include "../utils/sound.h"
+#include "../ui/inventory.h"
 
 typedef uint64_t Uint64;
 
-class Inventory;
 class DamagePopupManager;
 class EngineCompass;
 
 class MortalState : public BaseState {
     private:
         Uint64 lastMiningTime = 0;
-        Inventory* inventory = nullptr;
+        std::unique_ptr<Inventory> inventory;
         DamagePopupManager* damagePopups = nullptr;
         EngineCompass* engineCompass = nullptr;
         
@@ -24,14 +25,14 @@ class MortalState : public BaseState {
 
         ~MortalState();
 
-        void setDependencies(GameContext* ctx, SDL_Renderer* rend, InputManager* inp, Player* plyr, HUD* h, Inventory* inv, Sound* snd) {
+        void setDependencies(GameContext* ctx, SDL_Renderer* rend, InputManager* inp, Player* plyr, std::unique_ptr<HUD> h, std::unique_ptr<Inventory> inv, std::unique_ptr<Sound> snd) {
             context = ctx;
             renderer = rend;
             inputManager = inp;
             player = plyr;
-            hud = h;
-            inventory = inv;
-            sound = snd;
+            hud = std::move(h);
+            inventory = std::move(inv);
+            sound = std::move(snd);
         }
 
         /**

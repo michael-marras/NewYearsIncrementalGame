@@ -24,7 +24,6 @@
 #include "states/BaseState.h"
 #include "states/MortalState.h"
 #include "states/GodState.h"
-#include <vector>
 #include "utils/sound.h"
 
 enum class StateType : uint8_t {
@@ -35,11 +34,11 @@ enum class StateType : uint8_t {
 struct SDLApplication {
     SDL_Window* window;
     SDL_Renderer* renderer;
-    InputManager input;
+    InputManager  input;
     std::unique_ptr<GameContext> context = std::make_unique<GameContext>();
     Player* player = context -> getPlayer();
-    HUD* hud = nullptr;
-    Inventory* inventory = nullptr;
+    std::unique_ptr<HUD> hud;
+    std::unique_ptr<Inventory> inventory;
 
     // State management
     std::unique_ptr<MortalState> mortalState;
@@ -64,26 +63,14 @@ struct SDLApplication {
         context->InitializeManagers(window, renderer);
         
         // Initialize HUD
-        hud = new HUD(renderer);
+        hud = std::make_unique<HUD>(renderer);
         
         // Initialize Inventory
-        inventory = new Inventory(renderer);
+        inventory = std::make_unique<Inventory>(renderer);
     }
 
     //destructor
     ~SDLApplication() {
-        // Clean up HUD
-        if (hud) {
-            delete hud;
-            hud = nullptr;
-        }
-        
-        // Clean up Inventory
-        if (inventory) {
-            delete inventory;
-            inventory = nullptr;
-        }
-        
         // Managers are cleaned up by GameContext destructor
         if (renderer) {
             SDL_DestroyRenderer(renderer);
@@ -102,7 +89,7 @@ struct SDLApplication {
         ToolManager* toolManager = context->getToolManager();
         player = context->getPlayer();
         Camera* camera = context->getCamera();
-        Sound* sound = new Sound("audio/coin-collect-retro-8-bit-sound-effect-145251.wav");
+        std::unique_ptr<Sound> sound = std::make_unique<Sound>("audio/coin-collect-retro-8-bit-sound-effect-145251.wav");
         sound->SetupDevice();
         
         SetupTiles(tileManager, textureManager);
@@ -144,7 +131,7 @@ struct SDLApplication {
         
         // Initialize states
         mortalState = std::make_unique<MortalState>();
-        mortalState->setDependencies(context.get(), renderer, &input, player, hud, inventory, sound);
+        mortalState->setDependencies(context.get(), renderer, &input, player, std::move(hud), std::move(inventory), std::move(sound));
 
         godState = std::make_unique<GodState>();
         godState->setDependencies(context.get(), renderer, &input, player);

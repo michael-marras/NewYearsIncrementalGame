@@ -2,9 +2,9 @@
 
 # Compiler settings
 CXX = clang++
-CXXFLAGS = -std=c++17 -Wall -Wextra
+CXXFLAGS = -std=c++17 -Wall -Wextra -g -O0 -gdwarf-4
 # Debug flags with AddressSanitizer (use 'make debug' to build with sanitizers)
-CXXFLAGS_DEBUG = -std=c++17 -Wall -Wextra -g -fsanitize=address -fno-omit-frame-pointer
+CXXFLAGS_DEBUG = -std=c++17 -Wall -Wextra -g -O0 -gdwarf-4 -fsanitize=address -fno-omit-frame-pointer
 LDFLAGS_SANITIZE = -fsanitize=address
 
 # Directories
@@ -31,7 +31,7 @@ INCLUDES = -I. -I$(SDL_INCLUDE) -I$(SDL_BUILD_CONFIG) -I$(SDL_BUILD_CONFIG_ALT) 
 # Library paths and libraries
 # On macOS, SDL3 builds as libSDL3.0.dylib, but we link with -lSDL3
 
-LDFLAGS = -L$(SDL_LIB_DIR) -Wl,-rpath,$(SDL_LIB_DIR) $(FREETYPE_LDFLAGS)
+LDFLAGS = -L$(SDL_LIB_DIR) -Wl,-rpath,$(SDL_LIB_DIR) -g $(FREETYPE_LDFLAGS)
 LIBS = -lSDL3 $(FREETYPE_LIBS)
 
 # Source and output files

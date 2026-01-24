@@ -106,7 +106,7 @@ class Player {
         Player();
 
         /**
-         * Constructor
+         * Constructor 
          */
         Player(bool isPlayer);
 
