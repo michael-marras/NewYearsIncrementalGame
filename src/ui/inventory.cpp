@@ -354,12 +354,12 @@ void Inventory::Render(SDL_Renderer* renderer, Player* player, ResourceManager* 
     
     // Lazy load inventory texture if not already loaded
     if (!textureManager->HasTexture("inventory")) {
-        textureManager->LoadImageFromRes("inventory", "inventory.png");
+        textureManager->LoadImageFromRes("inventory", "ui/inventory.png");
     }
     
     // Lazy load input box texture if not already loaded
     if (!textureManager->HasTexture("inputbox")) {
-        textureManager->LoadImageFromRes("inputbox", "inputsbox.png");
+        textureManager->LoadImageFromRes("inputbox", "ui/inputsbox.png");
     }
     
     // Render the inventory background panel

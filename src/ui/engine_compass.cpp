@@ -143,7 +143,7 @@ void EngineCompass::Render(SDL_Renderer* renderer, TextureManager* textureManage
     }
     
     if (!textureManager->HasTexture("engine_arrow")) {
-        textureManager->LoadImageFromRes("engine_arrow", "engine_arrow.png");
+        textureManager->LoadImageFromRes("engine_arrow", "items/engine_arrow.png");
     }
 
     textureManager->RenderCompass(x, y, direction, 1.0f);

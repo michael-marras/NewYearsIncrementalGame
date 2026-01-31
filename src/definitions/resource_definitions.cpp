@@ -1,7 +1,7 @@
 #include "definitions/resource_definitions.h"
 
 void SetupResources(ResourceManager* resourceManager, TextureManager* textureManager) {
-    textureManager->LoadImageFromRes("resources", "resources.png");
+    textureManager->LoadImageFromRes("resources", "items/resources.png");
 
     resourceManager->RegisterResource(1, "resources", 0, 0, 16, 16, true, "raw_gold", 100, "Gold Ore");
     resourceManager->RegisterResource(2, "resources", 16, 0, 16, 16, true, "gold_ingot", 200, "Gold Ingot");

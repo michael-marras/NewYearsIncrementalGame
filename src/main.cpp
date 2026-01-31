@@ -3,6 +3,7 @@
 #include <memory>
 #include <cstdlib>
 #include "core/textures.h"
+#include "ui/text_renderer.h"
 #include "world/tiles.h"
 #include "world/objects.h"
 #include "definitions/tile_definitions.h"
@@ -83,6 +84,7 @@ struct SDLApplication {
 
     bool Initialize() {
         TextureManager* textureManager = context->getTextureManager();
+        TextRenderer* textRenderer = context->getTextRenderer();
         TileManager* tileManager = context->getTileManager();
         ObjectManager* objectManager = context->getObjectManager();
         ResourceManager* resourceManager = context->getResourceManager();
@@ -99,8 +101,10 @@ struct SDLApplication {
         SetupAnimations(player, textureManager);
         
         // Load crosshairs sprite sheet
-        textureManager->LoadImageFromRes("crosshairs", "crosshairs.png");
-        
+        textureManager->LoadImageFromRes("crosshairs", "ui/crosshairs.png");
+
+        textRenderer->LoadFont("gamefont");
+
         if (player) {
             player->AddTool(7, 1);
             player->AddTool(8, 1);

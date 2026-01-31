@@ -7,6 +7,7 @@
 
 // Forward declarations
 class TextureManager;
+class TextRenderer;
 class TileManager;
 class ObjectManager;
 class ResourceManager;
@@ -23,6 +24,7 @@ class GameContext {
         SDL_Renderer* renderer;
         // Managers
         TextureManager* textureManager;
+        TextRenderer* textRenderer;
         TileManager* tileManager;
         ObjectManager* objectManager;
         ResourceManager* resourceManager;
@@ -119,6 +121,11 @@ class GameContext {
         TextureManager* getTextureManager();
         
         /**
+         * Get Text Renderer
+         */
+         TextRenderer* getTextRenderer();
+
+        /**
          * Get Tile Manager
          */
         TileManager* getTileManager();
@@ -147,6 +154,11 @@ class GameContext {
          * Set Texture Manager
          */
         void setTextureManager(TextureManager* manager);
+
+        /**
+         * Set Text Renderer
+         */
+         void setTextRenderer(TextRenderer* manager);
         
         /**
          * Set Tile Manager

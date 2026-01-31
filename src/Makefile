@@ -1,11 +1,11 @@
-# Makefile for compiling main.cpp with SDL3 (macOS/Unix version)
+# Makefile for compiling main.cpp with SDL3 (Windows version)
 
-# Compiler settings
-CXX = clang++
-CXXFLAGS = -std=c++17 -Wall -Wextra -g -O0 -gdwarf-4
-# Debug flags with AddressSanitizer (use 'make debug' to build with sanitizers)
-CXXFLAGS_DEBUG = -std=c++17 -Wall -Wextra -g -O0 -gdwarf-4 -fsanitize=address -fno-omit-frame-pointer
-LDFLAGS_SANITIZE = -fsanitize=address
+# Compiler settings (using g++ for MinGW/MSYS2 on Windows)
+CXX = g++
+CXXFLAGS = -std=c++17 -Wall -Wextra
+# Debug flags (AddressSanitizer not available on all Windows toolchains)
+CXXFLAGS_DEBUG = -std=c++17 -Wall -Wextra -g
+LDFLAGS_SANITIZE =
 
 # Directories
 SRC_DIR = .
@@ -22,22 +22,24 @@ SDL_LIB_DIR = $(SDL_DIR)/build
 
 # Auto-detect FreeType paths (works across different systems)
 # Try freetype-config first (macOS Homebrew), then pkg-config (Linux), then fallback paths
-FREETYPE_CFLAGS := $(shell freetype-config --cflags 2>/dev/null || pkg-config --cflags freetype2 2>/dev/null || echo "-I/opt/homebrew/opt/freetype/include/freetype2 -I/usr/local/include/freetype2 -I/usr/include/freetype2")
-FREETYPE_LDFLAGS := $(shell freetype-config --libs 2>/dev/null | sed 's/-lfreetype//' || pkg-config --libs-only-L freetype2 2>/dev/null || echo "-L/opt/homebrew/opt/freetype/lib -L/usr/local/lib -L/usr/lib")
-FREETYPE_LIBS := -lfreetype
+# FREETYPE DISABLED - FreeType dependency removed from project
+# FREETYPE_CFLAGS := $(shell freetype-config --cflags 2>/dev/null || pkg-config --cflags freetype2 2>/dev/null || echo "-I/opt/homebrew/opt/freetype/include/freetype2 -I/usr/local/include/freetype2 -I/usr/include/freetype2")
+# FREETYPE_LDFLAGS := $(shell freetype-config --libs 2>/dev/null | sed 's/-lfreetype//' || pkg-config --libs-only-L freetype2 2>/dev/null || echo "-L/opt/homebrew/opt/freetype/lib -L/usr/local/lib -L/usr/lib")
+# FREETYPE_LIBS := -lfreetype
 
-INCLUDES = -I. -I$(SDL_INCLUDE) -I$(SDL_BUILD_CONFIG) -I$(SDL_BUILD_CONFIG_ALT) $(FREETYPE_CFLAGS)
+INCLUDES = -I. -I$(SDL_INCLUDE) -I$(SDL_BUILD_CONFIG) -I$(SDL_BUILD_CONFIG_ALT)
 
 # Library paths and libraries
-# On macOS, SDL3 builds as libSDL3.0.dylib, but we link with -lSDL3
+# On Windows, SDL3 builds as SDL3.dll, and we link with -lSDL3
+# Windows doesn't use rpath; DLLs are found via PATH or same directory as executable
 
-LDFLAGS = -L$(SDL_LIB_DIR) -Wl,-rpath,$(SDL_LIB_DIR) -g $(FREETYPE_LDFLAGS)
-LIBS = -lSDL3 $(FREETYPE_LIBS)
+LDFLAGS = -L$(SDL_LIB_DIR)
+LIBS = -lSDL3 -lmingw32
 
 # Source and output files
 SRC = main.cpp core/textures.cpp world/tiles.cpp world/objects.cpp items/resources.cpp items/tools.cpp definitions/tile_definitions.cpp definitions/object_definitions.cpp definitions/resource_definitions.cpp definitions/tool_definitions.cpp world/map_generation.cpp world/planet.cpp world/planet_tree.cpp world/object_node.cpp core/camera.cpp core/input_manager.cpp entities/player.cpp definitions/frame_definitions.cpp states/GameContext.cpp states/MortalState.cpp states/GodState.cpp ui/hud.cpp ui/inventory.cpp ui/text_renderer.cpp ui/damage_popup.cpp ui/engine_compass.cpp core/Animations.cpp world/BigBangEngine.cpp utils/sound.cpp
 OBJ = $(BUILD_DIR)/main.o $(BUILD_DIR)/textures.o $(BUILD_DIR)/tiles.o $(BUILD_DIR)/objects.o $(BUILD_DIR)/resources.o $(BUILD_DIR)/tools.o $(BUILD_DIR)/tile_definitions.o $(BUILD_DIR)/object_definitions.o $(BUILD_DIR)/resource_definitions.o $(BUILD_DIR)/tool_definitions.o $(BUILD_DIR)/map_generation.o $(BUILD_DIR)/planet.o $(BUILD_DIR)/planet_tree.o $(BUILD_DIR)/object_node.o $(BUILD_DIR)/camera.o $(BUILD_DIR)/input_manager.o $(BUILD_DIR)/player.o $(BUILD_DIR)/frame_definitions.o $(BUILD_DIR)/GameContext.o $(BUILD_DIR)/MortalState.o $(BUILD_DIR)/GodState.o $(BUILD_DIR)/hud.o $(BUILD_DIR)/inventory.o $(BUILD_DIR)/text_renderer.o $(BUILD_DIR)/damage_popup.o $(BUILD_DIR)/engine_compass.o $(BUILD_DIR)/Animations.o $(BUILD_DIR)/BigBangEngine.o $(BUILD_DIR)/sound.o
-TARGET = $(BUILD_DIR)/game
+TARGET = $(BUILD_DIR)/game.exe
 
 # Default target
 all: $(TARGET)
@@ -47,13 +49,12 @@ $(TARGET): $(OBJ)
 	$(CXX) $(OBJ) $(LDFLAGS) $(LIBS) -o $(TARGET)
 	@echo Build complete: $(TARGET)
 
-# Debug target with AddressSanitizer
+# Debug target
 debug: CXXFLAGS := $(CXXFLAGS_DEBUG)
 debug: LDFLAGS := $(LDFLAGS) $(LDFLAGS_SANITIZE)
 debug: clean $(TARGET)
-	@echo Build complete with AddressSanitizer: $(TARGET)
-	@echo "Run with: ./game"
-	@echo "Memory leaks will be reported when the program exits"
+	@echo Build complete with debug flags: $(TARGET)
+	@echo "Run with: ./game.exe"
 
 # Compile source to object files
 $(BUILD_DIR)/main.o: main.cpp
@@ -145,31 +146,37 @@ $(BUILD_DIR)/sound.o: utils/sound.cpp utils/sound.h
 
 # Clean build artifacts
 clean:
-	rm -f $(BUILD_DIR)/main.o
-	rm -f $(BUILD_DIR)/textures.o
-	rm -f $(BUILD_DIR)/tiles.o
-	rm -f $(BUILD_DIR)/objects.o
-	rm -f $(BUILD_DIR)/resources.o
-	rm -f $(BUILD_DIR)/tools.o
-	rm -f $(BUILD_DIR)/tile_definitions.o
-	rm -f $(BUILD_DIR)/object_definitions.o
-	rm -f $(BUILD_DIR)/resource_definitions.o
-	rm -f $(BUILD_DIR)/tool_definitions.o
-	rm -f $(BUILD_DIR)/map_generation.o
-	rm -f $(BUILD_DIR)/planet.o
-	rm -f $(BUILD_DIR)/planet_tree.o
-	rm -f $(BUILD_DIR)/object_node.o
-	rm -f $(BUILD_DIR)/camera.o
-	rm -f $(BUILD_DIR)/input_manager.o
-	rm -f $(BUILD_DIR)/player.o
-	rm -f $(BUILD_DIR)/frame_definitions.o
-	rm -f $(BUILD_DIR)/GameContext.o
-	rm -f $(BUILD_DIR)/MortalState.o
-	rm -f $(BUILD_DIR)/GodState.o
-	rm -f $(BUILD_DIR)/hud.o
-	rm -f $(BUILD_DIR)/inventory.o
-	rm -f $(BUILD_DIR)/text_renderer.o
-	rm -f $(BUILD_DIR)/damage_popup.o
+	del /Q $(BUILD_DIR)\main.o 2>nul || echo >nul
+	del /Q $(BUILD_DIR)\textures.o 2>nul || echo >nul
+	del /Q $(BUILD_DIR)\tiles.o 2>nul || echo >nul
+	del /Q $(BUILD_DIR)\objects.o 2>nul || echo >nul
+	del /Q $(BUILD_DIR)\resources.o 2>nul || echo >nul
+	del /Q $(BUILD_DIR)\tools.o 2>nul || echo >nul
+	del /Q $(BUILD_DIR)\tile_definitions.o 2>nul || echo >nul
+	del /Q $(BUILD_DIR)\object_definitions.o 2>nul || echo >nul
+	del /Q $(BUILD_DIR)\resource_definitions.o 2>nul || echo >nul
+	del /Q $(BUILD_DIR)\tool_definitions.o 2>nul || echo >nul
+	del /Q $(BUILD_DIR)\map_generation.o 2>nul || echo >nul
+	del /Q $(BUILD_DIR)\planet.o 2>nul || echo >nul
+	del /Q $(BUILD_DIR)\planet_tree.o 2>nul || echo >nul
+	del /Q $(BUILD_DIR)\object_node.o 2>nul || echo >nul
+	del /Q $(BUILD_DIR)\camera.o 2>nul || echo >nul
+	del /Q $(BUILD_DIR)\input_manager.o 2>nul || echo >nul
+	del /Q $(BUILD_DIR)\player.o 2>nul || echo >nul
+	del /Q $(BUILD_DIR)\frame_definitions.o 2>nul || echo >nul
+	del /Q $(BUILD_DIR)\GameContext.o 2>nul || echo >nul
+	del /Q $(BUILD_DIR)\MortalState.o 2>nul || echo >nul
+	del /Q $(BUILD_DIR)\GodState.o 2>nul || echo >nul
+	del /Q $(BUILD_DIR)\hud.o 2>nul || echo >nul
+	del /Q $(BUILD_DIR)\inventory.o 2>nul || echo >nul
+	del /Q $(BUILD_DIR)\text_renderer.o 2>nul || echo >nul
+	del /Q $(BUILD_DIR)\damage_popup.o 2>nul || echo >nul
+	del /Q $(BUILD_DIR)\engine_compass.o 2>nul || echo >nul
+	del /Q $(BUILD_DIR)\Animations.o 2>nul || echo >nul
+	del /Q $(BUILD_DIR)\BigBangEngine.o 2>nul || echo >nul
+	del /Q $(BUILD_DIR)\sound.o 2>nul || echo >nul
+	del /Q $(TARGET) 2>nul || echo >nul
+	@echo Clean complete
 	rm -f $(BUILD_DIR)/engine_compass.o
 	rm -f $(BUILD_DIR)/Animations.o
 	rm -f $(BUILD_DIR)/BigBangEngine.o

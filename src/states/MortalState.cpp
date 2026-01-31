@@ -28,6 +28,7 @@
 #include "ui/hud.h"
 #include "ui/inventory.h"
 #include "ui/damage_popup.h"
+#include "ui/text_renderer.h"
 // #include "ui/text_renderer.h" // DISABLED: FreeType dependency removed
 #include "ui/engine_compass.h"
 #include "core/input_manager.h"
@@ -991,7 +992,10 @@ void MortalState::render() {
     if (engineCompass && renderer && textureManager) {
         engineCompass->Render(renderer, textureManager);
     }
-    
+    TextRenderer* textRenderer = context->getTextRenderer();
+    if (textRenderer) {
+        // textRenderer->RenderText("Hello World", 100.f, 100.f, 0.5f, "center", "center");
+    }
     // Render damage popups
     // DISABLED: FreeType dependency removed
     // if (damagePopups && hud) {

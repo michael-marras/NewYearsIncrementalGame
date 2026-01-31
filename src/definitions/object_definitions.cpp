@@ -28,11 +28,11 @@ struct ObjectDefinitionData {
 
 void SetupObjects(ObjectManager* objectManager, TextureManager* textureManager, ResourceManager* resourceManager) {
     // Load object sprite sheets
-    textureManager->LoadImageFromRes("summer_objects", "summer_objects.png");
-    textureManager->LoadImageFromRes("fall_objects", "fall_objects.png");
-    textureManager->LoadImageFromRes("winter_objects", "winter_objects.png");
-    textureManager->LoadImageFromRes("spring_objects", "spring_objects.png");
-    textureManager->LoadImageFromRes("fantasy_objects", "fantasy_objects.png");
+    textureManager->LoadImageFromRes("summer_objects", "objects/summer_objects.png");
+    textureManager->LoadImageFromRes("fall_objects", "objects/fall_objects.png");
+    textureManager->LoadImageFromRes("winter_objects", "objects/winter_objects.png");
+    textureManager->LoadImageFromRes("spring_objects", "objects/spring_objects.png");
+    textureManager->LoadImageFromRes("fantasy_objects", "objects/fantasy_objects.png");
 
     // Define all objects in a data structure
     std::vector<ObjectDefinitionData> objectDefinitions = {

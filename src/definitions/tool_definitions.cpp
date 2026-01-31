@@ -2,10 +2,10 @@
 
 void SetupTools(ToolManager* toolManager, TextureManager* textureManager) {
     // Load tool sprite sheets (32x16 each: axes on left, picks on right)
-    textureManager->LoadImageFromRes("wood_tools", "wood_tools.png");
-    textureManager->LoadImageFromRes("stone_tools", "stone_tools.png");
-    textureManager->LoadImageFromRes("iron_tools", "iron_tools.png");
-    textureManager->LoadImageFromRes("gold_tools", "gold_tools.png");
+    textureManager->LoadImageFromRes("wood_tools", "items/wood_tools.png");
+    textureManager->LoadImageFromRes("stone_tools", "items/stone_tools.png");
+    textureManager->LoadImageFromRes("iron_tools", "items/iron_tools.png");
+    textureManager->LoadImageFromRes("gold_tools", "items/gold_tools.png");
     
     // Wood tools
     toolManager->RegisterTool(1, "wood_tools", 0, 0, 16, 16, "axe", 25, 200, "Wood Axe");

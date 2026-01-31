@@ -1,6 +1,7 @@
 #include "GameContext.h"
 #include "utils/constants.h"
 #include "core/textures.h"
+#include "ui/text_renderer.h"
 #include "world/tiles.h"
 #include "world/objects.h"
 #include "core/camera.h"
@@ -17,6 +18,7 @@ GameContext:: GameContext() {
     window = nullptr;
     renderer = nullptr;
     textureManager = nullptr;
+    textRenderer = nullptr;
     tileManager = nullptr;
     objectManager = nullptr;
     resourceManager = nullptr;
@@ -52,6 +54,10 @@ GameContext:: ~GameContext() {
         delete textureManager;
         textureManager = nullptr;
     }
+    if (textRenderer) {
+        delete textRenderer;
+        textRenderer = nullptr;
+    }
     if (resourceManager) {
         delete resourceManager;
         resourceManager = nullptr;
@@ -80,6 +86,9 @@ void GameContext:: InitializeManagers(SDL_Window* window, SDL_Renderer* renderer
     // Only initialize if not already initialized
     if (!textureManager) {
         textureManager = new TextureManager(renderer);
+    }
+    if (!textRenderer) {
+        textRenderer = new TextRenderer(renderer, textureManager);
     }
     if (!tileManager) {
         tileManager = new TileManager();
@@ -339,6 +348,10 @@ TextureManager* GameContext:: getTextureManager() {
     return this -> textureManager;
 }
 
+TextRenderer* GameContext:: getTextRenderer() {
+    return this->textRenderer;
+}
+
 TileManager* GameContext:: getTileManager() {
     return this -> tileManager;
 }
@@ -361,6 +374,10 @@ Camera* GameContext:: getCamera() {
 
 void GameContext:: setTextureManager(TextureManager* manager) {
     this -> textureManager = manager;
+}
+
+void GameContext:: setTextRenderer(TextRenderer* manager) {
+    this -> textRenderer = manager;
 }
 
 void GameContext:: setTileManager(TileManager* manager) {

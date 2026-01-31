@@ -20,7 +20,7 @@ public:
     ~BigBangEngine() = default;
 
     // Ensure the portal sprite is loaded (idempotent)
-    // name = "portal", file = "portal.png" in res/
+    // name = "portal", file = "other/portal.png" in res/
     void EnsureTextureLoaded(TextureManager* textureManager);
 
     // Advance animation by deltaTimeMs

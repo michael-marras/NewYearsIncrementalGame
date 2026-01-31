@@ -2,11 +2,11 @@
 
 void SetupTiles(TileManager* tileManager, TextureManager* textureManager) {
     // Load sprite sheets
-    textureManager->LoadImageFromRes("summer_floors", "summer_floors.png");
-    textureManager->LoadImageFromRes("fall_floors", "fall_floors.png");
-    textureManager->LoadImageFromRes("winter_floors", "winter_floors.png");
-    textureManager->LoadImageFromRes("spring_floors", "spring_floors.png");
-    textureManager->LoadImageFromRes("fantasy_floors", "fantasy_floors.png");
+    textureManager->LoadImageFromRes("summer_floors", "tiles/summer_floors.png");
+    textureManager->LoadImageFromRes("fall_floors", "tiles/fall_floors.png");
+    textureManager->LoadImageFromRes("winter_floors", "tiles/winter_floors.png");
+    textureManager->LoadImageFromRes("spring_floors", "tiles/spring_floors.png");
+    textureManager->LoadImageFromRes("fantasy_floors", "tiles/fantasy_floors.png");
     
     // Auto-generate tiles from floor sprite sheets (3x3 grid each = 9 tiles per biome)
     int nextId = tileManager->RegisterTilesFromGrid("summer_floors", 3, 3);

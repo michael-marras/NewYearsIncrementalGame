@@ -2,7 +2,7 @@
 #include "core/textures.h"
 
 static constexpr const char* kPortalTextureName = "portal";
-static constexpr const char* kPortalFile = "portal.png";
+static constexpr const char* kPortalFile = "other/portal.png";
 static constexpr int kFrameSize = 64;   // 64x64 frames
 static constexpr int kTopRowFrames = 4; // frames 0..3
 static constexpr int kTotalFrames = 7;  // 4 top + 3 bottom
