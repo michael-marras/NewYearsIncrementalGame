@@ -37,8 +37,8 @@ LDFLAGS = -L$(SDL_LIB_DIR)
 LIBS = -lSDL3 -lmingw32
 
 # Source and output files
-SRC = main.cpp core/textures.cpp world/tiles.cpp world/objects.cpp items/resources.cpp items/tools.cpp definitions/tile_definitions.cpp definitions/object_definitions.cpp definitions/resource_definitions.cpp definitions/tool_definitions.cpp world/map_generation.cpp world/planet.cpp world/planet_tree.cpp world/object_node.cpp core/camera.cpp core/input_manager.cpp entities/player.cpp definitions/frame_definitions.cpp states/GameContext.cpp states/MortalState.cpp states/GodState.cpp ui/hud.cpp ui/inventory.cpp ui/text_renderer.cpp ui/damage_popup.cpp ui/engine_compass.cpp core/Animations.cpp world/BigBangEngine.cpp utils/sound.cpp
-OBJ = $(BUILD_DIR)/main.o $(BUILD_DIR)/textures.o $(BUILD_DIR)/tiles.o $(BUILD_DIR)/objects.o $(BUILD_DIR)/resources.o $(BUILD_DIR)/tools.o $(BUILD_DIR)/tile_definitions.o $(BUILD_DIR)/object_definitions.o $(BUILD_DIR)/resource_definitions.o $(BUILD_DIR)/tool_definitions.o $(BUILD_DIR)/map_generation.o $(BUILD_DIR)/planet.o $(BUILD_DIR)/planet_tree.o $(BUILD_DIR)/object_node.o $(BUILD_DIR)/camera.o $(BUILD_DIR)/input_manager.o $(BUILD_DIR)/player.o $(BUILD_DIR)/frame_definitions.o $(BUILD_DIR)/GameContext.o $(BUILD_DIR)/MortalState.o $(BUILD_DIR)/GodState.o $(BUILD_DIR)/hud.o $(BUILD_DIR)/inventory.o $(BUILD_DIR)/text_renderer.o $(BUILD_DIR)/damage_popup.o $(BUILD_DIR)/engine_compass.o $(BUILD_DIR)/Animations.o $(BUILD_DIR)/BigBangEngine.o $(BUILD_DIR)/sound.o
+SRC = main.cpp Application.cpp core/textures.cpp world/tiles.cpp world/objects.cpp items/resources.cpp items/tools.cpp definitions/tile_definitions.cpp definitions/object_definitions.cpp definitions/resource_definitions.cpp definitions/tool_definitions.cpp world/map_generation.cpp world/planet.cpp world/planet_tree.cpp world/object_node.cpp core/camera.cpp core/input_manager.cpp entities/player.cpp definitions/frame_definitions.cpp states/GameContext.cpp states/MortalState.cpp states/GodState.cpp ui/hud.cpp ui/inventory.cpp ui/text_renderer.cpp ui/damage_popup.cpp ui/engine_compass.cpp core/Animations.cpp world/BigBangEngine.cpp utils/sound.cpp
+OBJ = $(BUILD_DIR)/main.o $(BUILD_DIR)/Application.o $(BUILD_DIR)/textures.o $(BUILD_DIR)/tiles.o $(BUILD_DIR)/objects.o $(BUILD_DIR)/resources.o $(BUILD_DIR)/tools.o $(BUILD_DIR)/tile_definitions.o $(BUILD_DIR)/object_definitions.o $(BUILD_DIR)/resource_definitions.o $(BUILD_DIR)/tool_definitions.o $(BUILD_DIR)/map_generation.o $(BUILD_DIR)/planet.o $(BUILD_DIR)/planet_tree.o $(BUILD_DIR)/object_node.o $(BUILD_DIR)/camera.o $(BUILD_DIR)/input_manager.o $(BUILD_DIR)/player.o $(BUILD_DIR)/frame_definitions.o $(BUILD_DIR)/GameContext.o $(BUILD_DIR)/MortalState.o $(BUILD_DIR)/GodState.o $(BUILD_DIR)/hud.o $(BUILD_DIR)/inventory.o $(BUILD_DIR)/text_renderer.o $(BUILD_DIR)/damage_popup.o $(BUILD_DIR)/engine_compass.o $(BUILD_DIR)/Animations.o $(BUILD_DIR)/BigBangEngine.o $(BUILD_DIR)/sound.o
 TARGET = $(BUILD_DIR)/game.exe
 
 # Default target
@@ -59,6 +59,9 @@ debug: clean $(TARGET)
 # Compile source to object files
 $(BUILD_DIR)/main.o: main.cpp
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c main.cpp -o $(BUILD_DIR)/main.o
+
+$(BUILD_DIR)/Application.o: Application.cpp Application.h
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -c Application.cpp -o $(BUILD_DIR)/Application.o
 
 $(BUILD_DIR)/textures.o: core/textures.cpp core/textures.h
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c core/textures.cpp -o $(BUILD_DIR)/textures.o
@@ -147,6 +150,7 @@ $(BUILD_DIR)/sound.o: utils/sound.cpp utils/sound.h
 # Clean build artifacts
 clean:
 	del /Q $(BUILD_DIR)\main.o 2>nul || echo >nul
+	del /Q $(BUILD_DIR)\Application.o 2>nul || echo >nul
 	del /Q $(BUILD_DIR)\textures.o 2>nul || echo >nul
 	del /Q $(BUILD_DIR)\tiles.o 2>nul || echo >nul
 	del /Q $(BUILD_DIR)\objects.o 2>nul || echo >nul
@@ -177,6 +181,7 @@ clean:
 	del /Q $(BUILD_DIR)\sound.o 2>nul || echo >nul
 	del /Q $(TARGET) 2>nul || echo >nul
 	@echo Clean complete
+	rm -f $(BUILD_DIR)/Application.o
 	rm -f $(BUILD_DIR)/engine_compass.o
 	rm -f $(BUILD_DIR)/Animations.o
 	rm -f $(BUILD_DIR)/BigBangEngine.o
