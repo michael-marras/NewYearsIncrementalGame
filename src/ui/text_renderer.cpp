@@ -1,10 +1,6 @@
 #include "ui/text_renderer.h"
-#include <cstring>
-#include <algorithm>
 #include <SDL3/SDL.h>
-#include <iostream>
 #include <fstream>
-#include <stdexcept>
 
 TextRenderer::TextRenderer(SDL_Renderer* renderer, TextureManager* textureManager) 
     : renderer(renderer), textureManager(textureManager), fontSize(16), fontLoaded(false) {

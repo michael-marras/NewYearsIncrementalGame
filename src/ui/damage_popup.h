@@ -1,17 +1,17 @@
 #ifndef DAMAGE_POPUP_H
 #define DAMAGE_POPUP_H
 
+#include "ui/text_renderer.h"
 #include <SDL3/SDL.h>
 #include <string>
 #include <vector>
 
-// Single damage popup instance
 struct DamagePopup {
     float worldX;
     float worldY;
     std::string text;
-    float lifetime;  // Total lifetime in seconds
-    float age;       // Current age in seconds
+    float lifetime;
+    float age;
     SDL_Color color;
     
     DamagePopup(float x, float y, const std::string& txt, SDL_Color col) 
@@ -31,9 +31,7 @@ public:
     void Update(float deltaTime);
     
     // Render all popups (requires TextRenderer and Camera)
-    // DISABLED: FreeType dependency removed
-    // void Render(class TextRenderer* textRenderer, class Camera* camera, int virtualWidth, int virtualHeight);
-    void Render(void* textRenderer, class Camera* camera, int virtualWidth, int virtualHeight); // Stub to maintain API compatibility
+    void Render(TextRenderer* textRenderer, class Camera* camera, int virtualWidth, int virtualHeight);
     
     // Clear all popups
     void Clear();

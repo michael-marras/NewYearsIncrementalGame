@@ -992,20 +992,14 @@ void MortalState::render() {
     if (engineCompass && renderer && textureManager) {
         engineCompass->Render(renderer, textureManager);
     }
-    TextRenderer* textRenderer = context->getTextRenderer();
-    if (textRenderer) {
-        // textRenderer->RenderText("Hello World", 100.f, 100.f, 0.5f, "center", "center");
+    if (damagePopups && hud) {
+        TextRenderer* textRenderer = context->getTextRenderer();
+        if (textRenderer && camera) {
+            damagePopups->Render(textRenderer, camera, VIRTUAL_WIDTH, VIRTUAL_HEIGHT);
+        }
     }
-    // Render damage popups
-    // DISABLED: FreeType dependency removed
-    // if (damagePopups && hud) {
-    //     TextRenderer* textRenderer = hud->GetTextRenderer();
-    //     if (textRenderer && camera) {
-    //         damagePopups->Render(textRenderer, camera, VIRTUAL_WIDTH, VIRTUAL_HEIGHT);
-    //     }
-    // }
     if (damagePopups && hud && camera) {
-        void* textRenderer = hud->GetTextRenderer();
+        TextRenderer* textRenderer = context->getTextRenderer();
         damagePopups->Render(textRenderer, camera, VIRTUAL_WIDTH, VIRTUAL_HEIGHT);
     }
     
